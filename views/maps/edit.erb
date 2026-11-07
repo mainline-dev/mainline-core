@@ -1,0 +1,17 @@
+<%== render('maps/_subnav') %>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/maps/<%= @map.id %>/edit">
+    <%== csrf_tag('/maps/' + @map.id + '/edit') %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @map_name %>"
+           placeholder="e.g. Product Map" maxlength="100" autofocus>
+
+    <button type="submit" class="btn">Save</button>
+  </form>
+</div>

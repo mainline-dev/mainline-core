@@ -1,0 +1,19 @@
+<%# locals: (groups:, suggestion:, chosen:, query:) %>
+<% if groups.empty? && query.to_s.strip.empty? %>
+  <p class="mu-hit-none" data-test-id="museum-no-stories-yet">There are no open stories on your maps yet. Promote this exhibit as a new story instead.</p>
+<% elsif groups.empty? %>
+  <p class="mu-hit-none" data-test-id="museum-no-stories">No stories match that.</p>
+<% end %>
+<% if suggestion && chosen == suggestion.story_id && groups.any? { |_map, hits| hits.any? { |hit| hit.id == chosen } } %>
+  <p class="mu-hit-why" data-test-id="museum-story-suggestion">Jira linked this to <%= suggestion.key %>, which you promoted as <em><%= suggestion.title %></em>. It's selected for you.</p>
+<% end %>
+<% groups.each do |map_name, hits| %>
+  <p class="mu-label mu-hit-map"><%= map_name %></p>
+  <% hits.each do |hit| %>
+    <label class="mu-hit" data-test-id="museum-story-hit" data-title="<%= hit.title %>">
+      <input type="radio" name="story_id" value="<%= hit.id %>" required<% if chosen == hit.id %> checked<% end %>>
+      <span class="mu-hit-title"><%= hit.title %></span>
+      <span class="mu-hit-meta"><%= hit.meta %></span>
+    </label>
+  <% end %>
+<% end %>

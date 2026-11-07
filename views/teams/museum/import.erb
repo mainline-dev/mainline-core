@@ -1,0 +1,107 @@
+<% @page_breadcrumb = 'Ticket Museum / Acquisition' %>
+<% chip = { 'staged' => ['is-waiting', 'waiting to be catalogued'], 'imported' => ['is-acquired', 'acquired'], 'undone' => ['', 'returned'] }.fetch(@import.status, ['', 'turned down']) %>
+<div class="mu-acq-title">
+  <h1 class="page-title">Acquisition: <%= @import.file_name %></h1>
+  <span class="mu-acq-chip <%= chip.first %>"><%= chip.last %></span>
+</div>
+
+<% if @preview %>
+  <p class="lens-help" data-test-id="museum-import-expires" data-hours="<%= @hours_left %>">Nothing has entered the museum yet. If you leave it, it's turned down automatically in <%= @hours_left %> <%= @hours_left == 1 ? 'hour' : 'hours' %>.</p>
+
+  <% acquirable = @preview.added + @preview.updated %>
+  <% cells = [
+       ['added', @preview.added, 'new exhibits'], ['updated', @preview.updated, 'refreshed from this newer file'],
+       ['left', @preview.promoted + @preview.discarded, 'promoted or stored, left as they are'],
+       ['finished', @preview.finished, 'finished in Jira, not museum material'], ['skipped', @preview.skipped, 'rows turned away']
+     ].select { |kind, count, _label| kind == 'added' || count.positive? } %>
+  <div class="mu-acq-body">
+    <div data-test-id="museum-import-preview" data-added="<%= @preview.added %>" data-updated="<%= @preview.updated %>" data-finished="<%= @preview.finished %>" data-skipped="<%= @preview.skipped %>" data-promoted="<%= @preview.promoted %>" data-discarded="<%= @preview.discarded %>">
+      <div class="mu-acq-bar">
+        <% cells.each do |kind, count, _label| %><% if count.positive? %><span class="is-<%= kind %>" style="flex: <%= count %>"></span><% end %><% end %>
+      </div>
+      <div class="mu-ledger">
+        <% cells.each do |kind, count, label| %>
+          <div class="mu-ledger-cell is-<%= kind %>" data-test-id="museum-ledger-cell" data-kind="<%= kind %>" data-count="<%= count %>">
+            <span class="mu-ledger-count"><%= count %></span>
+            <span class="mu-ledger-label"><%= label %></span>
+          </div>
+        <% end %>
+      </div>
+    </div>
+
+    <div class="mu-decide">
+      <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/apply">
+        <%== csrf_tag("/teams/#{@team.id}/museum/imports/#{@import.id}/apply") %>
+        <button type="submit" class="btn" data-test-id="museum-import-apply"<% if acquirable.zero? %> disabled<% end %>><% if acquirable.zero? %>Nothing to acquire<% else %>Acquire <%= acquirable %> <%= acquirable == 1 ? 'exhibit' : 'exhibits' %><% end %></button>
+      </form>
+      <% unless acquirable.zero? %><p class="mu-decide-note"><%= @preview.added %> new, <%= @preview.updated %> refreshed. You can return it afterwards.</p><% end %>
+      <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/cancel">
+        <%== csrf_tag("/teams/#{@team.id}/museum/imports/#{@import.id}/cancel") %>
+        <button type="submit" class="btn-ghost" data-test-id="museum-import-cancel">Turn it down</button>
+      </form>
+    </div>
+  </div>
+<% else %>
+  <p class="mu-acq-line" data-test-id="museum-import-status" data-status="<%= @import.status %>">
+    <% if @import.status == 'imported' %>
+      Acquired <%= @import.imported_at.strftime('%Y-%m-%d %H:%M') %><% if @import.actor %> by <span data-test-id="museum-import-by"><%= @import.actor.name %></span><% end %>: <strong><%= @import.added %> new exhibits</strong>, <%= @import.updated %> refreshed from the newer file.
+    <% elsif @import.status == 'undone' %>
+      Returned <%= @import.undone_at.strftime('%Y-%m-%d') %>. The museum is as it was.
+    <% else %>
+      Nothing entered the museum.
+    <% end %>
+  </p>
+  <% if ImportJiraCsv.undoable?(@import) %>
+    <div class="mu-return">
+      <p>Returning removes the <%= @import.added %> it added and puts the <%= @import.updated %> back as they were. Anything promoted or stored since stays.</p>
+      <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/undo">
+        <%== csrf_tag("/teams/#{@team.id}/museum/imports/#{@import.id}/undo") %>
+        <button type="submit" class="mu-danger-outline" data-test-id="museum-import-undo">Return this acquisition</button>
+      </form>
+    </div>
+  <% end %>
+<% end %>
+
+<% unless @import.problems.empty? %>
+  <% key_at = @import.header.index('Issue key') %>
+  <% summary_at = @import.header.index('Summary') %>
+  <% count = @import.problems.size %>
+  <section class="mu-turned-away">
+    <div class="mu-turned-head">
+      <span class="mu-label"><%= count %> <%= count == 1 ? 'row' : 'rows' %> turned away</span>
+      <span class="mu-turned-note">These won't be acquired. Fix them in a spreadsheet and acquire the file again.</span>
+      <a href="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/problems.csv" class="btn-ghost btn-sm" data-test-id="museum-import-problems-download">Download <%= count %> <%= count == 1 ? 'row' : 'rows' %> as CSV</a>
+    </div>
+    <% @import.problems.first(5).each do |problem| %>
+      <%== render('teams/museum/_problem_row', locals: { problem: problem, key_at: key_at, summary_at: summary_at }) %>
+    <% end %>
+    <% if count > 5 %>
+      <details class="mu-more-problems">
+        <summary data-test-id="museum-import-problems-more" data-count="<%= count - 5 %>">+ <%= count - 5 %> more</summary>
+        <% @import.problems.drop(5).each do |problem| %>
+          <%== render('teams/museum/_problem_row', locals: { problem: problem, key_at: key_at, summary_at: summary_at }) %>
+        <% end %>
+      </details>
+    <% end %>
+  </section>
+<% end %>
+
+<% if @preview %>
+  <% sample = @import.items.first(10) %>
+  <% unless sample.empty? %>
+    <section class="mu-sample" data-test-id="museum-import-sample">
+      <h2 class="mu-label">The first <%= sample.size %> exhibits, as they'll be displayed</h2>
+      <% sample.each do |item| %>
+        <div class="mu-sample-row">
+          <span class="mu-key"><%= item['source_key'] %></span>
+          <span class="mu-type"><%= item['issue_type'] %></span>
+          <span><%= item['summary'] %><% if item['in_progress'] %> <span class="mu-flag">in progress</span><% end %></span>
+          <span><% item['labels'].each do |label| %><span class="mu-chip"><%= label %></span> <% end %></span>
+          <span class="mu-date"><%= item['source_created_at']&.slice(0, 10) %></span>
+        </div>
+      <% end %>
+    </section>
+  <% end %>
+<% end %>
+
+<p><a href="/teams/<%= @team.id %>/museum" class="cancel-link">Back to the museum</a></p>

@@ -1,0 +1,15 @@
+<%# locals: (toast:) %>
+<div class="mu-toast" role="alert" data-test-id="flash-notice"<% if toast['count'] %> data-count="<%= toast['count'] %>"<% end %><% if toast['story_state'] %> data-story="<%= toast['story_state'] %>"<% end %> data-toast>
+  <span class="mu-toast-dot is-<%= toast['dot'] %>" aria-hidden="true"><%= toast['dot'] == 'stored' ? "■" : "●" %></span>
+  <span class="mu-toast-text">
+    <% if toast['key'] %><span class="mu-toast-key"><%= toast['key'] %></span> <% end %><%= toast['words'] %>
+    <% if toast['story_path'] %><a href="<%= toast['story_path'] %>" data-test-id="museum-toast-story"><%= toast['story_title'] %></a><% end %>
+  </span>
+  <% if toast['undo_path'] %>
+    <form method="post" action="<%= toast['undo_path'] %>">
+      <%== csrf_tag(toast['undo_path']) %>
+      <input type="hidden" name="return_to" value="<%= request.fullpath %>">
+      <button type="submit" class="mu-quiet" data-test-id="museum-toast-undo">Undo</button>
+    </form>
+  <% end %>
+</div>

@@ -1,0 +1,46 @@
+<%# locals: (item:, sub_tasks:) %>
+<div class="mu-relic">
+  <% if item.description.strip.empty? && sub_tasks.empty? && item.links.empty? && item.comments.empty? %>
+    <p class="mu-relic-empty" data-test-id="museum-relic-empty">Nothing on this one but its summary. No description, links or comments came across from Jira.</p>
+  <% end %>
+  <% unless item.description.strip.empty? %>
+    <section class="mu-relic-section">
+      <details class="mu-raw">
+        <summary class="mu-relic-head"><span class="mu-label">Description</span><span class="mu-raw-toggle">View raw markup</span></summary>
+        <pre class="mu-code"><%= item.description %></pre>
+      </details>
+      <div class="mu-markup"><%== JiraMarkup.to_html(item.description) %></div>
+    </section>
+  <% end %>
+  <% unless sub_tasks.empty? %>
+    <section class="mu-relic-section">
+      <span class="mu-label">Sub-tasks</span>
+      <% sub_tasks.each do |sub_task| %>
+        <p class="mu-relic-subtask" data-test-id="museum-case-sub-task" data-key="<%= sub_task.source_key %>"><span class="mu-subkey">&#8627; <%= sub_task.source_key %></span> <%= sub_task.summary %></p>
+      <% end %>
+    </section>
+  <% end %>
+  <% unless item.links.empty? %>
+    <section class="mu-relic-section">
+      <span class="mu-label">Links</span>
+      <p class="mu-relic-links">
+        <% item.links.each do |link| %>
+          <a href="<%= @museum_path %>?status=everything&amp;open=<%= link['key'] %>" class="mu-link-chip" data-test-id="museum-case-link" data-key="<%= link['key'] %>"><%= museum_link_words(link) %> <%= link['key'] %></a>
+        <% end %>
+      </p>
+    </section>
+  <% end %>
+  <% unless item.comments.empty? %>
+    <section class="mu-relic-section">
+      <span class="mu-label">Comments, unattributed</span>
+      <div class="mu-comments">
+        <% item.comments.each do |comment| %>
+          <div class="mu-comment" data-test-id="museum-case-comment">
+            <span class="mu-date"><%= comment['at']&.slice(0, 10) %></span>
+            <span><%= comment['text'] %></span>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</div>

@@ -1,0 +1,134 @@
+<% @page_breadcrumb = 'Teamwork' %>
+<%== render('teams/teamwork/_subnav') %>
+
+  <div>
+    <h2 class="section-heading" data-test-id="teamwork-page-matrix">Pairing Matrix</h2>
+
+    <div class="lens-toggles">
+      <% base = "/teams/#{@team.id}/teamwork" %>
+      <% wp = @window == 180 ? '' : "&window=#{@window}" %>
+      <% if @lens == 'stories' %>
+        <span class="filter-toggle active" aria-current="true">Stories</span>
+      <% else %>
+        <a href="<%= base %>?lens=stories<%= wp %>" class="filter-toggle">Stories</a>
+      <% end %>
+      <% if @lens == 'days' %>
+        <span class="filter-toggle active" aria-current="true">Last rotated</span>
+      <% else %>
+        <a href="<%= base %>?lens=days<%= wp %>" class="filter-toggle">Last rotated</a>
+      <% end %>
+      <% if @lens == 'current' %>
+        <span class="filter-toggle active" aria-current="true">Current</span>
+      <% else %>
+        <a href="<%= base %>?lens=current<%= wp %>" class="filter-toggle">Current</a>
+      <% end %>
+    </div>
+
+    <div class="lens-toggles">
+      <% lp = @lens == 'stories' ? '' : "&lens=#{@lens}" %>
+      <% { 90 => '90d', 180 => '180d', 365 => '1y' }.each do |days, label| %>
+        <% if @window == days %>
+          <span class="filter-toggle active" aria-current="true"><%= label %></span>
+        <% else %>
+          <a href="<%= base %>?window=<%= days %><%= lp %>" class="filter-toggle"><%= label %></a>
+        <% end %>
+      <% end %>
+    </div>
+
+    <% lens_help = case @lens
+       when 'stories' then 'Stories where the pair stayed together. Transient assignments count if they lasted at least 1 day or included a deploy.'
+       when 'days'    then 'Days since each pair last rotated.'
+       when 'current' then 'Who is working together right now.'
+       end %>
+    <p class="lens-help"><%= lens_help %></p>
+    <% if @matrix.agent && @lens != 'current' %>
+      <p class="lens-help">The agent's column counts the stories it read over MCP while that person was on them.</p>
+    <% end %>
+
+    <% if @matrix.people.empty? %>
+      <p class="empty-state">Add a teammate. The matrix needs at least two.</p>
+    <% else %>
+      <% if @lens == 'days' %>
+        <div class="matrix-legend">
+          <span class="legend-label">Last rotated</span>
+          <span class="legend-end">0d</span>
+          <span class="legend-swatch matrix-cell" data-days="0"></span>
+          <span class="legend-swatch matrix-cell" data-days="2"></span>
+          <span class="legend-swatch matrix-cell" data-days="4"></span>
+          <span class="legend-swatch matrix-cell" data-days="6"></span>
+          <span class="legend-swatch matrix-cell" data-days="7"></span>
+          <span class="legend-end">7d+</span>
+        </div>
+      <% elsif @lens == 'stories' %>
+        <div class="matrix-legend">
+          <span class="legend-label">Stories together</span>
+          <span class="legend-end">1</span>
+          <span class="legend-swatch matrix-cell" data-stories="1"></span>
+          <span class="legend-swatch matrix-cell" data-stories="2"></span>
+          <span class="legend-swatch matrix-cell" data-stories="3"></span>
+          <span class="legend-swatch matrix-cell" data-stories="4"></span>
+          <span class="legend-swatch matrix-cell" data-stories="5"></span>
+          <span class="legend-end">5+</span>
+        </div>
+      <% end %>
+      <% unless @lens == 'current' %>
+        <p class="matrix-caption">Diagonal cell shows solo work in the current window.</p>
+      <% end %>
+      <table class="pairing-matrix">
+        <thead>
+          <tr>
+            <th></th>
+            <% @matrix.people.each do |person| %>
+              <th><%= person.name %></th>
+            <% end %>
+            <% if @matrix.agent %>
+              <th class="matrix-agent" data-test-id="matrix-agent"><%= @matrix.agent.name %></th>
+            <% end %>
+          </tr>
+        </thead>
+        <tbody>
+          <% @matrix.columns.each do |row_person| %>
+            <tr>
+              <th<%== ' class="matrix-agent"' if row_person.equal?(@matrix.agent) %>><%= row_person.name %></th>
+              <% @matrix.columns.each do |col_person| %>
+                <% with = @matrix.agent_with(row_person, col_person) %>
+                <% agent_attr = with ? %( data-agent-with="#{with}") : '' %>
+                <% if row_person.id == col_person.id %>
+                  <% if @lens == 'current' && @matrix.current_solos.include?(row_person.id) %>
+                    <td class="matrix-diagonal matrix-solo">&#x25CF;</td>
+                  <% else %>
+                    <td class="matrix-diagonal"></td>
+                  <% end %>
+                <% else %>
+                  <% key = [row_person.id, col_person.id].sort %>
+                  <% if @lens == 'current' %>
+                    <% if @matrix.current_pairs[key] %>
+                      <td class="matrix-cell matrix-current">&#x25CF;</td>
+                    <% else %>
+                      <td class="matrix-cell"></td>
+                    <% end %>
+                  <% else %>
+                    <% days = @matrix.pairs[key] %>
+                    <% count = @matrix.story_counts[key] %>
+                    <% if days %>
+                      <% if @lens == 'stories' %>
+                        <td class="matrix-cell"<%== agent_attr %> data-stories="<%= count %>" title="<%= days %> days since"><%= count %></td>
+                      <% else %>
+                        <td class="matrix-cell"<%== agent_attr %> data-days="<%= days %>" title="<%= count %> stories together"><%= days %></td>
+                      <% end %>
+                    <% else %>
+                      <% if @lens == 'stories' %>
+                        <td class="matrix-cell matrix-never"<%== agent_attr %>>0</td>
+                      <% else %>
+                        <td class="matrix-cell matrix-never"<%== agent_attr %>>&mdash;</td>
+                      <% end %>
+                    <% end %>
+                  <% end %>
+                <% end %>
+              <% end %>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>

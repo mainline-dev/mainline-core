@@ -1,0 +1,28 @@
+<h1 class="page-title">Edit Task</h1>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/maps/<%= @map.id %>/tasks/<%= @task.id %>">
+    <%== csrf_tag('/maps/' + @map.id + '/tasks/' + @task.id) %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @task.name %>"
+           placeholder="e.g. Search products" maxlength="100" autofocus>
+
+    <label for="activity_id">Activity</label>
+    <select id="activity_id" name="activity_id">
+      <option value="">&mdash; select &mdash;</option>
+      <% @activities.each do |a| %>
+        <option value="<%= a.id %>" <%= 'selected' if @selected_activity_id == a.id %>>
+          <%= a.name %>
+        </option>
+      <% end %>
+    </select>
+
+    <button type="submit" class="btn">Save</button>
+    <a href="/maps/<%= @map.id %>" class="cancel-link">Cancel</a>
+  </form>
+</div>

@@ -1,0 +1,5 @@
+  <span class="nav-breadcrumb nav-breadcrumb-editable"
+      hx-get="/maps/<%= @map.id %>/edit_title"
+      hx-target="#map-title-container"
+      hx-swap="innerHTML"><%= @map.name %></span>
+

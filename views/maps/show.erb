@@ -1,0 +1,135 @@
+<% locked = @locked %>
+<%== render('maps/_subnav') %>
+
+<div class="map-grid-wrapper">
+<%== render('maps/_grid') %>
+</div>
+
+<%== "<script nonce=\"#{@csp_nonce}\">" %>
+(function() {
+  var grid = document.querySelector('.map-grid');
+  var wrapper = document.querySelector('.map-grid-wrapper');
+  if (grid && wrapper) {
+    function checkOverflow() {
+      var atEnd = grid.scrollLeft + grid.clientWidth >= grid.scrollWidth - 1;
+      wrapper.classList.toggle('has-overflow', grid.scrollWidth > grid.clientWidth && !atEnd);
+    }
+    checkOverflow();
+    grid.addEventListener('scroll', checkOverflow);
+    window.addEventListener('resize', checkOverflow);
+  }
+})();
+<%== "</script>" %>
+
+<%== "<script nonce=\"#{@csp_nonce}\">" %>
+(function() {
+  var key = 'mainline-density-<%= @current_team.id %>';
+  var d = localStorage.getItem(key) || 'comfortable';
+  document.body.dataset.density = d;
+  document.querySelectorAll('[data-density]').forEach(function(btn) {
+    if (btn.tagName !== 'BUTTON') return;
+    if (btn.dataset.density === d) btn.classList.add('density-active');
+    btn.addEventListener('click', function() {
+      localStorage.setItem(key, btn.dataset.density);
+      document.body.dataset.density = btn.dataset.density;
+      document.querySelectorAll('[data-density]').forEach(function(b) {
+        if (b.tagName === 'BUTTON') b.classList.toggle('density-active', b.dataset.density === btn.dataset.density);
+      });
+    });
+  });
+})();
+<%== "</script>" %>
+
+<% unless locked %>
+<%== "<script nonce=\"#{@csp_nonce}\">" %>
+var gridUrl = '/maps/<%= @map.id %>/grid';
+
+function refreshGrid() {
+  var g = document.querySelector('.map-grid-container');
+  if (g) g.classList.add('htmx-loading');
+  htmx.ajax('GET', gridUrl, {target: '.map-grid-container', swap: 'outerHTML'});
+}
+
+function initSortable() {
+  document.querySelectorAll('.task-stories[data-task-id]').forEach(function(el) {
+    var lastDragId = null;
+    var pending = Promise.resolve();
+    new Sortable(el, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      draggable: '.story-card',
+      filter: 'a, button, form, input, select, textarea, .unassign-btn, .card-kebab',
+      preventOnFilter: false,
+      group: 'map-stories',
+      onEnd: function(evt) {
+        var crossContainer = evt.from !== evt.to;
+        if (!crossContainer && evt.oldIndex === evt.newIndex) return;
+        var container = evt.to;
+        var dragId = evt.item.getAttribute('data-id') + ':' + evt.newIndex + ':' + container.getAttribute('data-task-id') + ':' + (container.getAttribute('data-slice-id') || '');
+        if (dragId === lastDragId) return;
+        lastDragId = dragId;
+        var url = container.getAttribute('data-reorder-url');
+        var ids = Array.from(container.querySelectorAll(':scope > .story-card > input[name="story_id"]'))
+                       .map(function(i) { return i.value; });
+        var csrf = document.querySelector('meta[name="_csrf"]');
+        pending = pending.then(function() {
+          var form = new FormData();
+          ids.forEach(function(id) { form.append('story_id[]', id); });
+          if (crossContainer && container.hasAttribute('data-slice-id')) {
+            form.append('release_slice_id', container.getAttribute('data-slice-id') || '');
+          }
+          return fetch(url, {
+            method: 'POST',
+            headers: csrf ? {'X-CSRF-Token': csrf.content} : {},
+            body: form
+          }).then(function(resp) {
+            if (crossContainer && resp.ok) refreshGrid();
+          });
+        });
+      }
+    });
+  });
+
+  document.querySelectorAll('.activity-tasks[data-activity-id]').forEach(function(el) {
+    var lastDragId = null;
+    var pending = Promise.resolve();
+    new Sortable(el, {
+      animation: 150,
+      ghostClass: 'sortable-ghost',
+      draggable: '.task-col[data-task-id]',
+      filter: 'a, button, form, input, select, textarea',
+      preventOnFilter: false,
+      group: 'map-tasks',
+      onEnd: function(evt) {
+        var crossContainer = evt.from !== evt.to;
+        if (!crossContainer && evt.oldIndex === evt.newIndex) return;
+        var container = evt.to;
+        var dragId = evt.item.getAttribute('data-task-id') + ':' + evt.newIndex + ':' + container.getAttribute('data-activity-id');
+        if (dragId === lastDragId) return;
+        lastDragId = dragId;
+        var url = container.getAttribute('data-reorder-url');
+        var ids = Array.from(container.querySelectorAll(':scope > .task-col[data-task-id]'))
+                       .map(function(i) { return i.getAttribute('data-task-id'); });
+        var csrf = document.querySelector('meta[name="_csrf"]');
+        pending = pending.then(function() {
+          var form = new FormData();
+          ids.forEach(function(id) { form.append('task_id[]', id); });
+          return fetch(url, {
+            method: 'POST',
+            headers: csrf ? {'X-CSRF-Token': csrf.content} : {},
+            body: form
+          }).then(function(resp) {
+            if (resp.ok) refreshGrid();
+          });
+        });
+      }
+    });
+  });
+}
+
+initSortable();
+document.body.addEventListener('htmx:afterSwap', function(evt) {
+  if (evt.detail.target.classList.contains('map-grid-container')) { initSortable(); }
+});
+<%== "</script>" %>
+<% end %>

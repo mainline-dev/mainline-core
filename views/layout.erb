@@ -1,0 +1,152 @@
+<!-- views/layout.erb -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= @page_title || 'Mainline' %></title>
+  <%== og_tags %>
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Source+Sans+3:wght@400;500;600;700&display=swap">
+  <%== assets(:css) %>
+  <script src="/js/Sortable.min.js"></script>
+  <script src="/js/htmx.min.js"></script>
+  <script src="/js/popper.min.js"></script>
+  <script src="/js/tippy.min.js"></script>
+  <script src="/js/app.js?v=22"></script>
+  <script src="/js/shortcuts.js"></script>
+  <%== csrf_metatag if respond_to?(:csrf_metatag) %>
+</head>
+<body <% if respond_to?(:csrf_token) %>hx-headers='<%== "{\"X-CSRF-Token\": \"#{csrf_token(nil)}\"}" %>'<% end %> <% if @current_team %>data-team-base="/teams/<%= @current_team.id %>"<% end %>>
+<a href="#main" class="skip-link">Skip to content</a>
+<nav>
+  <div class="nav-left">
+      <strong><a href="<%= @current_person ? '/teams' : '/' %>" class="nav-brand">Mainline</a></strong>
+      <% if @current_team %>
+        <span class="nav-sep">|</span>
+        <div class="nav-dropdown">
+          <a href="/teams/<%= @current_team.id %>" class="nav-dropdown-trigger nav-team-trigger"><%= @current_team.name %></a>
+          <div class="nav-dropdown-menu">
+            <a href="/teams/<%= @current_team.id %>/members">Members</a>
+            <a href="/settings">Settings</a>
+            <a href="/teams/<%= @current_team.id %>/webhook">Deploy webhook</a>
+            <a href="/teams/<%= @current_team.id %>/mcp_token">MCP server</a>
+            <% if @is_creator %>
+              <a href="/teams/<%= @current_team.id %>/account">Account</a>
+            <% end %>
+            <div class="nav-dropdown-divider"></div>
+            <a href="/teams">Switch team</a>
+            <a href="/teams/new">New team</a>
+          </div>
+        </div>
+        <% if @map %>
+          <span class="nav-sep">|</span>
+          <span id="map-title-container"><%== render('maps/_map_title') %></span>
+        <% elsif @page_breadcrumb %>
+          <span class="nav-sep">|</span>
+          <span class="nav-breadcrumb"><%= @page_breadcrumb %></span>
+        <% end %>
+      <% end %>
+  </div>
+  <div class="nav-right">
+    <% if @is_working_member %>
+      <div class="nav-menu">
+        <a href="#" class="nav-menu-trigger nav-dropdown-trigger">Menu</a>
+        <div class="nav-menu-items">
+          <a href="/teams/<%= @current_team.id %>">Maps</a>
+          <div class="nav-dropdown">
+            <a href="/teams/<%= @current_team.id %>/teamwork" class="nav-dropdown-trigger">Teamwork</a>
+            <div class="nav-dropdown-menu">
+              <a href="/teams/<%= @current_team.id %>/teamwork">Pairing Matrix</a>
+              <a href="/teams/<%= @current_team.id %>/teamwork/ensemble">Ensemble Timeline</a>
+              <a href="/teams/<%= @current_team.id %>/teamwork/solo">Solo Log</a>
+            </div>
+          </div>
+          <div class="nav-dropdown">
+            <a href="/teams/<%= @current_team.id %>/flow" class="nav-dropdown-trigger">Flow</a>
+            <div class="nav-dropdown-menu">
+              <a href="/teams/<%= @current_team.id %>/flow">Cumulative Flow</a>
+              <a href="/teams/<%= @current_team.id %>/flow/throughput">Throughput</a>
+              <a href="/teams/<%= @current_team.id %>/flow/lead-time">Lead Time</a>
+            </div>
+          </div>
+          <a href="/teams/<%= @current_team.id %>/inventory">Inventory</a>
+          <a href="/teams/<%= @current_team.id %>/museum" data-test-id="nav-museum">Museum</a>
+          <a href="/teams/<%= @current_team.id %>/monitor" data-shortcut-key="c" data-test-id="nav-monitor">CI Monitor</a>
+          <a href="https://mainline.dev/docs">Docs</a>
+        </div>
+      </div>
+    <% end %>
+    <% if @current_person %>
+      <span class="nav-sep">|</span>
+      <div class="nav-dropdown">
+        <a href="#" class="nav-dropdown-trigger nav-person-trigger"><%= @current_person.name %></a>
+        <div class="nav-dropdown-menu nav-person-menu">
+          <a href="/profile/edit">Edit Profile</a>
+          <a href="https://mainline.dev/docs/tutorial">Tutorial</a>
+          <a href="/profile/providers">Connected Accounts</a>
+          <form method="post" action="/logout">
+            <%== csrf_tag('/logout') %>
+            <button type="submit" class="nav-dropdown-btn">Sign out</button>
+          </form>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</nav>
+
+<% if flash['notice'] %>
+  <div class="flash" role="alert" data-test-id="flash-notice"><%= flash['notice'] %></div>
+<% end %>
+<% if flash['warning'] %>
+  <div class="flash flash-warning" role="alert" data-test-id="flash-warning"><%= flash['warning'] %></div>
+<% end %>
+<% if flash['error'] %>
+  <div class="flash flash-error" role="alert" data-test-id="flash-error"<% if flash['error_reason'] %> data-reason="<%= flash['error_reason'] %>"<% end %>><%= flash['error'] %></div>
+<% end %>
+
+<div id="mu-toast-slot"><% if flash['museum_toast'] %><%== render('teams/museum/_toast', locals: { toast: flash['museum_toast'] }) %><% end %></div>
+
+<main id="main">
+<%== yield %>
+</main>
+<div id="story-panel-container" data-test-id="story-panel-container"></div>
+<% if @is_working_member %>
+<div id="shortcuts-modal" class="shortcuts-modal" data-test-id="shortcuts-modal">
+  <div class="shortcuts-card">
+    <h3 class="shortcuts-title">Keyboard shortcuts</h3>
+    <div class="shortcuts-grid">
+      <div class="shortcuts-section">
+        <h4>Navigation</h4>
+        <dl>
+          <dt><kbd>g</kbd> <kbd>m</kbd></dt><dd>Go to Maps</dd>
+          <dt><kbd>g</kbd> <kbd>f</kbd></dt><dd>Go to Flow</dd>
+          <dt><kbd>g</kbd> <kbd>t</kbd></dt><dd>Go to Teamwork</dd>
+          <dt><kbd>g</kbd> <kbd>i</kbd></dt><dd>Go to Inventory</dd>
+          <dt data-test-id="shortcut-monitor"><kbd>g</kbd> <kbd>c</kbd></dt><dd>Go to CI Monitor</dd>
+        </dl>
+      </div>
+      <div class="shortcuts-section">
+        <h4>Story cards</h4>
+        <dl>
+          <dt><kbd>j</kbd> / <kbd>k</kbd></dt><dd>Next / previous card</dd>
+          <dt><kbd>Enter</kbd></dt><dd>Open story panel</dd>
+          <dt><kbd>e</kbd></dt><dd>Edit selected story</dd>
+        </dl>
+      </div>
+      <div class="shortcuts-section">
+        <h4>General</h4>
+        <dl>
+          <dt><kbd>?</kbd></dt><dd>Toggle this cheatsheet</dd>
+          <dt><kbd>Esc</kbd></dt><dd>Close panel or deselect</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</div>
+<% end %>
+</body>
+</html>

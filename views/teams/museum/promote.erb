@@ -1,0 +1,23 @@
+<% @page_breadcrumb = "Ticket Museum / Promote #{@item.source_key}" %>
+<p class="mu-back"><a href="<%= @return_to %>" data-test-id="museum-promote-back">&larr; Back to the museum</a></p>
+<h1 class="page-title mu-page-title">Promote <%= @item.source_key %></h1>
+<p class="lens-help">Rewrite it as something a person would want. The relic stays behind in its case.</p>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="mu-promote-page">
+  <div class="mu-promote-relic">
+    <%== render('teams/museum/_placard', locals: { item: @item }) %>
+    <div data-test-id="museum-case" data-key="<%= @item.source_key %>">
+      <%== render('teams/museum/_relic', locals: { item: @item, sub_tasks: @sub_tasks }) %>
+    </div>
+  </div>
+  <div class="mu-promote-side">
+    <%== render('teams/museum/_promote_slot', locals: {
+          items: [@item], title: @title, scenarios: @scenarios.to_a, tasks_by_map: @tasks_by_map,
+          selected_task_id: @selected_task_id, remembered_task: @remembered_task, return_to: @return_to, inline: false
+        }) %>
+  </div>
+</div>

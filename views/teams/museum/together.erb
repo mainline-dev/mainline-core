@@ -1,0 +1,36 @@
+<% @page_breadcrumb = 'Ticket Museum / Promote together' %>
+<% leaving = @items.flat_map { |item| [[item.id, item.source_key]] + @sub_tasks.fetch(item.source_key, []).map { |sub_task| [item.id, sub_task.source_key] } } %>
+<p class="mu-back"><a href="<%= @return_to %>" data-test-id="museum-promote-back">&larr; Back to the museum</a></p>
+<h1 class="page-title mu-page-title" data-together-title>Promote <%= @items.size %> <%= @items.size == 1 ? 'exhibit' : 'exhibits' %> as one story</h1>
+<p class="lens-help">All of them will link to the story.</p>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="mu-promote-page">
+  <div class="mu-together-cards">
+    <% @items.each_with_index do |item, index| %>
+      <% sub_tasks = @sub_tasks.fetch(item.source_key, []) %>
+      <details class="mu-together-card" data-exhibit data-test-id="museum-together-card" data-key="<%= item.source_key %>"<% if index.zero? %> open<% end %>>
+        <summary>
+          <span class="mu-together-key"><%= item.source_key %></span>
+          <span class="mu-type"><%= item.issue_type %></span>
+          <span class="mu-together-summary"><%= item.summary %></span>
+          <% sub_tasks.each do |sub_task| %><span class="mu-together-sub">+ <%= sub_task.source_key %> sub-task</span><% end %>
+          <button type="button" class="mu-scenario-remove" data-remove-exhibit="<%= item.id %>" data-test-id="museum-together-remove" aria-label="Take <%= item.source_key %> out of this story"<% if @items.size == 1 %> hidden<% end %>>&times;</button>
+        </summary>
+        <div class="mu-together-body">
+          <%== render('teams/museum/_relic', locals: { item: item, sub_tasks: sub_tasks }) %>
+        </div>
+      </details>
+    <% end %>
+  </div>
+  <div class="mu-promote-side">
+    <%== render('teams/museum/_promote_slot', locals: {
+          items: @items, mode: @mode, title: @title, scenarios: @scenarios.to_a, tasks_by_map: @tasks_by_map,
+          selected_task_id: @selected_task_id, remembered_task: @remembered_task, return_to: @return_to, inline: false,
+          action: "#{@museum_path}/together/promote", ids: @items.map(&:id), leaving: leaving, button: "Promote #{@items.size} as one story", count: @items.size
+        }) %>
+  </div>
+</div>

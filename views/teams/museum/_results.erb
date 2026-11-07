@@ -1,0 +1,102 @@
+<%# locals: (in_place:) %>
+<% if in_place %><%== render('teams/museum/_tally', locals: { in_place: true }) %><%== render('teams/museum/_why', locals: { in_place: true }) %><% end %>
+<% if in_place && flash['museum_toast'] %>
+  <div id="mu-toast-slot" hx-swap-oob="true"><%== render('teams/museum/_toast', locals: { toast: flash['museum_toast'] }) %></div>
+<% end %>
+<% if @museum.items.empty? %>
+  <% on_display = !%w[promoted in-storage kept everything].include?(@filters[:status]) %>
+  <div class="mu-nomatch" data-test-id="museum-no-match" data-promoted="<%= @museum.promoted_matches %>" data-stored="<%= @museum.stored_matches %>">
+    <p class="mu-nomatch-title">Nothing <% if on_display %>on display <% end %>matches <% if @filters[:search] %>"<%= @filters[:search] %>"<% else %>these filters<% end %></p>
+    <% if on_display %>
+      <% elsewhere = museum_elsewhere(@museum.promoted_matches, @museum.stored_matches) %>
+      <% if elsewhere %><p class="mu-nomatch-text"><%= elsewhere %></p><% end %>
+    <% end %>
+    <p class="mu-nomatch-links">
+      <% if on_display && @museum.promoted_matches.positive? %><a href="<%= museum_filter_path(status: 'promoted') %>">Look in Promoted (<%= @museum.promoted_matches %>)</a><% end %>
+      <% if on_display && @museum.stored_matches.positive? %><a href="<%= museum_filter_path(status: 'in-storage') %>">Look in storage (<%= @museum.stored_matches %>)</a><% end %>
+      <a href="<%= @museum_path %>" class="mu-clear">Clear filters</a>
+    </p>
+  </div>
+<% else %>
+  <div class="mu-table">
+    <div class="mu-grid mu-head">
+      <span></span>
+      <span>Key</span>
+      <span>Summary</span>
+      <span class="labels">Labels</span>
+      <span>Created</span>
+      <span></span>
+    </div>
+    <% @museum.items.each do |item| %>
+      <% state = if item.story then 'promoted' elsif item.discarded_at then 'stored' end %>
+      <div class="mu-grid mu-row<% if state %> is-<%= state %><% end %><% if @open_key == item.source_key %> is-open<% end %>" data-test-id="museum-item" data-key="<%= item.source_key %>"<% if item.in_progress %> data-in-progress<% end %> data-case="<%= @museum_path %>/<%= item.id %>/case">
+        <% if state == 'promoted' %>
+          <span class="mu-mark"><span class="mu-mark-promoted">&#9679;</span></span>
+        <% elsif state == 'stored' %>
+          <span class="mu-mark"><span class="mu-mark-stored">&#9632;</span></span>
+        <% else %>
+          <label class="mu-checkcell"><input type="checkbox" class="mu-check" name="ids[]" value="<%= item.id %>" form="mu-selection" data-test-id="museum-select" data-key="<%= item.source_key %>" data-subtasks="<%= @museum.sub_tasks.fetch(item.source_key, []).size %>" aria-label="Select <%= item.source_key %>"></label>
+        <% end %>
+        <span class="mu-keycell"><button type="button" class="mu-key" data-open-case data-test-id="museum-open-case" data-key="<%= item.source_key %>" aria-expanded="<%= @open_key == item.source_key %>" aria-controls="case-<%= item.id %>"><%= item.source_key %> <span class="mu-caret" aria-hidden="true"><%= @open_key == item.source_key ? "\u25BE" : "\u25B8" %></span></button><span class="mu-type"><%= item.issue_type %></span></span>
+        <span class="mu-summary">
+          <span class="mu-summary-text"><%= item.summary %></span>
+          <% if item.in_progress %><span class="mu-flag">in progress</span><% end %>
+          <% if item.kept_at && @filters[:status] == 'kept' %><span class="mu-storage-note" data-test-id="museum-kept-note" data-why="<%= item.let_go_group %>">kept, though it looked <%= LetGoReview.title(item.let_go_group).downcase %></span><% end %>
+          <% if state == 'stored' && item.storage_note %><span class="mu-storage-note" data-test-id="museum-storage-note" data-why="<%= item.storage_note %>"><%= LetGoReview.title(item.storage_note) %></span><% end %>
+          <% if item.story %><span class="mu-arrow">&rarr;</span><a href="/maps/<%= item.story.map_id %>/stories/<%= item.story.id %>/edit" class="mu-story-link" data-test-id="museum-story-link"><%= item.story.title %></a><% end %>
+        </span>
+        <span class="labels"><% item.labels.each do |label| %><span class="mu-chip"><%= label %></span><% end %></span>
+        <span class="mu-date"><%= item.source_created_at&.strftime('%Y-%m-%d') %></span>
+        <span class="mu-actions">
+          <% if item.story %>
+            <form method="post" action="<%= @museum_path %>/<%= item.id %>/unpromote">
+              <%== csrf_tag("#{@museum_path}/#{item.id}/unpromote") %>
+              <input type="hidden" name="return_to" value="<%= request.fullpath %>">
+              <button type="submit" class="mu-quiet" data-test-id="museum-unpromote" data-key="<%= item.source_key %>">Send back to the museum</button>
+            </form>
+          <% elsif item.discarded_at %>
+            <form method="post" action="<%= @museum_path %>/<%= item.id %>/restore">
+              <%== csrf_tag("#{@museum_path}/#{item.id}/restore") %>
+              <input type="hidden" name="return_to" value="<%= request.fullpath %>">
+              <button type="submit" class="btn-ghost btn-sm" data-test-id="museum-restore" data-key="<%= item.source_key %>">Bring out of storage</button>
+            </form>
+          <% else %>
+            <% if item.kept_at && @filters[:status] == 'kept' %>
+              <form method="post" action="<%= @museum_path %>/<%= item.id %>/unkeep">
+                <%== csrf_tag("#{@museum_path}/#{item.id}/unkeep") %>
+                <input type="hidden" name="return_to" value="<%= request.fullpath %>">
+                <button type="submit" class="mu-quiet" data-test-id="museum-unkeep" data-key="<%= item.source_key %>">Undo keep</button>
+              </form>
+            <% end %>
+            <% unless item.sub_task? %><a href="<%= @museum_path %>/<%= item.id %>/promote?<%= URI.encode_www_form(return_to: request.fullpath) %>" class="mu-promote" data-test-id="museum-promote" data-key="<%= item.source_key %>">Promote</a><% end %>
+            <form method="post" action="<%= @museum_path %>/<%= item.id %>/discard">
+              <%== csrf_tag("#{@museum_path}/#{item.id}/discard") %>
+              <input type="hidden" name="return_to" value="<%= request.fullpath %>">
+              <button type="submit" class="mu-quiet" data-test-id="museum-discard" data-key="<%= item.source_key %>">Store</button>
+            </form>
+          <% end %>
+        </span>
+      </div>
+      <% @museum.sub_tasks.fetch(item.source_key, []).each do |sub_task| %>
+        <div class="mu-grid mu-subrow" data-test-id="museum-sub-task" data-key="<%= sub_task.source_key %>" data-parent="<%= item.source_key %>">
+          <span class="mu-checkcell"><% unless state %><input type="checkbox" class="mu-check mu-check-mirror" data-parent="<%= item.source_key %>" disabled tabindex="-1" aria-hidden="true"><% end %></span>
+          <span class="mu-subkey">&#8627; <%= sub_task.source_key %></span>
+          <span class="mu-summary"><%= sub_task.summary %></span>
+          <span class="labels"><% sub_task.labels.each do |label| %><span class="mu-chip"><%= label %></span><% end %></span>
+          <span class="mu-date"><%= sub_task.source_created_at&.strftime('%Y-%m-%d') %></span>
+          <span class="mu-actions mu-goes-with">goes with its parent</span>
+        </div>
+      <% end %>
+      <div class="mu-case-slot" id="case-<%= item.id %>"><% if @open_key == item.source_key %><%== museum_case(item, @museum.sub_tasks.fetch(item.source_key, []), museum_filter_path(page: @museum.page)) %><% end %></div>
+    <% end %>
+  </div>
+
+  <% first = ((@museum.page - 1) * MuseumList::PER_PAGE) + 1 %>
+  <div class="mu-paging">
+    <span data-test-id="museum-total" data-count="<%= @museum.total %>"><%= first %> to <%= first + @museum.items.size - 1 %> of <%= @museum.total %></span>
+    <span class="mu-paging-links">
+      <% if @previous_path %><a href="<%= @previous_path %>" class="btn-ghost btn-sm" data-test-id="museum-previous">&larr; Previous</a><% else %><span class="btn-ghost btn-sm is-disabled" aria-disabled="true">&larr; Previous</span><% end %>
+      <% if @next_path %><a href="<%= @next_path %>" class="btn-ghost btn-sm" data-test-id="museum-next">Next &rarr;</a><% else %><span class="btn-ghost btn-sm is-disabled" aria-disabled="true">Next &rarr;</span><% end %>
+    </span>
+  </div>
+<% end %>

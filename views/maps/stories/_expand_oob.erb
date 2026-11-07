@@ -1,0 +1,24 @@
+<div id="story-expand-body" class="story-expand-body" hx-swap-oob="true">
+  <h1 class="story-expand-title"><%= @story.title %></h1>
+
+  <% if @story.story_assignments.any? %>
+    <div class="story-expand-assignees">
+      <% @story.story_assignments.each do |sa| %>
+        <span class="story-expand-person"><%= sa.person.name %></span>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% scenarios = @story.scenarios %>
+  <% if scenarios.any? %>
+    <ol class="story-expand-scenarios">
+      <% scenarios.each do |sc| %>
+        <li class="story-expand-scenario">
+          <div><span class="story-expand-kw">Given</span> <%= sc.given_text %></div>
+          <div><span class="story-expand-kw">When</span> <%= sc.when_text %></div>
+          <div><span class="story-expand-kw">Then</span> <%= sc.then_text %></div>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>

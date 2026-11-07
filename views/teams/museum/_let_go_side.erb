@@ -1,0 +1,11 @@
+<%# locals: (side:, goes:, name:, chosen:) %>
+<label class="mu-lg-side">
+  <span class="mu-lg-side-top">
+    <input type="radio" name="pairs[<%= name %>]" value="<%= goes.item.id %>" data-keeps="<%= side.item.source_key %>"<% if chosen %> checked<% end %>>
+    <span class="mu-lg-key"><%= side.item.source_key %></span>
+    <span class="mu-lg-state mu-lg-keep">keep</span>
+    <span class="mu-lg-state mu-lg-go">let go</span>
+  </span>
+  <span class="mu-lg-summary"><%= side.item.summary %></span>
+  <span class="mu-lg-evidence" data-test-id="let-go-evidence"><%= side.evidence %></span>
+</label>

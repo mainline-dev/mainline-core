@@ -1,0 +1,125 @@
+plugins:
+  - rubocop-sequel
+  - rubocop-minitest
+
+AllCops:
+  TargetRubyVersion: 3.4
+  NewCops: enable
+  SuggestExtensions: false
+  Exclude:
+    - 'vendor/**/*'
+    - 'migrate/**/*'
+
+# -- Layout ------------------------------------------------
+
+Layout/HashAlignment:
+  EnforcedColonStyle: table
+  EnforcedHashRocketStyle: table
+
+Layout/LineLength:
+  Max: 140
+
+Layout/SpaceInsideHashLiteralBraces:
+  Enabled: false
+
+Layout/SpaceInsideBlockBraces:
+  Enabled: false
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Layout/FirstHashElementIndentation:
+  EnforcedStyle: consistent
+
+Layout/ArgumentAlignment:
+  EnforcedStyle: with_fixed_indentation
+
+# -- Style -------------------------------------------------
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/Documentation:
+  Enabled: false
+
+Style/ClassAndModuleChildren:
+  Enabled: false
+
+Style/BlockDelimiters:
+  EnforcedStyle: semantic
+  AllowBracesOnProceduralOneLiners: true
+
+Style/SymbolArray:
+  Enabled: false
+
+Style/NumericLiterals:
+  Enabled: false
+
+# -- Metrics -----------------------------------------------
+
+Metrics/BlockLength:
+  Exclude:
+    - 'test/**/*'
+    - 'routes/**/*'
+    - 'lib/**/*'
+    - 'Rakefile'
+
+Metrics/MethodLength:
+  Max: 25
+  Exclude:
+    - 'lib/**/*'
+
+Metrics/AbcSize:
+  Max: 30
+  Exclude:
+    - 'lib/**/*'
+    - 'test/**/*'
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+  Exclude:
+    - 'lib/**/*'
+    - 'test/**/*'
+
+Metrics/PerceivedComplexity:
+  Max: 10
+  Exclude:
+    - 'lib/**/*'
+    - 'test/**/*'
+
+Metrics/ClassLength:
+  Max: 200
+  Exclude:
+    - 'app.rb'
+    - 'routes/**/*'
+    - 'test/dsl/drivers/http_driver.rb'
+
+Metrics/ModuleLength:
+  Max: 200
+  Exclude:
+    - 'test/dsl/mainline_dsl.rb'
+
+Metrics/ParameterLists:
+  Max: 8
+
+# -- Naming ------------------------------------------------
+
+Naming/VariableNumber:
+  Enabled: false
+
+Naming/PredicateMethod:
+  Enabled: false
+
+# -- Bundler -----------------------------------------------
+
+Bundler/OrderedGems:
+  Enabled: false
+
+# -- Lint --------------------------------------------------
+
+Lint/SuppressedException:
+  Enabled: false
+
+Lint/EmptyBlock:
+  Exclude:
+    - 'app.rb'

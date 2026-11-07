@@ -1,0 +1,99 @@
+<h1 class="page-title">Split scenarios out of "<%= @story.title %>"</h1>
+<p class="page-subtitle">
+  The scenarios you select move to a new story. Name it with a story template -
+  a story an agent or teammate can pick up without asking what it means.
+</p>
+
+<% if @split_errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @split_errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/maps/<%= @map.id %>/stories/<%= @story.id %>/split" data-test-id="split-form">
+    <%== csrf_tag("/maps/#{@map.id}/stories/#{@story.id}/split") %>
+
+    <% form = @form || {} %>
+    <% selected_template = form['template'] || 'connextra' %>
+    <label for="template">Template</label>
+    <select id="template" name="template">
+      <option value="connextra" <%= 'selected' if selected_template == 'connextra' %>>As a... I want to... so that...</option>
+      <option value="card" <%= 'selected' if selected_template == 'card' %>>Persona does thing</option>
+      <option value="behaviour" <%= 'selected' if selected_template == 'behaviour' %>>When... persona can...</option>
+    </select>
+
+    <div class="template-fields" id="fields-connextra">
+      <label for="role">As a</label>
+      <input type="text" id="role" name="role" value="<%= form['role'] %>" placeholder="e.g. Returning Customer" maxlength="80" autofocus>
+
+      <label for="goal">I want to</label>
+      <input type="text" id="goal" name="goal" value="<%= form['goal'] %>" placeholder="e.g. reorder with one click" maxlength="80">
+
+      <label for="benefit">So that</label>
+      <input type="text" id="benefit" name="benefit" value="<%= form['benefit'] %>" placeholder="e.g. I save time" maxlength="80">
+    </div>
+
+    <div class="template-fields" id="fields-card">
+      <label for="card-persona">Persona</label>
+      <input type="text" id="card-persona" name="card_persona" value="<%= form['card_persona'] %>" placeholder="e.g. Returning Customer" maxlength="80">
+
+      <label for="card-action">Does</label>
+      <input type="text" id="card-action" name="card_action" value="<%= form['card_action'] %>" placeholder="e.g. reorders previous purchase" maxlength="120">
+    </div>
+
+    <div class="template-fields" id="fields-behaviour">
+      <label for="beh-context">When</label>
+      <input type="text" id="beh-context" name="beh_context" value="<%= form['beh_context'] %>" placeholder="e.g. viewing order history" maxlength="80">
+
+      <label for="beh-persona">Persona</label>
+      <input type="text" id="beh-persona" name="beh_persona" value="<%= form['beh_persona'] %>" placeholder="e.g. Returning Customer" maxlength="80">
+
+      <label for="beh-action">Can</label>
+      <input type="text" id="beh-action" name="beh_action" value="<%= form['beh_action'] %>" placeholder="e.g. reorder with one click" maxlength="80">
+    </div>
+
+    <h2 class="scenarios-heading">Scenarios to move</h2>
+    <% if @split_scenarios.empty? %>
+      <p class="empty-state">Every scenario on this story is already done.</p>
+    <% end %>
+    <% @split_scenarios.each do |sc| %>
+      <% picked = form.empty? || Array(form['scenario_ids']).include?(sc.id) %>
+      <div class="scenario-row split-scenario-row">
+        <label class="split-scenario-pick">
+          <input type="checkbox" name="scenario_ids[]" value="<%= sc.id %>" <%= 'checked' if picked %>
+                 data-test-id="split-pick-<%= sc.id %>">
+          Move this scenario
+        </label>
+        <label class="scenario-label">Given</label>
+        <input type="text" name="scenario_<%= sc.id %>_given" value="<%= form["scenario_#{sc.id}_given"] || sc.given_text %>" maxlength="100" class="scenario-input">
+        <label class="scenario-label">When</label>
+        <input type="text" name="scenario_<%= sc.id %>_when" value="<%= form["scenario_#{sc.id}_when"] || sc.when_text %>" maxlength="100" class="scenario-input">
+        <label class="scenario-label">Then</label>
+        <input type="text" name="scenario_<%= sc.id %>_then" value="<%= form["scenario_#{sc.id}_then"] || sc.then_text %>" maxlength="100" class="scenario-input">
+      </div>
+    <% end %>
+
+    <button type="submit" class="btn" data-test-id="split-submit">Split into new story</button>
+    <a href="/maps/<%= @map.id %>" class="btn-link">Cancel</a>
+  </form>
+</div>
+
+<%== "<script nonce=\"#{@csp_nonce}\">" %>
+  document.getElementById('template').addEventListener('change', function() {
+    document.querySelectorAll('.template-fields').forEach(function(el) {
+      el.hidden = true;
+      el.querySelectorAll('input').forEach(function(input) { input.value = ''; input.disabled = true; });
+    });
+    var fields = document.getElementById('fields-' + this.value);
+    if (fields) {
+      fields.hidden = false;
+      fields.querySelectorAll('input').forEach(function(input) { input.disabled = false; });
+    }
+  });
+  document.querySelectorAll('.template-fields').forEach(function(el) {
+    el.hidden = true;
+    el.querySelectorAll('input').forEach(function(input) { input.disabled = true; });
+  });
+  var active = document.getElementById('fields-' + document.getElementById('template').value);
+  active.hidden = false;
+  active.querySelectorAll('input').forEach(function(input) { input.disabled = false; });
+<%== "</script>" %>

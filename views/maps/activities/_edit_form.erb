@@ -1,0 +1,29 @@
+<li data-id="<%= @activity.id %>" id="activity-<%= @activity.id %>" class="activity-editing">
+  <% if @errors&.any? %>
+    <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
+  <form method="post" action="/maps/<%= @map.id %>/activities/<%= @activity.id %>"
+        hx-post="/maps/<%= @map.id %>/activities/<%= @activity.id %>"
+        hx-target="#activity-<%= @activity.id %>" hx-swap="outerHTML"
+        class="dirty-form">
+    <%== csrf_tag('/maps/' + @map.id + '/activities/' + @activity.id) %>
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @activity.name %>"
+           placeholder="e.g. Browse catalogue" maxlength="100" autofocus>
+    <label>Personas</label>
+    <div class="checkbox-group">
+      <% @personas.each do |p| %>
+        <label>
+          <input type="checkbox" name="persona_ids[]" value="<%= p.id %>"
+                 <%= 'checked' if @selected_persona_ids&.include?(p.id) %>>
+          <%= p.name %>
+        </label>
+      <% end %>
+    </div>
+    <button type="submit" class="btn btn-sm" disabled>Save</button>
+    <a class="cancel-link"
+       hx-get="/maps/<%= @map.id %>/activities/<%= @activity.id %>"
+       hx-target="#activity-<%= @activity.id %>"
+       hx-swap="outerHTML">Cancel</a>
+  </form>
+</li>

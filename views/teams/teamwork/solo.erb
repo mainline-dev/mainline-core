@@ -1,0 +1,48 @@
+<% @page_breadcrumb = 'Teamwork' %>
+<%== render('teams/teamwork/_subnav') %>
+
+<div class="teamwork-layout">
+  <div class="teamwork-main">
+    <h2 class="section-heading" data-test-id="teamwork-page-solo">Solo Log</h2>
+
+    <div class="lens-toggles">
+      <% base = "/teams/#{@team.id}/teamwork/solo" %>
+      <% { 90 => '90d', 180 => '180d', 365 => '1y' }.each do |days, label| %>
+        <% if @window == days %>
+          <span class="filter-toggle active" aria-current="true"><%= label %></span>
+        <% else %>
+          <a href="<%= base %>?window=<%= days %>" class="filter-toggle"><%= label %></a>
+        <% end %>
+      <% end %>
+    </div>
+
+    <p class="lens-help">Stories released while solo. One person was working on it at the time of release.</p>
+
+    <% if @entries.empty? %>
+      <p class="empty-state">No solo-shipped stories.</p>
+    <% else %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Released</th>
+            <th>Story</th>
+            <th>Person</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @entries.each do |entry| %>
+            <tr data-test-id="solo-row">
+              <td><%= entry.released_at.strftime('%Y-%m-%d') %></td>
+              <td><%= entry.story_title %></td>
+              <td><%= entry.person_name %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
+  <div class="teamwork-sidebar">
+    <%== render('teams/teamwork/_members') %>
+  </div>
+</div>

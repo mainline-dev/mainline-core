@@ -1,0 +1,8 @@
+<aside class="teamwork-members">
+  <h2 class="members-title">Team</h2>
+  <ul class="members-list">
+    <% @members.each do |member| %>
+      <li class="members-entry"><%= member.name %></li>
+    <% end %>
+  </ul>
+</aside>

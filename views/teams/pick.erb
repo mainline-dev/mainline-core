@@ -1,0 +1,34 @@
+<% if @current_person.email_verified_at.nil? && PersonIdentity.where(person_id: @current_person.id, provider: 'email').any? %>
+  <div class="flash flash-warning" data-test-id="verify-email-banner">
+    Please verify your email to create a team.
+    <form method="post" action="/resend-verification" style="display: inline;">
+      <%== csrf_tag('/resend-verification') %>
+      <button type="submit" class="btn-link">Resend verification email</button>
+    </form>
+  </div>
+<% end %>
+<% if @team_map_counts.values.sum.zero? %>
+  <p class="getting-started-hint">New here? Follow the <a href="https://mainline.dev/docs/tutorial">tutorial</a> to build your first map.</p>
+<% end %>
+
+<div class="section-header">
+  <h1 class="page-title"><%= @teams.length == 1 ? 'Your Team' : 'Your Teams' %></h1>
+  <% if @can_create_team %>
+    <a href="/teams/new" class="section-action">+ Create a new team</a>
+  <% end %>
+</div>
+<div class="map-card-grid">
+  <% @teams.each do |team| %>
+    <a href="/teams/<%= team.id %>" class="map-card">
+      <span class="map-card-name"><%= team.name %></span>
+      <% mc = @team_map_counts[team.id] || 0 %>
+      <span class="map-card-meta" data-test-id="team-map-count" data-count="<%= mc %>">
+        <%= mc %> <%= mc == 1 ? 'map' : 'maps' %>
+      </span>
+      <% names = @team_members[team.id] || [] %>
+      <% if names.any? %>
+        <span class="map-card-members"><%= names.join(', ') %></span>
+      <% end %>
+    </a>
+  <% end %>
+</div>

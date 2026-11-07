@@ -1,0 +1,69 @@
+<% @page_breadcrumb = 'Ticket Museum / Acquire' %>
+<h1 class="page-title">Acquire from Jira</h1>
+<p class="lens-help">Every relic is catalogued before it goes on display, and an acquisition can be returned afterwards.</p>
+
+<div class="mu-acquire">
+  <div class="mu-acquire-main">
+    <form method="post" action="/teams/<%= @team.id %>/museum/import" enctype="multipart/form-data" class="mu-tile" data-drop-upload data-test-id="museum-import-form">
+      <%== csrf_tag("/teams/#{@team.id}/museum/import") %>
+      <p class="mu-tile-title">Drop a Jira CSV export</p>
+      <p class="mu-tile-hint">here, or anywhere on this page</p>
+      <label for="museum-csv" class="mu-tile-choose">Choose a file</label>
+      <input type="file" id="museum-csv" name="csv" accept=".csv,text/csv" required>
+      <noscript><button type="submit" class="btn-ghost btn-sm">Upload</button></noscript>
+      <p class="mu-tile-limit">up to 1,000 issues &middot; 10 MB</p>
+    </form>
+
+    <% unless @imports.empty? %>
+      <section data-test-id="museum-imports">
+        <h2 class="mu-label mu-past-head">Past acquisitions</h2>
+        <div class="mu-past-row mu-past-cols" data-test-id="museum-imports-head" aria-hidden="true">
+          <span>File</span>
+          <span class="mu-past-by">By</span>
+          <span>When</span>
+          <span>What happened</span>
+          <span></span>
+        </div>
+        <% @imports.each do |import| %>
+          <div class="mu-past-row" data-test-id="museum-import-row" data-status="<%= import.status %>">
+            <a href="/teams/<%= @team.id %>/museum/imports/<%= import.id %>" class="mu-past-file" data-test-id="museum-import-link-row"><%= import.file_name %></a>
+            <span class="mu-past-by"><%= import.actor&.name %></span>
+            <span class="mu-past-when"><%= (import.imported_at || import.created_at).strftime('%Y-%m-%d %H:%M') %></span>
+            <% if import.status == 'staged' %>
+              <span class="mu-past-waiting">Waiting to be catalogued</span>
+            <% elsif import.status == 'imported' %>
+              <span><%= import.added %> acquired, <%= import.updated %> refreshed from the newer file<% if import.skipped.positive? %>, <%= import.skipped %> rows turned away<% end %></span>
+            <% else %>
+              <span class="mu-past-quiet"><%= import.status == 'undone' ? 'Returned' : 'Turned down' %></span>
+            <% end %>
+            <span class="mu-past-undo">
+              <% if import.id == @undoable_id %>
+                <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= import.id %>/undo">
+                  <%== csrf_tag("/teams/#{@team.id}/museum/imports/#{import.id}/undo") %>
+                  <button type="submit" class="mu-quiet" data-test-id="museum-import-undo">Return</button>
+                </form>
+              <% end %>
+            </span>
+          </div>
+        <% end %>
+      </section>
+    <% end %>
+  </div>
+
+  <section class="mu-guide" data-test-id="museum-import-guide">
+    <h2 class="mu-label">Getting the CSV out of Jira</h2>
+    <ol class="mu-guide-steps">
+      <li>In Jira, open <strong>Filters</strong> and then <strong>View all issues</strong> (Jira Cloud), or <strong>Issues</strong> and then <strong>Search for issues</strong> (Jira Server and Data Center).</li>
+      <li>Switch to JQL and search for the backlog you want to bring:<pre class="mu-code">project = SHOP AND statusCategory != Done ORDER BY created DESC</pre></li>
+      <li>Choose <strong>Export</strong> and then <strong>Export CSV (all fields)</strong>, so descriptions, labels, comments, parents and links come with it.</li>
+      <li>Drop the file here.</li>
+    </ol>
+    <div class="mu-guide-notes">
+      <p>More than 1,000 issues? Narrow the search, for example by adding <code>AND created &lt; "2025-01-01"</code>, and acquire each file. Bringing the same tickets again refreshes them.</p>
+      <p>People are left at the door: no assignees, reporters, comment authors, @mentions or email addresses. Attachments aren't acquired.</p>
+    </div>
+  </section>
+</div>
+
+<p><a href="/teams/<%= @team.id %>/museum" class="cancel-link">Back to the museum</a></p>
+<%== render('teams/museum/_drop_overlay') %>

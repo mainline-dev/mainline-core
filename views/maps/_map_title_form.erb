@@ -1,0 +1,12 @@
+<form hx-post="/maps/<%= @map.id %>/edit"
+      hx-target="#map-title-container"
+      hx-swap="innerHTML"
+      class="nav-title-form">
+  <input type="text" name="name" value="<%= @map.name %>"
+         class="nav-title-input" maxlength="100" autofocus>
+  <button type="submit" class="nav-title-btn">Save</button>
+  <button type="button" class="nav-title-btn"
+          hx-get="/maps/<%= @map.id %>/title"
+          hx-target="#map-title-container"
+          hx-swap="innerHTML">Cancel</button>
+</form>

@@ -1,0 +1,206 @@
+<% @page_breadcrumb = 'Throughput' %>
+<% base = "/teams/#{@team.id}/flow" %>
+<% tp_base = "/teams/#{@team.id}/flow/throughput" %>
+<nav class="subnav flow-subnav">
+  <a href="<%= base %>" class="subnav-link">Cumulative Flow</a>
+  <span class="subnav-link active" data-test-id="flow-page-throughput">Throughput</span>
+  <a href="<%= base %>/lead-time" class="subnav-link">Lead Time</a>
+</nav>
+
+<% map_param = @map_filter ? "&map_id=#{@map_filter}" : '' %>
+<% days_param = @days ? "days=#{@days}" : "days=all" %>
+<% lens_param = @lens != 'released' ? "&lens=#{@lens}" : '' %>
+<div class="flow-filters">
+  <span class="subnav-filter-label">Show</span>
+  <% if @lens == 'released' %>
+    <span class="filter-toggle active" aria-current="true">Releases</span>
+  <% else %>
+    <a href="<%= tp_base %>?<%= days_param %><%= map_param %>" class="filter-toggle">Releases</a>
+  <% end %>
+  <% if @lens == 'deployed' %>
+    <span class="filter-toggle active" aria-current="true">Deploys</span>
+  <% else %>
+    <a href="<%= tp_base %>?lens=deployed&<%= days_param %><%= map_param %>" class="filter-toggle">Deploys</a>
+  <% end %>
+  <% if @lens == 'both' %>
+    <span class="filter-toggle active" aria-current="true">Both</span>
+  <% else %>
+    <a href="<%= tp_base %>?lens=both&<%= days_param %><%= map_param %>" class="filter-toggle">Both</a>
+  <% end %>
+  <span class="subnav-divider"></span>
+  <span class="subnav-filter-label">Window</span>
+  <% if @days == 30 %>
+    <span class="filter-toggle active" aria-current="true">30d</span>
+  <% else %>
+    <a href="<%= tp_base %>?days=30<%= lens_param %><%= map_param %>" class="filter-toggle">30d</a>
+  <% end %>
+  <% if @days == 60 %>
+    <span class="filter-toggle active" aria-current="true">60d</span>
+  <% else %>
+    <a href="<%= tp_base %>?days=60<%= lens_param %><%= map_param %>" class="filter-toggle">60d</a>
+  <% end %>
+  <% if @days == 90 %>
+    <span class="filter-toggle active" aria-current="true">90d</span>
+  <% else %>
+    <a href="<%= tp_base %>?days=90<%= lens_param %><%= map_param %>" class="filter-toggle">90d</a>
+  <% end %>
+  <% if @days.nil? %>
+    <span class="filter-toggle active" aria-current="true">All</span>
+  <% else %>
+    <a href="<%= tp_base %>?days=all<%= lens_param %><%= map_param %>" class="filter-toggle">All</a>
+  <% end %>
+  <% if @maps.length > 1 %>
+    <% base_params = "#{days_param}#{lens_param}" %>
+    <span class="subnav-divider"></span>
+    <span class="subnav-filter-label">Map</span>
+    <% if @map_filter.nil? %>
+      <span class="filter-toggle active" aria-current="true">All</span>
+    <% else %>
+      <a href="<%= tp_base %>?<%= base_params %>" class="filter-toggle">All</a>
+    <% end %>
+    <% @maps.each do |m| %>
+      <% if @map_filter == m.id.to_s %>
+        <span class="filter-toggle active" aria-current="true"><%= m.name %></span>
+      <% else %>
+        <a href="<%= tp_base %>?<%= base_params %>&map_id=<%= m.id %>" class="filter-toggle"><%= m.name %></a>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>
+
+<%
+  if @lens == 'both'
+    deploy_counts = @deploy_scatter.daily_counts
+    release_counts = @release_scatter.daily_counts
+    all_dates = (deploy_counts.keys + release_counts.keys).uniq.sort
+    has_data = all_dates.any?
+    if has_data
+      start_d = [@deploy_scatter.start_date, @release_scatter.start_date].compact.min
+      end_d = [@deploy_scatter.end_date, @release_scatter.end_date].compact.max
+    end
+  else
+    deploy_counts = {}
+    release_counts = {}
+    has_data = !@scatter.daily_counts.empty?
+    if has_data
+      start_d = @scatter.start_date
+      end_d = @scatter.end_date
+      if @lens == 'deployed'
+        deploy_counts = @scatter.daily_counts
+      else
+        release_counts = @scatter.daily_counts
+      end
+    end
+  end
+%>
+
+<% if !has_data || start_d.nil? || end_d.nil? %>
+  <p class="empty-state" data-test-id="flow-empty">Nothing released in the window. The chart wakes up when a story leaves the map.</p>
+<% else %>
+  <%
+    w = 800
+    h = 300
+    pad_left = 40
+    pad_bottom = 30
+    pad_top = 10
+    pad_right = 10
+    chart_w = w - pad_left - pad_right
+    chart_h = h - pad_top - pad_bottom
+
+    total_days = (end_d - start_d).to_i
+    total_days = [total_days, 1].max
+
+    all_counts = deploy_counts.values + release_counts.values
+    max_count = all_counts.any? ? all_counts.max : 1
+    max_count = [max_count, 1].max
+
+    x_for = ->(date) {
+      offset = (date - start_d).to_i
+      pad_left + (offset.to_f / total_days) * chart_w
+    }
+
+    y_for = ->(n) {
+      pad_top + chart_h - (n.to_f / max_count) * chart_h
+    }
+
+    date_range = (start_d..end_d).to_a
+    n_dates = date_range.length
+    date_labels = if n_dates <= 10
+                    date_range.each_with_index.map { |d, i| [i, d] }
+                  else
+                    step = (n_dates / 6.0).ceil
+                    date_range.each_with_index.select { |_d, i| (i % step).zero? || i == n_dates - 1 }.map { |d, i| [i, d] }
+                  end
+  %>
+  <div class="chart-with-guide">
+  <div class="chart-main">
+  <svg class="scatter-chart" viewBox="0 0 <%= w %> <%= h %>" preserveAspectRatio="xMidYMid meet">
+    <line x1="<%= pad_left %>" y1="<%= pad_top %>" x2="<%= pad_left %>" y2="<%= pad_top + chart_h %>" class="scatter-axis" />
+    <line x1="<%= pad_left %>" y1="<%= pad_top + chart_h %>" x2="<%= pad_left + chart_w %>" y2="<%= pad_top + chart_h %>" class="scatter-axis" />
+
+    <% y_ticks = [max_count, 5].min %>
+    <% tick_step = (max_count.to_f / y_ticks).ceil %>
+    <% tick_step = [tick_step, 1].max %>
+    <% (0..y_ticks).each do |t| %>
+      <% val = t * tick_step %>
+      <% next if val > max_count %>
+      <% y = y_for.(val) %>
+      <text x="<%= pad_left - 4 %>" y="<%= (y + 3).round(1) %>" class="scatter-label scatter-label-y"><%= val %></text>
+      <line x1="<%= pad_left %>" y1="<%= y.round(1) %>" x2="<%= pad_left + chart_w %>" y2="<%= y.round(1) %>" class="scatter-grid" />
+    <% end %>
+
+    <% date_labels.each do |i, d| %>
+      <% x = x_for.(d) %>
+      <text x="<%= x.round(1) %>" y="<%= h - 4 %>" class="scatter-label scatter-label-x"><%= d.strftime('%-m/%-d') %></text>
+    <% end %>
+
+    <% deploy_counts.each do |date, count| %>
+      <% cx = x_for.(date) %>
+      <% (1..count).each do |n| %>
+        <% cy = y_for.(n) %>
+        <circle cx="<%= cx.round(1) %>" cy="<%= cy.round(1) %>" class="scatter-dot scatter-dot-deploy" />
+      <% end %>
+    <% end %>
+
+    <% release_counts.each do |date, count| %>
+      <% cx = x_for.(date) %>
+      <% (1..count).each do |n| %>
+        <% cy = y_for.(n) %>
+        <circle cx="<%= cx.round(1) %>" cy="<%= cy.round(1) %>" class="scatter-dot scatter-dot-release" />
+      <% end %>
+    <% end %>
+  </svg>
+
+  <% if @lens == 'both' %>
+    <table class="scatter-key">
+      <tr>
+        <td><span class="scatter-swatch scatter-dot-deploy"></span></td>
+        <td>Deployed</td>
+      </tr>
+      <tr>
+        <td><span class="scatter-swatch scatter-dot-release"></span></td>
+        <td>Released</td>
+      </tr>
+    </table>
+  <% end %>
+  </div>
+
+  <div class="scatter-guide">
+    <h3>How to read this</h3>
+    <% if @lens == 'both' %>
+      <p>Each dot is one story. Blue dots are deploys, green dots are releases. Multiple dots stacked vertically mean multiple stories on the same day.</p>
+    <% else %>
+      <p>Each dot is one story <%= @lens == 'deployed' ? 'deployed' : 'released' %> on that day. Multiple dots stacked vertically mean multiple stories on the same day.</p>
+    <% end %>
+    <ul>
+      <li><strong>Dots clustering higher?</strong> The team is delivering more per day. Flow is healthy.</li>
+      <li><strong>Dots mostly at 1?</strong> Steady single-story delivery. Consider whether batch size is a choice or a constraint.</li>
+      <li><strong>Long gaps between dots?</strong> Work may be stuck upstream.</li>
+      <% if @lens == 'both' %>
+        <li><strong>Blue dots without green?</strong> Code is deployed but not released. Check if a release decision is stalling.</li>
+      <% end %>
+      <li><strong>Sudden spike?</strong> A batch. Check if stories were held back or if the team genuinely completed many at once.</li>
+    </ul>
+  </div>
+  </div>
+<% end %>

@@ -1,0 +1,103 @@
+<% @page_breadcrumb = 'Ticket Museum' %>
+<form method="post" action="<%= @museum_path %>/import" enctype="multipart/form-data" data-drop-upload hidden>
+  <%== csrf_tag("#{@museum_path}/import") %>
+  <input type="file" name="csv" accept=".csv,text/csv">
+</form>
+<%== render('teams/museum/_drop_overlay') %>
+<% if @waiting %>
+  <div class="mu-waiting" data-test-id="museum-waiting">
+    <span class="mu-waiting-dot"></span>
+    <span><span class="mu-file"><%= @waiting.file_name %></span> is waiting to be catalogued. Nothing has entered the museum yet.</span>
+    <a href="<%= @museum_path %>/imports/<%= @waiting.id %>" data-test-id="museum-waiting-review">Review the acquisition &rarr;</a>
+  </div>
+<% end %>
+
+<% if @empty %>
+  <div class="mu-empty" data-test-id="museum-empty">
+    <span class="mu-label">The galleries are empty</span>
+    <p class="mu-empty-title">Every museum starts with one acquisition.</p>
+    <p class="mu-empty-text">Export your backlog from Jira as a CSV and bring it in here. Nothing goes on display until you've checked it.</p>
+    <p><a href="<%= @museum_path %>/import" class="btn" data-test-id="museum-import-link">Acquire from Jira</a></p>
+    <p class="mu-drop-caption" data-test-id="museum-drop-caption">or drop a CSV anywhere on this page</p>
+  </div>
+<% else %>
+  <% catalogue = @museum.catalogue %>
+  <div class="mu-header">
+    <div>
+      <h1 class="page-title">Ticket Museum</h1>
+      <div class="mu-catalogue" data-test-id="museum-catalogue" data-on-display="<%= catalogue.on_display %>" data-promoted="<%= catalogue.promoted %>" data-stored="<%= catalogue.stored %>">
+        <span class="mu-catbar">
+          <span class="p" style="width: <%= catalogue.total.zero? ? 0 : (catalogue.promoted * 100.0 / catalogue.total).round(2) %>%"></span>
+          <span class="s" style="width: <%= catalogue.total.zero? ? 0 : (catalogue.stored * 100.0 / catalogue.total).round(2) %>%"></span>
+        </span>
+        <span><b><%= catalogue.on_display %></b> on display &middot; <b><%= catalogue.promoted %></b> promoted &middot; <b><%= catalogue.stored %></b> stored</span>
+      </div>
+    </div>
+    <div class="mu-acquire-link">
+      <a href="<%= @museum_path %>/import" class="btn" data-test-id="museum-import-link">Acquire from Jira</a>
+      <p class="mu-drop-caption" data-test-id="museum-drop-caption">or drop a CSV anywhere on this page</p>
+    </div>
+  </div>
+
+  <% if @no_tasks %><%== render('teams/museum/_no_tasks') %><% end %>
+  <%== render('teams/museum/_let_go_prompt', locals: { prompt: @let_go_prompt, tries: @let_go_tries, back: request.fullpath }) %>
+  <form method="get" action="<%= @museum_path %>" class="mu-filters" data-test-id="museum-filters"
+        hx-get="<%= @museum_path %>" hx-target="#mu-results" hx-push-url="true"
+        hx-trigger="change, input changed delay:300ms from:input[name=search]">
+    <input type="search" name="search" class="mu-search" aria-label="Search" placeholder="Search keys, summaries, descriptions" data-test-id="museum-search" value="<%= @filters[:search] %>">
+    <select name="status" class="mu-status" aria-label="Status" data-test-id="museum-filter-status">
+      <% [['', 'On display'], %w[promoted Promoted], ['in-storage', 'In storage'], %w[kept Kept], %w[everything Everything]].each do |value, text| %>
+        <option value="<%= value %>"<% if @filters[:status].to_s == value %> selected<% end %>><%= text %></option>
+      <% end %>
+    </select>
+    <select name="type" class="mu-select" aria-label="Type" data-test-id="museum-filter-type">
+      <option value="">Type</option>
+      <% @museum.types.each do |type| %>
+        <option value="<%= type %>"<% if @filters[:type] == type %> selected<% end %>>Type: <%= type %></option>
+      <% end %>
+    </select>
+    <select name="label" class="mu-select" aria-label="Label" data-test-id="museum-filter-label">
+      <option value="">Label</option>
+      <% @museum.labels.each do |label| %>
+        <option value="<%= label %>"<% if @filters[:label] == label %> selected<% end %>>Label: <%= label %></option>
+      <% end %>
+    </select>
+    <select name="epic" class="mu-select" aria-label="Epic" data-test-id="museum-filter-epic">
+      <option value="">Epic</option>
+      <% @museum.epics.each do |epic| %>
+        <option value="<%= epic.source_key %>"<% if @filters[:epic] == epic.source_key %> selected<% end %>>Epic: <%= epic.source_key %> <%= epic.summary %></option>
+      <% end %>
+    </select>
+    <select name="age" class="mu-select" aria-label="Created" data-test-id="museum-filter-age">
+      <option value="">Age</option>
+      <% [['under-3-months', 'under 3 months'], ['3-to-12-months', '3 to 12 months'], ['over-a-year', 'over a year']].each do |value, text| %>
+        <option value="<%= value %>"<% if @filters[:age] == value %> selected<% end %>>Age: <%= text %></option>
+      <% end %>
+    </select>
+    <%== render('teams/museum/_why', locals: { in_place: false }) %>
+    <noscript><button type="submit" class="btn-ghost btn-sm">Filter</button></noscript>
+    <%== render('teams/museum/_tally', locals: { in_place: false }) %>
+  </form>
+
+  <div id="mu-results">
+    <%== render('teams/museum/_results', locals: { in_place: false }) %>
+  </div>
+
+  <form id="mu-selection" method="post" action="<%= @museum_path %>/discard" class="mu-selbar" data-team="<%= @team.id %>" data-test-id="museum-selection" hidden>
+    <%== csrf_tag("#{@museum_path}/discard") %>
+    <input type="hidden" name="return_to" value="<%= request.fullpath %>">
+    <span class="mu-sel-count" data-selection-count>0 selected</span>
+    <span class="mu-sel-keys" data-selection-keys></span>
+    <span class="mu-sel-actions">
+      <button type="submit" form="mu-together" class="btn" data-test-id="museum-selection-together">Promote together</button>
+      <button type="submit" form="mu-together" name="mode" value="add" class="btn-ghost" data-test-id="museum-selection-add">Add to a story&hellip;</button>
+      <button type="submit" class="btn-ghost" data-test-id="museum-selection-store">Send to storage</button>
+      <button type="button" class="mu-sel-clear" data-selection-clear data-test-id="museum-selection-clear">Clear</button>
+    </span>
+  </form>
+  <form id="mu-together" method="post" action="<%= @museum_path %>/together">
+    <%== csrf_tag("#{@museum_path}/together") %>
+    <input type="hidden" name="return_to" value="<%= request.fullpath %>">
+  </form>
+  <noscript><style>#mu-selection[hidden] { display: flex; }</style></noscript>
+<% end %>

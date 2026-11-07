@@ -1,0 +1,50 @@
+<%== render('maps/_subnav') %>
+
+<% if @activities.empty? %>
+  <p class="empty-state">No activities yet.</p>
+<% else %>
+  <ul class="plain-list" id="activity-list"
+      data-reorder-url="/maps/<%= @map.id %>/activities/reorder">
+    <% @activities.each do |activity| %>
+      <% @activity = activity %>
+      <%== render('maps/activities/_item') %>
+    <% end %>
+  </ul>
+<% end %>
+
+<%== render('maps/activities/_history') %>
+
+<% unless @locked %>
+<%== "<script nonce=\"#{@csp_nonce}\">" %>
+(function() {
+  var list = document.getElementById('activity-list');
+  if (!list) return;
+  var lastDragId = null;
+  var pending = Promise.resolve();
+  new Sortable(list, {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'sortable-ghost',
+    onEnd: function(evt) {
+      if (evt.oldIndex === evt.newIndex) return;
+      var dragId = evt.item.getAttribute('data-id') + ':' + evt.newIndex;
+      if (dragId === lastDragId) return;
+      lastDragId = dragId;
+      var url = list.getAttribute('data-reorder-url');
+      var ids = Array.from(list.querySelectorAll(':scope > li[data-id]'))
+                     .map(function(li) { return li.getAttribute('data-id'); });
+      var csrf = document.querySelector('meta[name="_csrf"]');
+      pending = pending.then(function() {
+        var form = new FormData();
+        ids.forEach(function(id) { form.append('activity_id[]', id); });
+        return fetch(url, {
+          method: 'POST',
+          headers: csrf ? {'X-CSRF-Token': csrf.content} : {},
+          body: form
+        });
+      });
+    }
+  });
+})();
+<%== "</script>" %>
+<% end %>

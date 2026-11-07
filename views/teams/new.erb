@@ -1,0 +1,18 @@
+<h1 class="page-title">Create Your Team</h1>
+<p class="page-subtitle">Give your team a name to get started.</p>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/teams">
+    <%== csrf_tag('/teams') %>
+
+    <label for="team_name">Team name</label>
+    <input type="text" id="team_name" name="team_name" value="<%= @team_name %>"
+           placeholder="e.g. Acme Corp" maxlength="100" required autofocus>
+
+    <button type="submit" class="btn">Create Team</button>
+  </form>
+</div>

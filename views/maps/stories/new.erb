@@ -1,0 +1,85 @@
+<h1 class="page-title">New Story</h1>
+<p class="page-subtitle">
+  Pick a template to structure the story from the user's perspective.
+</p>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/maps/<%= @map.id %>/stories">
+    <%== csrf_tag('/maps/' + @map.id + '/stories') %>
+
+    <label for="task_id">Task</label>
+    <select id="task_id" name="task_id">
+      <option value="">&mdash; select &mdash;</option>
+      <% @tasks.each do |t| %>
+        <option value="<%= t.id %>" <%= 'selected' if @selected_task_id == t.id %>>
+          <%= t.activity.name %> &rarr; <%= t.name %>
+        </option>
+      <% end %>
+    </select>
+
+    <label for="template">Template</label>
+    <select id="template" name="template">
+      <option value="connextra" <%= 'selected' if @default_template == 'connextra' %>>As a... I want to... so that...</option>
+      <option value="card" <%= 'selected' if @default_template == 'card' %>>Persona does thing</option>
+      <option value="behaviour" <%= 'selected' if @default_template == 'behaviour' %>>When... persona can...</option>
+    </select>
+
+    <div class="template-fields" id="fields-connextra">
+      <label for="role">As a</label>
+      <input type="text" id="role" name="role" placeholder="e.g. Returning Customer" maxlength="80" autofocus>
+
+      <label for="goal">I want to</label>
+      <input type="text" id="goal" name="goal" placeholder="e.g. reorder with one click" maxlength="80">
+
+      <label for="benefit">So that</label>
+      <input type="text" id="benefit" name="benefit" placeholder="e.g. I save time" maxlength="80">
+    </div>
+
+    <div class="template-fields" id="fields-card">
+      <label for="card-persona">Persona</label>
+      <input type="text" id="card-persona" name="card_persona" placeholder="e.g. Returning Customer" maxlength="80">
+
+      <label for="card-action">Does</label>
+      <input type="text" id="card-action" name="card_action" placeholder="e.g. reorders previous purchase" maxlength="120">
+    </div>
+
+    <div class="template-fields" id="fields-behaviour">
+      <label for="beh-context">When</label>
+      <input type="text" id="beh-context" name="beh_context" placeholder="e.g. viewing order history" maxlength="80">
+
+      <label for="beh-persona">Persona</label>
+      <input type="text" id="beh-persona" name="beh_persona" placeholder="e.g. Returning Customer" maxlength="80">
+
+      <label for="beh-action">Can</label>
+      <input type="text" id="beh-action" name="beh_action" placeholder="e.g. reorder with one click" maxlength="80">
+    </div>
+
+    <button type="submit" class="btn">Create Story</button>
+    <a href="/maps/<%= @map.id %>" class="cancel-link">Cancel</a>
+  </form>
+</div>
+
+<%== "<script nonce=\"#{@csp_nonce}\">" %>
+  document.getElementById('template').addEventListener('change', function() {
+    document.querySelectorAll('.template-fields').forEach(function(el) {
+      el.hidden = true;
+      el.querySelectorAll('input').forEach(function(input) { input.value = ''; input.disabled = true; });
+    });
+    var fields = document.getElementById('fields-' + this.value);
+    if (fields) {
+      fields.hidden = false;
+      fields.querySelectorAll('input').forEach(function(input) { input.disabled = false; });
+    }
+  });
+  document.querySelectorAll('.template-fields').forEach(function(el) {
+    el.hidden = true;
+    el.querySelectorAll('input').forEach(function(input) { input.disabled = true; });
+  });
+  var active = document.getElementById('fields-' + document.getElementById('template').value);
+  active.hidden = false;
+  active.querySelectorAll('input').forEach(function(input) { input.disabled = false; });
+<%== "</script>" %>

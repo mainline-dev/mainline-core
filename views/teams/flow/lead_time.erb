@@ -1,0 +1,136 @@
+<% @page_breadcrumb = 'Lead Time' %>
+<% base = "/teams/#{@team.id}/flow" %>
+<% lt_base = "/teams/#{@team.id}/flow/lead-time" %>
+<nav class="subnav flow-subnav">
+  <a href="<%= base %>" class="subnav-link">Cumulative Flow</a>
+  <a href="<%= base %>/throughput" class="subnav-link">Throughput</a>
+  <span class="subnav-link active" data-test-id="flow-page-lead-time">Lead Time</span>
+</nav>
+
+<% map_param = @map_filter ? "&map_id=#{@map_filter}" : '' %>
+<div class="flow-filters">
+  <span class="subnav-filter-label">Window</span>
+  <% if @days == 30 %>
+    <span class="filter-toggle active" aria-current="true">30d</span>
+  <% else %>
+    <a href="<%= lt_base %>?days=30<%= map_param %>" class="filter-toggle">30d</a>
+  <% end %>
+  <% if @days == 60 %>
+    <span class="filter-toggle active" aria-current="true">60d</span>
+  <% else %>
+    <a href="<%= lt_base %>?days=60<%= map_param %>" class="filter-toggle">60d</a>
+  <% end %>
+  <% if @days == 90 %>
+    <span class="filter-toggle active" aria-current="true">90d</span>
+  <% else %>
+    <a href="<%= lt_base %>?days=90<%= map_param %>" class="filter-toggle">90d</a>
+  <% end %>
+  <% if @days.nil? %>
+    <span class="filter-toggle active" aria-current="true">All</span>
+  <% else %>
+    <a href="<%= lt_base %>?days=all<%= map_param %>" class="filter-toggle">All</a>
+  <% end %>
+  <% if @maps.length > 1 %>
+    <% days_param = @days ? "days=#{@days}" : 'days=all' %>
+    <span class="subnav-divider"></span>
+    <span class="subnav-filter-label">Map</span>
+    <% if @map_filter.nil? %>
+      <span class="filter-toggle active" aria-current="true">All</span>
+    <% else %>
+      <a href="<%= lt_base %>?<%= days_param %>" class="filter-toggle">All</a>
+    <% end %>
+    <% @maps.each do |m| %>
+      <% if @map_filter == m.id.to_s %>
+        <span class="filter-toggle active" aria-current="true"><%= m.name %></span>
+      <% else %>
+        <a href="<%= lt_base %>?<%= days_param %>&map_id=<%= m.id %>" class="filter-toggle"><%= m.name %></a>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>
+
+<% if @histogram.buckets.empty? %>
+  <p class="empty-state" data-test-id="flow-empty">Not enough finished stories yet. The bars appear after a few releases.</p>
+<% else %>
+  <%
+    w = 800
+    h = 300
+    pad_left = 40
+    pad_bottom = 40
+    pad_top = 10
+    pad_right = 10
+    chart_w = w - pad_left - pad_right
+    chart_h = h - pad_top - pad_bottom
+
+    buckets = @histogram.buckets
+    n = buckets.size
+    max_count = buckets.map { |b| b[:count] }.max
+    max_count = [max_count, 1].max
+
+    bar_gap = 2
+    bar_w = (chart_w.to_f / n) - bar_gap
+    bar_w = [bar_w, 1].max
+
+    y_ticks = [max_count, 5].min
+    tick_step = (max_count.to_f / y_ticks).ceil
+    tick_step = [tick_step, 1].max
+  %>
+  <div class="chart-with-guide">
+  <div class="chart-main">
+  <svg class="histogram-chart" viewBox="0 0 <%= w %> <%= h %>" preserveAspectRatio="xMidYMid meet">
+    <line x1="<%= pad_left %>" y1="<%= pad_top %>" x2="<%= pad_left %>" y2="<%= pad_top + chart_h %>" class="histogram-axis" />
+    <line x1="<%= pad_left %>" y1="<%= pad_top + chart_h %>" x2="<%= pad_left + chart_w %>" y2="<%= pad_top + chart_h %>" class="histogram-axis" />
+
+    <% (0..y_ticks).each do |t| %>
+      <% val = t * tick_step %>
+      <% next if val > max_count %>
+      <% y = pad_top + chart_h - (val.to_f / max_count * chart_h) %>
+      <text x="<%= pad_left - 4 %>" y="<%= (y + 3).round(1) %>" class="histogram-label histogram-label-y"><%= val %></text>
+      <line x1="<%= pad_left %>" y1="<%= y.round(1) %>" x2="<%= pad_left + chart_w %>" y2="<%= y.round(1) %>" class="histogram-grid" />
+    <% end %>
+
+    <% buckets.each_with_index do |bucket, i| %>
+      <% x = pad_left + i * (bar_w + bar_gap) %>
+      <% bar_h = (bucket[:count].to_f / max_count) * chart_h %>
+      <% y = pad_top + chart_h - bar_h %>
+      <% if bucket[:count] > 0 %>
+        <rect x="<%= x.round(1) %>" y="<%= y.round(1) %>" width="<%= bar_w.round(1) %>" height="<%= bar_h.round(1) %>" class="histogram-bar" />
+      <% end %>
+      <% label_x = x + bar_w / 2.0 %>
+      <% if n <= 20 || (i % ((n / 10.0).ceil)).zero? || i == n - 1 %>
+        <text x="<%= label_x.round(1) %>" y="<%= h - 4 %>" class="histogram-label histogram-label-x"><%= bucket[:range] %></text>
+      <% end %>
+    <% end %>
+
+    <% if @histogram.p50 %>
+      <% p50_bucket = @histogram.p50 / @histogram.bucket_size %>
+      <% p50_x = pad_left + p50_bucket * (bar_w + bar_gap) + bar_w / 2.0 %>
+      <line x1="<%= p50_x.round(1) %>" y1="<%= pad_top %>" x2="<%= p50_x.round(1) %>" y2="<%= pad_top + chart_h %>" class="histogram-marker" />
+      <text x="<%= p50_x.round(1) %>" y="<%= pad_top - 2 %>" class="histogram-marker-label">P50 <%= @histogram.p50 %>d</text>
+    <% end %>
+    <% if @histogram.p90 %>
+      <% p90_bucket = @histogram.p90 / @histogram.bucket_size %>
+      <% p90_x = pad_left + p90_bucket * (bar_w + bar_gap) + bar_w / 2.0 %>
+      <line x1="<%= p90_x.round(1) %>" y1="<%= pad_top %>" x2="<%= p90_x.round(1) %>" y2="<%= pad_top + chart_h %>" class="histogram-marker histogram-marker-p90" />
+      <text x="<%= p90_x.round(1) %>" y="<%= pad_top - 2 %>" class="histogram-marker-label histogram-marker-label-p90">P90 <%= @histogram.p90 %>d</text>
+    <% end %>
+  </svg>
+
+  <p class="histogram-summary">
+    Stories released in the last <%= @days || 'all' %> days.
+    Bucket size: <%= @histogram.bucket_size %> day<%= @histogram.bucket_size > 1 ? 's' : '' %>.
+  </p>
+  </div>
+
+  <div class="histogram-guide">
+    <h3>How to read this</h3>
+    <p>Each bar shows how many stories took that many days from first assignment to release. A narrow, left-leaning distribution means fast, predictable delivery.</p>
+    <ul>
+      <li><strong>Tall bar on the left?</strong> Most stories ship quickly. The team has short feedback loops.</li>
+      <li><strong>Wide spread?</strong> Lead times are unpredictable. Some stories are stuck for long stretches. Look for patterns in what gets stuck.</li>
+      <li><strong>Outlier bars on the right?</strong> A few stories took much longer than average. Often these are stories that could have been split earlier.</li>
+      <li><strong>Bimodal (two humps)?</strong> Two different types of work with different dynamics. Consider whether they should be tracked separately.</li>
+    </ul>
+  </div>
+  </div>
+<% end %>

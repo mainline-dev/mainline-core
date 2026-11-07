@@ -1,0 +1,3 @@
+<span class="persona-card-name inline-editable" id="persona-name-<%= @persona.id %>"
+      hx-get="/maps/<%= @map.id %>/personas/<%= @persona.id %>/edit_name"
+      hx-target="#persona-name-<%= @persona.id %>" hx-swap="outerHTML"><%= @persona.name %></span>

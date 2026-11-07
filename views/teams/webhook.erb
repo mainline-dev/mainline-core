@@ -1,0 +1,111 @@
+<h1 class="page-title">Deploy Webhook</h1>
+
+<div class="banner-info">Only fire this webhook after a production deploy. Recording non-production deploys will distort your flow metrics and inventory data.</div>
+
+<% if @generated_token %>
+  <section class="section">
+    <h2 class="section-title">Your Token</h2>
+    <p><strong>Copy this now - it won't be shown again.</strong></p>
+    <code class="token"><%= @generated_token %></code>
+  </section>
+<% end %>
+
+<% if @team.webhook_token %>
+  <section class="section">
+    <h2 class="section-title">Endpoint</h2>
+    <code>POST /api/teams/<%= @team.id %>/deploys</code>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Usage</h2>
+    <pre>curl -X POST \
+  <%= ENV.fetch('BASE_URL') %>/api/teams/<%= @team.id %>/deploys \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"story_ids": ["ABC12345"]}'</pre>
+    <p>Pass full UUIDs or the first 8 characters of story IDs shown on each card.</p>
+  </section>
+
+  <section class="section">
+    <% if @is_creator %>
+    <form method="post" action="/teams/<%= @team.id %>/webhook">
+      <%== csrf_tag('/teams/' + @team.id + '/webhook') %>
+      <button type="submit" class="btn">Regenerate Token</button>
+    </form>
+    <% else %>
+      <p class="muted">Only the account holder can generate or rotate this token.</p>
+    <% end %>
+  </section>
+<% else %>
+  <p>Generate a token to enable your CI pipeline to report deploys automatically.</p>
+  <p><strong>The token will only be displayed once.</strong> Store it somewhere safe before leaving this page.</p>
+
+  <% if @is_creator %>
+  <form method="post" action="/teams/<%= @team.id %>/webhook">
+    <%== csrf_tag('/teams/' + @team.id + '/webhook') %>
+    <button type="submit" class="btn">Generate Token</button>
+  </form>
+  <% else %>
+    <p class="muted">Only the account holder can generate or rotate this token.</p>
+  <% end %>
+<% end %>
+
+<section class="section">
+  <h2 class="section-title">Pipeline Setup</h2>
+  <p>Add a step to your deploy pipeline that calls this endpoint after a successful deploy. Store your team ID and token as secrets in your pipeline.</p>
+
+  <details>
+    <summary>GitHub Actions</summary>
+    <pre>- name: Record deploy in Mainline
+  run: |
+    curl -sf -X POST \
+      "<%= ENV.fetch('BASE_URL') %>/api/teams/$MAINLINE_TEAM_ID/deploys" \
+      -H "Authorization: Bearer $MAINLINE_DEPLOY_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{"story_ids": ["ABC12345", "DEF67890"]}'
+  env:
+    MAINLINE_TEAM_ID: ${{ secrets.MAINLINE_TEAM_ID }}
+    MAINLINE_DEPLOY_TOKEN: ${{ secrets.MAINLINE_DEPLOY_TOKEN }}</pre>
+  </details>
+
+  <details>
+    <summary>GitLab CI</summary>
+    <pre>record_deploy:
+  stage: post-deploy
+  script:
+    - |
+      curl -sf -X POST \
+        "<%= ENV.fetch('BASE_URL') %>/api/teams/$MAINLINE_TEAM_ID/deploys" \
+        -H "Authorization: Bearer $MAINLINE_DEPLOY_TOKEN" \
+        -H "Content-Type: application/json" \
+        -d '{"story_ids": ["ABC12345", "DEF67890"]}'</pre>
+    <p>Add <code>MAINLINE_TEAM_ID</code> and <code>MAINLINE_DEPLOY_TOKEN</code> under Settings &gt; CI/CD &gt; Variables.</p>
+  </details>
+
+  <details>
+    <summary>Buildkite</summary>
+    <pre>- label: "Record deploy in Mainline"
+  command: |
+    curl -sf -X POST \
+      "<%= ENV.fetch('BASE_URL') %>/api/teams/$$MAINLINE_TEAM_ID/deploys" \
+      -H "Authorization: Bearer $$MAINLINE_DEPLOY_TOKEN" \
+      -H "Content-Type: application/json" \
+      -d '{"story_ids": ["ABC12345", "DEF67890"]}'</pre>
+    <p>Add <code>MAINLINE_TEAM_ID</code> and <code>MAINLINE_DEPLOY_TOKEN</code> in your Buildkite cluster secrets.</p>
+  </details>
+
+  <details>
+    <summary>Generic / Shell</summary>
+    <pre>export MAINLINE_TEAM_ID="your-team-id"
+export MAINLINE_DEPLOY_TOKEN="your-token"
+
+curl -sf -X POST \
+  "<%= ENV.fetch('BASE_URL') %>/api/teams/$MAINLINE_TEAM_ID/deploys" \
+  -H "Authorization: Bearer $MAINLINE_DEPLOY_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"story_ids": ["ABC12345"]}'</pre>
+  </details>
+
+  <p>Replace the story IDs with the short IDs shown on each card. The endpoint accepts full UUIDs or the first 8 characters. Only active stories will be recorded.</p>
+  <p>The response returns <code>{"deployed": N}</code> with the count of stories that were updated.</p>
+</section>

@@ -1,0 +1,49 @@
+<section class="section">
+  <div class="section-header">
+    <h2 class="section-title" data-test-id="team-maps">Maps</h2>
+    <% if @is_working_member %>
+      <a href="/maps/new" class="section-action">+ Create a new map</a>
+    <% end %>
+  </div>
+
+  <% if @maps.empty? %>
+    <% if @is_working_member %>
+      <div class="empty-workspace">
+        <p class="empty-workspace-lead">Start with one persona. Then the next thing a real user does.</p>
+        <p class="empty-workspace-context">Follow the <a href="https://mainline.dev/docs/tutorial">tutorial</a> to build your first map.</p>
+        <a href="/maps/new" class="btn-ghost-cyan">+ Create your first map</a>
+      </div>
+    <% else %>
+      <div class="empty-workspace empty-workspace--observer">
+        <p class="empty-workspace-lead">Your team hasn't built a map yet.</p>
+        <p class="empty-workspace-context">A working member starts with one persona, then the next thing a real user does.</p>
+        <div class="empty-workspace-actions">
+          <p class="empty-workspace-prompt">Are you also building?</p>
+          <form method="post" action="/teams/<%= @team.id %>/account/join">
+            <%== csrf_tag("/teams/#{@team.id}/account/join") %>
+            <button type="submit" class="btn-ghost-cyan" data-test-id="join-working">Join as a working member</button>
+          </form>
+        </div>
+      </div>
+    <% end %>
+  <% else %>
+    <div class="map-card-grid">
+      <% @maps.each do |map| %>
+        <a href="/maps/<%= map.id %>" class="map-card" data-test-id="map-<%= map.name.downcase.gsub(/\s+/, '-') %>">
+          <span class="map-card-name"><%= map.name %></span>
+          <% ac = @activity_counts[map.id] || 0 %>
+          <% sc = @story_counts[map.id] || 0 %>
+          <% active = @active_counts[map.id] || 0 %>
+          <span class="map-card-meta" data-test-id="map-counts" data-activities="<%= ac %>" data-stories="<%= sc %>" data-active="<%= active %>">
+            <%= ac %> <%= ac == 1 ? 'activity' : 'activities' %> &middot; <%= sc %> <%= sc == 1 ? 'story' : 'stories' %><% if active.positive? %> &middot; <%= active %> active<% end %>
+          </span>
+          <% if @last_events[map.id] %>
+            <span class="map-card-updated"><%= time_ago_label(@last_events[map.id]) %></span>
+          <% end %>
+        </a>
+      <% end %>
+    </div>
+  <% end %>
+
+</section>
+

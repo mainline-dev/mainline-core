@@ -1,0 +1,70 @@
+<div id="scenarios-container" class="scenarios">
+  <h2 class="scenarios-heading">Scenarios</h2>
+
+  <% if @story.status != 'released' && (@scenarios || []).any? { |sc| sc.done_at.nil? } && (@scenarios || []).any? { |sc| sc.done_at } %>
+    <p class="split-remaining-hint">
+      <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/split" data-test-id="split-remaining">Split remaining scenarios into a new story &rarr;</a>
+    </p>
+  <% end %>
+
+  <% if @scenario_errors&.any? %>
+    <ul class="errors" data-test-id="form-errors"><% @scenario_errors.each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
+
+  <% released = @story.status == 'released' %>
+
+  <% (@scenarios || []).each do |sc| %>
+    <div class="scenario-row card-deletable<%= ' scenario-done' if sc.done_at %>">
+      <% if released %>
+        <div><span class="scenario-kw">Given</span> <%= sc.given_text %></div>
+        <div><span class="scenario-kw">When</span> <%= sc.when_text %></div>
+        <div><span class="scenario-kw">Then</span> <%= sc.then_text %></div>
+      <% else %>
+        <div class="card-topbar">
+          <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>/<%= sc.done_at ? 'undone' : 'done' %>"
+                hx-target="#scenarios-container" hx-swap="outerHTML" class="scenario-done-form">
+            <button type="submit" class="scenario-done-btn<%= ' is-done' if sc.done_at %>"
+                    data-test-id="scenario-done-toggle"
+                    data-tippy-content="<%= sc.done_at ? 'Verified. Click to unmark.' : 'Mark verified' %>"
+                    aria-label="<%= sc.done_at ? 'Mark scenario not done' : 'Mark scenario done' %>">&#10003;</button>
+          </form>
+          <button type="button" class="delete-btn delete-confirm"
+                  data-delete-url="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>/delete"
+                  data-delete-target="#scenarios-container"
+                  aria-label="Delete scenario">&times;</button>
+        </div>
+        <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>"
+              hx-target="#scenarios-container" hx-swap="outerHTML"
+              class="scenario-form">
+          <label class="scenario-label">Given</label>
+          <input type="text" name="given" value="<%= sc.given_text %>" maxlength="100" class="scenario-input">
+          <label class="scenario-label">When</label>
+          <input type="text" name="when" value="<%= sc.when_text %>" maxlength="100" class="scenario-input">
+          <label class="scenario-label">Then</label>
+          <input type="text" name="then" value="<%= sc.then_text %>" maxlength="100" class="scenario-input">
+          <span class="scenario-actions">
+            <button type="submit" class="btn btn-sm" disabled>Save</button>
+          </span>
+        </form>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% unless released %>
+    <div class="scenario-add" id="scenario-add">
+      <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios"
+            hx-target="#scenarios-container" hx-swap="outerHTML"
+            class="scenario-form scenario-add-form">
+        <label class="scenario-label">Given</label>
+        <input type="text" name="given" maxlength="100" class="scenario-input" placeholder="precondition">
+        <label class="scenario-label">When</label>
+        <input type="text" name="when" maxlength="100" class="scenario-input" placeholder="action">
+        <label class="scenario-label">Then</label>
+        <input type="text" name="then" maxlength="100" class="scenario-input" placeholder="outcome">
+        <span class="scenario-actions">
+          <button type="submit" class="btn btn-sm">Add</button>
+        </span>
+      </form>
+    </div>
+  <% end %>
+</div>

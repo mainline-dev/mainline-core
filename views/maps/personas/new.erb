@@ -1,0 +1,22 @@
+<%== render('maps/_subnav') %>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/maps/<%= @map.id %>/personas">
+    <%== csrf_tag('/maps/' + @map.id + '/personas') %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @persona&.name %>"
+           placeholder="e.g. Returning Customer" maxlength="100" autofocus>
+
+    <label for="description">Description (optional)</label>
+    <textarea id="description" name="description" maxlength="255"
+              placeholder="Brief context about this persona"><%= @persona&.description %></textarea>
+
+    <button type="submit" class="btn">Create Persona</button>
+    <a href="/maps/<%= @map.id %>/personas" class="cancel-link">Cancel</a>
+  </form>
+</div>

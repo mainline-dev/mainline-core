@@ -1,0 +1,15 @@
+<%# locals: (item:) %>
+<% epic = item.parent_key && MuseumItem.where(team_id: item.team_id, source_key: item.parent_key).first %>
+<div class="mu-placard">
+  <p class="mu-placard-top">
+    <span class="mu-placard-key"><%= item.source_key %></span>
+    <span class="mu-type"><%= item.issue_type %></span>
+    <% if item.source_created_at %><span class="mu-placard-age">relic of <%= item.source_created_at.year %></span><% end %>
+    <% if item.in_progress %><span class="mu-flag">abandoned in progress</span><% end %>
+  </p>
+  <p class="mu-placard-summary"><%= item.summary %></p>
+  <p class="mu-placard-meta">
+    <% item.labels.each do |label| %><span class="mu-chip"><%= label %></span><% end %>
+    <span><% if epic&.epic? %>Epic <%= epic.source_key %> <%= epic.summary %> &middot; <% end %>Created <%= item.source_created_at&.strftime('%Y-%m-%d') || 'unknown' %></span>
+  </p>
+</div>

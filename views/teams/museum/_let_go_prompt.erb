@@ -1,0 +1,17 @@
+<%# locals: (prompt:, tries:, back:) %>
+<div id="mu-let-go-prompt"<% if tries && !prompt %> data-test-id="let-go-watching" hx-get="<%= @museum_path %>/let-go/prompt?tries=<%= tries %>" hx-trigger="every 2s" hx-swap="outerHTML"<% end %>>
+  <% if prompt %>
+    <div class="mu-prompt" data-test-id="let-go-prompt" data-count="<%= prompt.total %>">
+      <div class="mu-prompt-text">
+        <p class="mu-prompt-title">The curator suggests letting go of <%= prompt.total %> exhibits.</p>
+        <p class="mu-prompt-detail"><%= prompt.breakdown %>. Nothing goes without you.</p>
+      </div>
+      <a href="<%= @museum_path %>/let-go" class="mu-promote" data-test-id="let-go-review">Review the suggestions</a>
+      <form method="post" action="<%= @museum_path %>/let-go/snooze">
+        <%== csrf_tag("#{@museum_path}/let-go/snooze") %>
+        <input type="hidden" name="return_to" value="<%= back %>">
+        <button type="submit" class="mu-quiet" data-test-id="let-go-not-now">Not now</button>
+      </form>
+    </div>
+  <% end %>
+</div>

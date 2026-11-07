@@ -1,0 +1,19 @@
+<div id="story-history" class="story-history">
+  <h3 class="history-heading">History</h3>
+  <% if @events.empty? %>
+    <p class="empty-state">No events recorded.</p>
+  <% else %>
+    <% recent = @events.last(5).reverse %>
+    <ul class="history-timeline">
+      <% recent.each do |event| %>
+        <li class="history-entry">
+          <span class="history-action"><%= EventPresenter.describe(event, { people: @people_by_id, slices: @slices_by_id, tasks: @tasks_by_id }) %></span>
+          <span class="history-meta"><%= event.actor.name %> &middot; <%= event.occurred_at.strftime('%b %-d') %></span>
+        </li>
+      <% end %>
+    </ul>
+    <% if @events.size > 5 %>
+      <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/history" class="history-view-all">View all <%= @events.size %> events</a>
+    <% end %>
+  <% end %>
+</div>

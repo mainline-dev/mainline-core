@@ -1,0 +1,27 @@
+<h1 class="page-title" data-test-id="profile-edit">Edit Your Name</h1>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/profile/edit">
+    <%== csrf_tag('/profile/edit') %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @person.name %>" maxlength="100" autofocus>
+
+    <button type="submit" class="btn">Save</button>
+  </form>
+</div>
+
+<% if @can_delete_account %>
+  <div class="form-container" data-test-id="delete-account">
+    <h2 class="page-title">Delete Account</h2>
+    <p>This will permanently delete your account and all associated data. This cannot be undone.</p>
+    <form method="post" action="/profile/delete-account">
+      <%== csrf_tag('/profile/delete-account') %>
+      <button type="submit" class="btn btn-danger">Delete my account</button>
+    </form>
+  </div>
+<% end %>

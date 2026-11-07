@@ -1,0 +1,11 @@
+<nav class="subnav">
+  <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/edit"
+     class="subnav-link<%= ' active' if @subnav_active == 'edit' %>">Edit</a>
+  <% unless @story.status == 'released' %>
+    <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/assignments/new"
+       class="subnav-link<%= ' active' if @subnav_active == 'assign' %>">Assign</a>
+  <% end %>
+  <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/history"
+     class="subnav-link<%= ' active' if @subnav_active == 'history' %>">History</a>
+  <a href="/maps/<%= @map.id %>" class="subnav-link">Back to Map</a>
+</nav>

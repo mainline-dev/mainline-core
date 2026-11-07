@@ -1,0 +1,38 @@
+<h1 class="team-title" data-test-id="account-page"><a href="/teams/<%= @team.id %>/edit" class="team-title-name"><%= @team.name %></a> <span class="team-title-section">Account</span></h1>
+
+<section class="section section-compact">
+  <h2 class="section-title">Team Members</h2>
+  <div class="member-preview">
+    <div class="member-preview-avatars">
+      <% @working_members.first(5).each do |m| %>
+        <span class="member-initials"><%= m.name.split.map { |w| w[0] }.first(2).join.upcase %></span>
+      <% end %>
+      <% if @working_members.length > 5 %>
+        <span class="member-initials member-initials-more">+<%= @working_members.length - 5 %></span>
+      <% end %>
+    </div>
+    <a href="/teams/<%= @team.id %>/members">Manage members &rarr;</a>
+  </div>
+</section>
+
+<section class="section section-compact">
+  <h2 class="section-title">Working Membership</h2>
+  <% if @membership.working %>
+    <p>You are a working member of this team.</p>
+  <% else %>
+    <p class="warning-text">Only join if you are actively doing the work. Non-workers joining the team distort pairing charts, flow metrics, and assignment data. This degrades the team's experience of the product.</p>
+    <form method="post" action="/teams/<%= @team.id %>/account/join">
+      <%== csrf_tag("/teams/#{@team.id}/account/join") %>
+      <button type="submit" class="btn btn-ghost">Join as Working Member</button>
+    </form>
+  <% end %>
+</section>
+
+<% if @is_creator %>
+<section class="section danger">
+  <h2 class="section-title">Delete Team</h2>
+  <p class="delete-hint">Permanently delete this team and all its data.</p>
+  <span class="permanent-caption">Permanent</span>
+  <a href="/teams/<%= @team.id %>/account/delete" class="btn btn-danger">Delete Team</a>
+</section>
+<% end %>

@@ -1,0 +1,39 @@
+<% @page_breadcrumb = 'Ticket Museum / Let go' %>
+<p class="mu-back"><a href="<%= @museum_path %>" data-test-id="let-go-back">&larr; Back to the museum</a></p>
+<h1 class="page-title mu-page-title">Let go</h1>
+<p class="lens-help">Most backlogs are mostly landfill. These exhibits are stale, duplicated, unreproducible or too vague to act on. Untick anything worth keeping.</p>
+
+<% if @groups.empty? %>
+  <p class="empty-state" data-test-id="let-go-nothing">The curator has nothing to suggest right now.</p>
+<% else %>
+  <% going = @groups.sum { |group| group.suggestions.size } %>
+  <form method="post" action="<%= @museum_path %>/let-go" class="mu-letgo" data-test-id="let-go-form" data-let-go data-on-display="<%= @on_display %>">
+    <%== csrf_tag("#{@museum_path}/let-go") %>
+    <div class="mu-lg-impact">
+      <div class="mu-lg-track"><div class="mu-lg-fill" data-impact></div></div>
+      <p class="mu-lg-tally">
+        <span class="mu-lg-tally-go"><strong data-test-id="let-go-going" data-count="<%= going %>"><%= going %></strong> would go</span>
+        <span class="mu-lg-tally-stay"><strong data-test-id="let-go-staying" data-count="<%= @on_display - going %>"><%= @on_display - going %></strong> of <%= @on_display %> would stay on display</span>
+      </p>
+    </div>
+    <% @groups.each do |group| %>
+      <section class="mu-lg-group" data-test-id="let-go-group" data-group="<%= group.id %>">
+        <div class="mu-lg-head">
+          <input type="checkbox" class="mu-check" data-group-tick data-test-id="let-go-group-tick" aria-label="All of <%= group.title %>" checked>
+          <div class="mu-lg-head-text">
+            <p class="mu-lg-title"><%= group.title %> <span class="mu-count" data-test-id="let-go-selected" data-count="<%= group.suggestions.size %>"><%= group.suggestions.size %> of <%= group.suggestions.size %> selected</span></p>
+            <p class="mu-lg-why"><%= group.why %></p>
+            <p class="mu-lg-rule">rule: <%= group.rule %></p>
+          </div>
+          <button type="button" class="mu-quiet" data-fold data-test-id="let-go-fold" aria-expanded="true">Hide &#9662;</button>
+        </div>
+        <%== render('teams/museum/_let_go_page', locals: { group: group, offset: 0, size: group.limit, ticked: true }) %>
+      </section>
+    <% end %>
+    <div class="mu-selbar mu-lg-bar">
+      <button type="submit" class="btn" data-test-id="let-go-submit" data-count="<%= going %>">Let go of <%= going %> <%= going == 1 ? 'exhibit' : 'exhibits' %></button>
+      <span class="mu-lg-bar-note">They go to storage: out of sight, never re-acquired, and you can bring any back.</span>
+      <a href="<%= @museum_path %>" class="mu-cancel">Cancel</a>
+    </div>
+  </form>
+<% end %>

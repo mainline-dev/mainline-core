@@ -1,0 +1,18 @@
+<%# locals: (suggestion:, ticked:) %>
+<% item = suggestion.item %>
+<label class="mu-lg-row<% if item.kept_at %> is-kept<% end %>" id="mu-lg-<%= item.id %>" data-test-id="let-go-row" data-key="<%= item.source_key %>">
+  <input type="hidden" name="seen[]" value="<%= item.id %>">
+  <% if item.kept_at %>
+    <span></span>
+  <% else %>
+    <input type="checkbox" class="mu-check" name="ids[]" value="<%= item.id %>" data-key="<%= item.source_key %>"<% if ticked %> checked<% end %>>
+  <% end %>
+  <span class="mu-lg-key"><%= item.source_key %></span>
+  <span class="mu-lg-summary"><%= item.summary %></span>
+  <span class="mu-lg-evidence" data-test-id="let-go-evidence"><%= suggestion.evidence %></span>
+  <% if item.kept_at %>
+    <button type="button" class="mu-quiet mu-lg-kept" data-test-id="let-go-kept" hx-post="<%= @museum_path %>/<%= item.id %>/unkeep" hx-params="none" hx-target="#mu-lg-<%= item.id %>" hx-swap="outerHTML">Kept &#10003;</button>
+  <% else %>
+    <button type="button" class="mu-quiet" data-test-id="let-go-keep" hx-post="<%= @museum_path %>/<%= item.id %>/keep" hx-params="none" hx-target="#mu-lg-<%= item.id %>" hx-swap="outerHTML">Keep</button>
+  <% end %>
+</label>

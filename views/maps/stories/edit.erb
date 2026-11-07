@@ -1,0 +1,15 @@
+<h1 class="page-title"><%= @story.status == 'released' ? 'Edit Decoupling' : 'Edit Story' %></h1>
+<%== render('maps/stories/_subnav') %>
+
+<div class="story-edit-layout">
+  <div class="story-edit-main">
+    <%== render('maps/stories/_edit_form') %>
+
+    <% @scenario_errors = [] %>
+    <%== render('maps/stories/_scenarios') %>
+  </div>
+
+  <div class="story-edit-sidebar">
+    <%== render('maps/stories/_preview') %>
+  </div>
+</div>

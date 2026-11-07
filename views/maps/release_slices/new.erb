@@ -1,0 +1,17 @@
+<%== render('maps/_subnav') %>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/maps/<%= @map.id %>/release_slices">
+    <%== csrf_tag('/maps/' + @map.id + '/release_slices') %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @release_slice&.name %>"
+           placeholder="e.g. MVP, Beta, v1.0" maxlength="100" autofocus>
+
+    <button type="submit" class="btn">Create Slice</button>
+  </form>
+</div>

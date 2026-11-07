@@ -1,0 +1,29 @@
+# frozen_string_literal: true
+
+require_relative 'mailer'
+
+module SendVerificationEmail
+  def self.call(person:, token:)
+    return dev_link(token) unless ENV['RACK_ENV'] == 'production'
+
+    Mailer.deliver(
+      to:      person.email,
+      subject: 'Verify your Mainline email',
+      text:    text_body(token)
+    )
+  end
+
+  def self.dev_link(token)
+    "http://#{ENV.fetch('MAINLINE_HOST')}/verify-email/#{token}"
+  end
+
+  def self.text_body(token)
+    <<~TEXT
+      Welcome to Mainline. Please verify your email to create a team.
+
+      Verify: https://#{ENV.fetch('MAINLINE_HOST')}/verify-email/#{token}
+
+      This link expires in 10 minutes.
+    TEXT
+  end
+end

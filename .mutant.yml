@@ -1,0 +1,35 @@
+usage: opensource
+
+integration:
+  name: minitest
+
+requires:
+  - ./models
+  - ./lib/assign_person
+  - ./lib/business_days
+  - ./lib/bypass_rls
+  - ./lib/record_event
+  - ./lib/cumulative_flow
+  - ./lib/data_export
+  - ./lib/delete_team
+  - ./lib/encrypted_email
+  - ./lib/ensemble_timeline
+  - ./lib/event_presenter
+  - ./lib/flash_adapter
+  - ./lib/inventory
+  - ./lib/lead_time
+  - ./lib/map_grid
+  - ./lib/pairing_matrix
+  - ./lib/rate_limiter
+  - ./lib/reorder_activities
+  - ./lib/reorder_stories
+  - ./lib/reorder_tasks
+  - ./lib/resource_cap
+  - ./lib/revoke_oauth_token
+  - ./lib/set_team_context
+  - ./lib/solo_log
+  - ./lib/split_candidate
+  - ./lib/throughput_scatter
+
+environment_variables:
+  RACK_ENV: test

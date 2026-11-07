@@ -1,0 +1,170 @@
+<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:) %>
+<%
+  assign_count = story.story_assignments.length
+  pairing_label, pairing_short = if story.status == 'released'
+                    ['released', 'DONE']
+                  elsif story.status == 'planned'
+                    ['planned', 'PLAN']
+                  elsif assign_count >= 3
+                    ['ensemble', 'ENS']
+                  elsif assign_count == 2
+                    ['paired', 'PAIR']
+                  elsif assign_count == 1
+                    ['solo', 'SOLO']
+                  else
+                    [story.status, story.status.upcase]
+                  end
+  story_slug = story.title.downcase.gsub(/[^a-z0-9]+/, '-').gsub(/^-|-$/, '')
+  strategy_code = { 'flag' => 'FF', 'bba' => 'BBA', 'dark_launch' => 'DL' }
+  note_labels = { 'split_candidate' => 'Active longer than most released stories',
+                  'stale_story' => 'Stale story', 'stale_solo' => 'Stale solo',
+                  'stale_flag' => 'Stale feature flag' }
+  short_id = story.id[0, 8].upcase
+  deploy_tip = "#{deploy_count || 0} deployment#{(deploy_count || 0) == 1 ? '' : 's'}"
+%>
+<div class="story-card<%= ' story-released' if story.status == 'released' %>" data-id="<%= story.id %>" data-test-id="story-card">
+  <input type="hidden" name="story_id" value="<%= story.id %>">
+  <div class="card-header">
+    <span class="state-label state-<%= pairing_label %>"><%= pairing_short %></span>
+    <% if story.agent_assisted %>
+      <span class="card-note-chip note-chip-agent"
+            data-tippy-content="An AI agent has read this story via MCP."
+            data-test-id="agent-chip">AI</span>
+    <% end %>
+    <% if story_notes.any? %>
+      <%
+        primary_note = story_notes.first
+        note_chip = case primary_note
+                    when 'split_candidate' then { icon: :warning, cls: 'note-chip-split',
+                                                  tip: "Active longer than most of the team's released stories." }
+                    when 'stale_solo'      then { code: 'STALE', cls: 'note-chip-stale',
+                                                  tip: 'Solo work older than the team P90.' }
+                    when 'stale_story'     then { code: 'STALE', cls: 'note-chip-stale',
+                                                  tip: 'Story active longer than the team P90.' }
+                    when 'stale_flag'      then { code: 'STALE', cls: 'note-chip-stale',
+                                                  tip: 'Released, but decoupling strategy still in place.' }
+                    end
+        if note_chip && story_notes.length > 1
+          extras = (story_notes - [primary_note]).map { |n| note_labels[n] || n }.join(', ')
+          note_chip[:tip] = "#{note_chip[:tip]} Also: #{extras}."
+        end
+      %>
+      <% if note_chip %>
+        <span class="card-note-chip <%= note_chip[:cls] %>"
+              data-tippy-content="<%= note_chip[:tip] %>"
+              data-test-id="story-note-chip"><% if note_chip[:icon] == :warning %><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M12 2 1 21h22L12 2zm1 14h-2v2h2v-2zm0-7h-2v5h2V9z"/></svg><% else %><%= note_chip[:code] %><% end %></span>
+      <% end %>
+    <% end %>
+  </div>
+  <div class="card-body">
+    <% panel_path = "/maps/#{map_id}/stories/#{story.id}/panel" %>
+    <a href="<%= "/maps/#{map_id}/stories/#{story.id}/#{locked ? 'panel' : 'edit'}" %>"
+       class="story-title-link"
+       data-test-id="story-title-<%= story_slug %>"
+       hx-get="<%= panel_path %>"
+       hx-target="#story-panel-container"
+       hx-swap="innerHTML"><%= story.title %></a>
+  </div>
+  <%
+    has_labels = story.story_assignments.any?
+  %>
+  <% if has_labels %>
+    <div class="card-labels">
+      <% story.story_assignments.each do |sa| %>
+        <span class="assignee-badge">
+          <%= sa.person.name %>
+            <form method="post" action="/maps/<%= map_id %>/stories/<%= story.id %>/assignments/<%= sa.id %>/unassign" class="inline-form"
+                  hx-post="/maps/<%= map_id %>/stories/<%= story.id %>/assignments/<%= sa.id %>/unassign"
+                  hx-target=".map-grid-container" hx-swap="outerHTML">
+              <%== csrf_tag('/maps/' + map_id + '/stories/' + story.id + '/assignments/' + sa.id + '/unassign') %>
+              <button type="submit" class="unassign-btn" aria-label="Unassign">&times;</button>
+            </form>
+        </span>
+      <% end %>
+    </div>
+  <% end %>
+  <% if story.status == 'active' %>
+    <div class="card-footer">
+      <div class="card-footer-row">
+          <% unless locked %>
+            <a href="/maps/<%= map_id %>/stories/<%= story.id %>/edit" class="add-link">Edit</a>
+          <% end %>
+          <span class="inline-assign-wrapper" data-test-id="inline-assign-trigger">
+            <a href="/maps/<%= map_id %>/stories/<%= story.id %>/assignments/new"
+               class="add-link"
+               hx-get="/maps/<%= map_id %>/stories/<%= story.id %>/assignments/inline"
+               hx-target="closest .inline-assign-wrapper"
+               hx-swap="innerHTML">Assign</a>
+          </span>
+          <a href="/maps/<%= map_id %>/stories/<%= story.id %>/history" class="add-link">History<span class="add-link-count" data-tippy-content="<%= deploy_tip %>"><%= deploy_count || 0 %></span></a>
+          <details class="card-kebab" data-test-id="card-kebab">
+            <summary aria-label="Actions">&#x22EE;</summary>
+            <div class="card-kebab-menu">
+              <button type="button" class="deploy-btn delete-confirm"
+                      data-delete-url="/maps/<%= map_id %>/stories/<%= story.id %>/deploy"
+                      data-delete-target=".map-grid-container"
+                      data-label="Deploy"
+                      data-test-id="deploy-<%= story_slug %>">Deploy</button>
+              <button type="button" class="release-btn delete-confirm"
+                      data-delete-url="/maps/<%= map_id %>/stories/<%= story.id %>/release"
+                      data-delete-target=".map-grid-container"
+                      data-label="Release"
+                      data-test-id="release-<%= story_slug %>">Release</button>
+              <button type="button" class="kebab-copy-id preview-copy-id" data-story-id="<%= story.id %>" data-test-id="card-copy-id">Copy ID &middot; <%= short_id %></button>
+            </div>
+          </details>
+      </div>
+      <% if story.decoupling_strategy %>
+        <div class="card-footer-row">
+          <span class="decoupling-pill"><%= strategy_code[story.decoupling_strategy] %><% if story.decoupling_label && !story.decoupling_label.empty? %> &middot; <%= story.decoupling_label %><% end %></span>
+        </div>
+      <% end %>
+    </div>
+  <% elsif story.status == 'planned' %>
+    <div class="card-footer">
+      <div class="card-footer-row">
+          <% unless locked %>
+            <a href="/maps/<%= map_id %>/stories/<%= story.id %>/edit" class="add-link">Edit</a>
+          <% end %>
+          <span class="inline-assign-wrapper" data-test-id="inline-assign-trigger">
+            <a href="/maps/<%= map_id %>/stories/<%= story.id %>/assignments/new"
+               class="add-link"
+               hx-get="/maps/<%= map_id %>/stories/<%= story.id %>/assignments/inline"
+               hx-target="closest .inline-assign-wrapper"
+               hx-swap="innerHTML">Assign</a>
+          </span>
+          <a href="/maps/<%= map_id %>/stories/<%= story.id %>/history" class="add-link">History<span class="add-link-count" data-tippy-content="<%= deploy_tip %>"><%= deploy_count || 0 %></span></a>
+          <details class="card-kebab" data-test-id="card-kebab">
+            <summary aria-label="Actions">&#x22EE;</summary>
+            <div class="card-kebab-menu">
+              <button type="button" class="archive-btn delete-confirm"
+                      data-delete-url="/maps/<%= map_id %>/stories/<%= story.id %>/archive"
+                      data-delete-target=".map-grid-container"
+                      data-label="Archive"
+                      data-test-id="archive-<%= story_slug %>">Archive</button>
+              <button type="button" class="kebab-copy-id preview-copy-id" data-story-id="<%= story.id %>" data-test-id="card-copy-id">Copy ID &middot; <%= short_id %></button>
+            </div>
+          </details>
+      </div>
+      <% if story.decoupling_strategy %>
+        <div class="card-footer-row">
+          <span class="decoupling-pill"><%= strategy_code[story.decoupling_strategy] %><% if story.decoupling_label && !story.decoupling_label.empty? %> &middot; <%= story.decoupling_label %><% end %></span>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="card-footer">
+      <div class="card-footer-row">
+          <% unless locked %>
+            <a href="/maps/<%= map_id %>/stories/<%= story.id %>/edit" class="add-link">Edit</a>
+          <% end %>
+          <a href="/maps/<%= map_id %>/stories/<%= story.id %>/history" class="add-link">History<span class="add-link-count" data-tippy-content="<%= deploy_tip %>"><%= deploy_count || 0 %></span></a>
+      </div>
+      <% if story.decoupling_strategy %>
+        <div class="card-footer-row">
+          <span class="decoupling-pill"><%= strategy_code[story.decoupling_strategy] %><% if story.decoupling_label && !story.decoupling_label.empty? %> &middot; <%= story.decoupling_label %><% end %></span>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
