@@ -71,4 +71,8 @@ It migrates the test database, runs RuboCop, then the model and acceptance tests
 
 ## Licence
 
+Copyright (C) 2026 Kipple PTY LTD.
+
 GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
+
+Mainline™ is a trademark of Kipple PTY LTD. The licence covers the code, not the name.
