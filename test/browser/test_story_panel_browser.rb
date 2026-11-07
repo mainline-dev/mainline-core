@@ -28,6 +28,14 @@ describe 'Story slide-over panel (browser)' do
     end
   end
 
+  # The panel slides in, and a click aimed at a moving button can miss it.
+  def wait_for_panel_to_settle
+    settled = "document.querySelector('[data-test-id=\"story-panel\"]').getAnimations().length === 0"
+    page.document.synchronize(5, errors: [Capybara::ExpectationNotMet]) do
+      raise Capybara::ExpectationNotMet, 'the panel is still sliding in' unless page.evaluate_script(settled)
+    end
+  end
+
   it 'close button dismisses the panel' do
     use_browser!
     driver.visit_map(@map)
@@ -35,6 +43,7 @@ describe 'Story slide-over panel (browser)' do
     find('[data-test-id="story-title-find-things"]').click
 
     assert_selector '[data-test-id="story-panel"]', wait: 5
+    wait_for_panel_to_settle
 
     find('[data-test-id="panel-close"]').click
 

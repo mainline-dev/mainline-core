@@ -33,6 +33,15 @@ describe 'Self-host setup' do
 
       assert_empty EnvRequirements::CORE.keys - env
     end
+
+    # The README's quick start runs docker-compose.yml, and a service missing a
+    # required variable refuses to boot.
+    it "gives the development #{service} every variable the app requires" do
+      development = YAML.safe_load_file(File.join(root, 'docker-compose.yml'), aliases: true)
+      env = development.dig('services', service, 'environment').keys
+
+      assert_empty EnvRequirements.required.keys - env
+    end
   end
 
   # The app runs the migrations as it starts; a worker started earlier would

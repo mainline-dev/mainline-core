@@ -3,7 +3,8 @@ set -euo pipefail
 
 DUMMY_KEY="0000000000000000000000000000000000000000000000000000000000000000"
 # The sign-in tests need every provider present; the development compose ships them disabled.
-TEST_ENV=(-e RACK_ENV=test -e LOCKBOX_MASTER_KEY="$DUMMY_KEY" -e GOOGLE_CLIENT_ID=test -e GOOGLE_CLIENT_SECRET=test -e GH_OAUTH_CLIENT_ID=test -e GH_OAUTH_CLIENT_SECRET=test -e GITLAB_CLIENT_ID=test -e GITLAB_CLIENT_SECRET=test)
+# Tests get their own Redis database, or the dev worker takes the jobs they queue.
+TEST_ENV=(-e RACK_ENV=test -e REDIS_URL=redis://redis:6379/1 -e LOCKBOX_MASTER_KEY="$DUMMY_KEY" -e GOOGLE_CLIENT_ID=test -e GOOGLE_CLIENT_SECRET=test -e GH_OAUTH_CLIENT_ID=test -e GH_OAUTH_CLIENT_SECRET=test -e GITLAB_CLIENT_ID=test -e GITLAB_CLIENT_SECRET=test)
 
 docker compose exec -T "${TEST_ENV[@]}" app bundle exec rake test_up
 echo "Running linter..."
@@ -17,7 +18,7 @@ export TEST_APP_DATABASE_URL=postgres://mainline_app:app_password@localhost:5432
 export MAINLINE_SESSION_SECRET=0000000000000000000000000000000000000000000000000000000000000000
 export MAINLINE_HOST=localhost:3000
 export LOCKBOX_MASTER_KEY=0000000000000000000000000000000000000000000000000000000000000000
-export REDIS_URL=redis://localhost:6379/0
+export REDIS_URL=redis://localhost:6379/1
 export SENTRY_DSN=test
 export SENTRY_ENVIRONMENT=test
 export CI_MONITOR_GITHUB_APP_ID=test

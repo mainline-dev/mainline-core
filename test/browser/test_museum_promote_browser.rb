@@ -236,7 +236,7 @@ describe 'Ticket Museum promote form (browser)' do
   it 'holds the toast while its Undo has focus, then lets it go' do
     promote_with_a_short_toast
 
-    execute_script('document.querySelector(\'[data-test-id="museum-toast-undo"]\').focus()')
+    find('[data-test-id="museum-toast-undo"]').execute_script('this.focus()')
     sleep 0.8
 
     assert_selector '[data-test-id="museum-toast-undo"]'
