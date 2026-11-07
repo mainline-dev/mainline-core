@@ -36,13 +36,13 @@ describe EventPresenter do
   it 'describes agent_read with user agent' do
     event = build_event(action: 'agent_read', after_state: { 'user_agent' => 'claude-code/2.0' })
 
-    assert_equal 'read by AI agent (claude-code/2.0)', EventPresenter.describe(event, lookup)
+    assert_equal 'read by coding agent (claude-code/2.0)', EventPresenter.describe(event, lookup)
   end
 
   it 'describes agent_read without user agent' do
     event = build_event(action: 'agent_read')
 
-    assert_equal 'read by AI agent', EventPresenter.describe(event, lookup)
+    assert_equal 'read by coding agent', EventPresenter.describe(event, lookup)
   end
 
   it 'describes person_assigned with name' do

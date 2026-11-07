@@ -5,7 +5,7 @@ module McpActor
     team = Team[team_id]
     return team.mcp_actor_id if team.mcp_actor_id
 
-    actor = Actor.create(kind: 'system', name: 'AI Agent')
+    actor = Actor.create(kind: 'system', name: 'Coding agent')
     team.update(mcp_actor_id: actor.id)
     actor.id
   end

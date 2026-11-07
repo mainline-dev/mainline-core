@@ -1,6 +1,7 @@
 /.env.rb
 /coverage
 .DS_Store
+.idea/
 .claude/
 .mutant
 /tmp/

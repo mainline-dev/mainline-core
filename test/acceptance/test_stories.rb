@@ -21,7 +21,7 @@ describe 'Stories' do
     assert_map_shows 'Keyword search'
   end
 
-  it 'shows the agent chip on a story an AI agent has read' do
+  it 'shows the agent chip on a story a coding agent has read' do
     visitor = create_persona('Visitor')
     browse  = create_activity('Browse', for_personas: [visitor])
     search  = create_task('Search', under_activity: browse)

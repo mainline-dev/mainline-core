@@ -79,7 +79,7 @@ module EventPresenter
 
   def self.describe_agent_read(event, _lookup, _include_name)
     ua = event.after_state['user_agent']
-    ua ? "read by AI agent (#{ua})" : 'read by AI agent'
+    ua ? "read by coding agent (#{ua})" : 'read by coding agent'
   end
 
   def self.describe_split_out(event, _lookup, _include_name)

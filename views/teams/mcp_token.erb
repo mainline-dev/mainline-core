@@ -1,6 +1,6 @@
 <h1 class="page-title">MCP Server</h1>
 
-<div class="banner-info">Read-only access to your story maps for AI coding assistants like Claude Code.</div>
+<div class="banner-info">Read-only access to your story maps for coding agents like Claude Code.</div>
 
 <% if @generated_token %>
   <section class="section">
@@ -47,7 +47,7 @@
     <% end %>
   </section>
 <% else %>
-  <p>Generate a token to enable AI coding assistants to read your story maps.</p>
+  <p>Generate a token to enable coding agents to read your story maps.</p>
   <p><strong>The token will only be displayed once.</strong> Store it somewhere safe before leaving this page.</p>
 
   <% if @is_creator %>

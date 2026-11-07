@@ -6,7 +6,7 @@ x-app-env: &app-env
   TEST_DATABASE_URL: postgres://mainline:password@db:5432/mainline_test
   TEST_APP_DATABASE_URL: postgres://mainline_app:app_password@db:5432/mainline_test
   MAINLINE_APP_USER_DATABASE_PASSWORD: app_password
-  MAINLINE_SESSION_SECRET: YniKJkiVWXrzVf9w70Nyp1RetneLFoZU1xp31E2x5Er3t1dr07stWnNRtRcOiXtZ
+  MAINLINE_SESSION_SECRET: dev-only-session-secret-not-used-anywhere-outside-local-docker-0
   LOCKBOX_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
   SENTRY_DSN: dev_placeholder
   SENTRY_ENVIRONMENT: development

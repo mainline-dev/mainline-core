@@ -10,7 +10,7 @@ You need Docker with Compose.
 
 ```shell
 git clone https://github.com/mainline-dev/mainline-core.git
-cd mainline
+cd mainline-core
 docker compose up --build
 ```
 
