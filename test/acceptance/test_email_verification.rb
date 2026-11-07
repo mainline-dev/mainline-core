@@ -85,6 +85,28 @@ describe 'Email verification - resend' do
     AUTH_RATE_LIMITER.reset
   end
 
+  it 'shows the verification link on screen where no mail is sent' do
+    driver.submit_email_signup(
+      name: 'Alice', email: 'alice@acme.co', password: 'longpassword12'
+    )
+
+    driver.follow_redirect!
+
+    assert driver.response_includes?('/verify-email/')
+  end
+
+  it 'shows the verification link again when asked to resend it' do
+    driver.submit_email_signup(
+      name: 'Alice', email: 'alice@acme.co', password: 'longpassword12'
+    )
+    driver.follow_redirect!
+
+    driver.post '/resend-verification'
+    driver.follow_redirect!
+
+    assert driver.response_includes?('/verify-email/')
+  end
+
   it 'resends verification email for unverified user' do
     driver.submit_email_signup(
       name: 'Alice', email: 'alice@acme.co', password: 'longpassword12'

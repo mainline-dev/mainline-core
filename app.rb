@@ -312,7 +312,7 @@ class Mainline < Roda
       r.get 'mcp.json' do
         response['Content-Type'] = 'application/json'
         server = {
-          url:            'https://mainline.dev/mcp/{team_id}',
+          url:            "#{ENV.fetch('BASE_URL')}/mcp/{team_id}",
           description:    'Replace {team_id} with your team UUID from team settings',
           authentication: { type: 'bearer' }
         }
@@ -344,7 +344,7 @@ class Mainline < Roda
         end
         regenerate_session(preserve_keys: ['signup_plan'])
         session['person_id'] = result[:person].id
-        flash['notice'] = "Signed in as #{result[:person].name}"
+        flash['notice'] = "Signed in as #{result[:person].name}.#{verify_link_notice(result[:verification])}"
         has_team = TeamMembership.where(person_id: result[:person].id, left_at: nil).any?
         r.redirect(has_team ? '/teams' : '/teams/new')
       end
@@ -471,7 +471,7 @@ class Mainline < Roda
         if result == :failed
           flash['error'] = 'Could not send the verification email. Please try again.'
         else
-          flash['notice'] = 'Verification email sent. Check your inbox.'
+          flash['notice'] = verify_link_notice(result) || 'Verification email sent. Check your inbox.'
         end
       end
       r.redirect '/teams'
@@ -565,7 +565,13 @@ class Mainline < Roda
     result = SendVerificationEmail.call(person: person, token: token)
     flash['error'] = 'Could not send the verification email. Please try again.' if result == :failed
     accept_invite(person, email, session)
-    { person: person }
+    { person: person, verification: result }
+  end
+
+  # Outside production no mail goes out and the link comes back instead, so it
+  # has to go on the page or the person can never verify.
+  def verify_link_notice(verification)
+    " Verify your email: #{verification}" if verification.is_a?(String)
   end
 
   def validate_signup(name, email, password)

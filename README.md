@@ -16,13 +16,15 @@ cd mainline-core
 docker compose up --build
 ```
 
-The app runs at http://localhost:3000. `docker-compose.yml` is the development setup and carries its own throwaway values, so no configuration is needed. Sign up with an email address; the Google, GitHub and GitLab buttons appear once their variables hold real OAuth apps.
+The app runs at http://localhost:3000. `docker-compose.yml` is the development setup and carries its own throwaway values, so no configuration is needed.
 
-Load sample teams and print a login link for each person:
+For sample teams, seed the empty database before signing up. It writes a login link for each person to `tmp/dev_seed.txt`:
 
 ```shell
 docker compose exec app bundle exec rake dev_seed
 ```
+
+To start from nothing instead, sign up with an email address. Development sends no mail, so the page shows your verification link. The Google, GitHub and GitLab buttons appear once their variables hold real OAuth apps.
 
 ## Self-host
 

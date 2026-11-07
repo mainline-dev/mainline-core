@@ -53,6 +53,14 @@ describe 'Self-host setup' do
     assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
   end
 
+  it 'keeps the .env file the README suggests out of git and out of the image' do
+    ignored = File.readlines(File.join(root, '.gitignore'), chomp: true)
+    not_in_image = File.readlines(File.join(root, '.dockerignore'), chomp: true)
+
+    assert_includes ignored, '/.env'
+    assert_empty %w[.env .env.* .git] - not_in_image
+  end
+
   it 'changes into the folder the quick start clone creates' do
     readme = File.read(File.join(root, 'README.md'))
     cloned = readme[%r{git clone \S+/([^/\s]+)\.git}, 1]
