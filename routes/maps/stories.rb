@@ -479,7 +479,7 @@ class Mainline
   def load_assignable_people
     assigned_ids = StoryAssignment.where(story_id: @story.id).select_map(:person_id)
     @available_people = available_team_members(assigned_ids)
-    @busy_person_ids = busy_person_ids_for_team
+    @busy_person_ids = AssignPerson.people_at_limit(@current_team)
   end
 
   def available_team_members(excluded_ids)
@@ -491,16 +491,6 @@ class Mainline
       .exclude(Sequel[:people][:id] => excluded_ids)
       .select_all(:people)
       .all
-  end
-
-  def busy_person_ids_for_team
-    StoryAssignment
-      .join(:stories, id: :story_id)
-      .where(Sequel[:story_assignments][:team_id] => @current_team.id)
-      .where(Sequel[:stories][:archived_at] => nil)
-      .exclude(Sequel[:story_assignments][:story_id] => @story.id)
-      .select_map(Sequel[:story_assignments][:person_id])
-      .to_set
   end
 
   def validate_scenario_fields(given, whn, thn)

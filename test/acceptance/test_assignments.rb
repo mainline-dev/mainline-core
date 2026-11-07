@@ -64,6 +64,23 @@ describe 'Assignments' do
     assert_shown('busy-person', body)
   end
 
+  it 'offers a person who is on a story but under the raised WIP limit' do
+    TeamConstraint.create(
+      team_id: @team.id, constraint_key: 'max_active_stories', value: 2,
+      min_value: 1, max_value: 5, default_value: 1
+    )
+    other_story = create_story('Other story', under_task: @task)
+    StoryAssignment.create(story_id: other_story.id, person_id: @alice.id, team_id: @team.id)
+
+    visit_assign_page(@story)
+
+    refute_shown('busy-person', page_body)
+
+    assign_person(@story, person: @alice)
+
+    refute_nil StoryAssignment.where(story_id: @story.id, person_id: @alice.id).first
+  end
+
   it 'rejects if person already on another active story' do
     other_story = create_story('Other story', under_task: @task)
     StoryAssignment.create(story_id: other_story.id, person_id: @alice.id, team_id: @team.id)

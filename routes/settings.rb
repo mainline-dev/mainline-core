@@ -24,7 +24,9 @@ class Mainline
       r.get { load_settings_page }
 
       r.post do
-        if r.params.key?('split_percentile')
+        if r.params.key?('max_active_stories')
+          save_wip_limit(r)
+        elsif r.params.key?('split_percentile')
           save_split_thresholds(r)
         elsif r.params.key?('allow_solo_activation')
           save_solo_activation(r)
@@ -45,6 +47,7 @@ class Mainline
     @aging_days = TeamConstraint.for_team(@team.id, 'inventory_aging_days', default: 4)
     @stale_days = TeamConstraint.for_team(@team.id, 'inventory_stale_days', default: 10)
     @allow_solo_activation = TeamConstraint.for_team(@team.id, 'allow_solo_activation', default: 0)
+    @wip_limit = AssignPerson.wip_limit(@team)
     @split_percentile = TeamConstraint.for_team(@team.id, 'split_percentile', default: 80)
     @split_min_released = TeamConstraint.for_team(@team.id, 'split_min_released', default: 10)
     template_idx = TeamConstraint.for_team(@team.id, 'default_story_template', default: 0)
@@ -54,6 +57,27 @@ class Mainline
     ).order(Sequel.desc(:occurred_at)).limit(20).eager(actor: :person).all
     @page_title = 'Settings - Mainline'
     view 'settings'
+  end
+
+  # Anyone working on the team can change the limit, and everyone can see who
+  # did and why, so a reason is required in both directions.
+  def save_wip_limit(req)
+    limit = Integer(req.params['max_active_stories'].to_s, 10, exception: false)
+    reason = req.params['wip_reason'].to_s.strip[0, 280]
+    if limit.nil? || !(1..AssignPerson::WIP_CEILING).cover?(limit)
+      flash['error'] = "The limit must be between 1 and #{AssignPerson::WIP_CEILING}."
+    elsif reason.empty? && limit != AssignPerson.wip_limit(@team)
+      flash['error'] = 'Give a reason for changing the limit.'
+    else
+      DB.transaction do
+        upsert_constraint_with_event(
+          AssignPerson::WIP_KEY, limit,
+          min: 1, max: AssignPerson::WIP_CEILING, default: AssignPerson::DEFAULT_WIP_LIMIT, reason: reason
+        )
+      end
+      flash['notice'] = 'WIP limit updated'
+    end
+    req.redirect '/settings'
   end
 
   def save_inventory_thresholds(req)
@@ -179,7 +203,7 @@ class Mainline
     req.redirect '/settings'
   end
 
-  def upsert_constraint_with_event(key, value, min:, max:, default:)
+  def upsert_constraint_with_event(key, value, min:, max:, default:, reason: nil)
     old_value = TeamConstraint.for_team(@team.id, key, default: default)
     upsert_constraint(key, value, min: min, max: max, default: default)
     return if old_value == value
@@ -189,7 +213,7 @@ class Mainline
       actor_id: @current_person.actor.id, entity: row, action: 'updated',
       team_id: @team.id,
       before_state: { constraint_key: key, value: old_value },
-      after_state: { constraint_key: key, value: value }
+      after_state: { constraint_key: key, value: value, reason: reason }.compact
     )
   end
 

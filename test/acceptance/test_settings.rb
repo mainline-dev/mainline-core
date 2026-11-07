@@ -324,4 +324,87 @@ describe 'Settings' do
 
     assert_includes resp.body, 'value="behaviour" selected'
   end
+
+  describe 'WIP limit' do
+    def wip_limit
+      TeamConstraint.for_team(@team.id, 'max_active_stories', default: 1)
+    end
+
+    def wip_events
+      Event.where(team_id: @team.id, entity_type: 'team_constraint').all
+        .select { |event| event.after_state['constraint_key'] == 'max_active_stories' }
+    end
+
+    it 'starts at one active story per person' do
+      visit_settings
+
+      assert_page_includes('name="max_active_stories" value="1"')
+    end
+
+    it 'raises the limit with a reason, recorded on an event' do
+      update_settings(max_active_stories: 2, wip_reason: 'Waiting on a vendor')
+
+      assert_equal 2, wip_limit
+      event = wip_events.first
+
+      assert_equal 1, event.before_state['value']
+      assert_equal 'Waiting on a vendor', event.after_state['reason']
+      assert_equal @alice.actor_id, event.actor_id
+    end
+
+    it 'needs a reason to change the limit' do
+      update_settings(max_active_stories: 2, wip_reason: '   ')
+
+      assert_equal 1, wip_limit
+      assert_empty wip_events
+      visit_settings
+
+      assert_error_shown
+    end
+
+    it 'needs a reason to lower the limit as well' do
+      update_settings(max_active_stories: 3, wip_reason: 'Short of people')
+      update_settings(max_active_stories: 2, wip_reason: '')
+
+      assert_equal 3, wip_limit
+    end
+
+    it 'allows up to five' do
+      update_settings(max_active_stories: 5, wip_reason: 'Trying it')
+
+      assert_equal 5, wip_limit
+    end
+
+    it 'refuses a limit above the ceiling' do
+      update_settings(max_active_stories: 6, wip_reason: 'Too many')
+
+      assert_equal 1, wip_limit
+      visit_settings
+
+      assert_error_shown
+    end
+
+    it 'refuses a limit below one' do
+      update_settings(max_active_stories: 0, wip_reason: 'Nothing at all')
+
+      assert_equal 1, wip_limit
+      visit_settings
+
+      assert_error_shown
+    end
+
+    it 'records nothing when the limit stays the same' do
+      update_settings(max_active_stories: 1, wip_reason: 'No change')
+
+      assert_empty wip_events
+    end
+
+    it 'shows the change and its reason in the history' do
+      update_settings(max_active_stories: 2, wip_reason: 'Waiting on a vendor')
+      visit_settings
+
+      assert_page_includes('data-setting="max_active_stories"')
+      assert_shown('settings-event-reason')
+    end
+  end
 end

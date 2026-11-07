@@ -65,6 +65,49 @@ describe AssignPerson do
     refute_empty result.errors
   end
 
+  describe 'with a raised WIP limit' do
+    before do
+      TeamConstraint.create(
+        team_id: @team.id, constraint_key: 'max_active_stories', value: 2,
+        min_value: 1, max_value: 5, default_value: 1
+      )
+      @other = another_story('Other', 2000)
+      StoryAssignment.create(story_id: @other.id, person_id: @person.id, team_id: @team.id)
+    end
+
+    def another_story(title, position)
+      Story.create(map_id: @map.id, team_id: @team.id, task_id: @task.id,
+        title: title, position: position, created_by_id: @person.id)
+    end
+
+    def assign(story)
+      AssignPerson.call(story: story, person_id: @person.id, team: @team, actor_id: @person.actor_id)
+    end
+
+    it 'lets a person take stories up to the limit' do
+      assert_predicate assign(@story), :success?
+    end
+
+    it 'refuses the story past the limit' do
+      assign(@story)
+
+      result = assign(another_story('Third', 3000))
+
+      refute_predicate result, :success?
+      refute_empty result.errors
+    end
+
+    it 'leaves stories in flight when the limit is lowered, and refuses new ones' do
+      assign(@story)
+      TeamConstraint.where(team_id: @team.id, constraint_key: 'max_active_stories').update(value: 1)
+
+      result = assign(another_story('Third', 3000))
+
+      refute_predicate result, :success?
+      assert_equal 2, StoryAssignment.where(person_id: @person.id, team_id: @team.id).count
+    end
+  end
+
   it 'activates planned story when second person assigned' do
     StoryAssignment.create(story_id: @story.id, person_id: @person.id, team_id: @team.id)
 
