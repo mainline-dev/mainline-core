@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Start free - Mainline</title>
+  <title>Sign up - Mainline</title>
   <meta name="description" content="Start Mainline free: a 14-day team trial with no card, or self-host it free. Or get the free CI monitor for GitHub with no paid plan needed.">
   <%== og_tags %>
   <%== assets(:css) %>
@@ -96,7 +96,6 @@
 <%== render('site/_nav') %>
   <div class="hero">
     <div class="login-brand">Main<em>line</em></div>
-    <p class="login-tagline">Leave your story points at the door.</p>
 
     <% if flash['error'] %>
       <div class="flash flash-error" role="alert" data-test-id="flash-error"><%= flash['error'] %></div>
@@ -106,8 +105,7 @@
     <% end %>
 
     <section class="signup-trial">
-      <h2>Start free</h2>
-      <p class="signup-trial-sub">Track your team's delivery flow from story to production.</p>
+      <h2>Create your account</h2>
       <div class="auth-buttons">
         <% if SignInProviders.enabled?('google_oauth2') %>
         <form method="post" action="/auth/google_oauth2">
@@ -137,7 +135,9 @@
         </form>
         <% end %>
       </div>
-      <p class="signup-trial-sub" style="margin-top: 0.75rem;">Sign-in only. No access to your code.</p>
+      <% if SignInProviders.any? %>
+        <p class="signup-trial-sub" style="margin-top: 0.75rem;">Sign-in only. No access to your code.</p>
+      <% end %>
       <% if SignInProviders.any? %>
         <div class="login-divider">or</div>
       <% end %>
@@ -156,20 +156,7 @@
         </div>
         <button type="submit">Sign up with email</button>
       </form>
-      <ul class="signup-receipts">
-        <li><span class="dot"></span>14 days free, no card</li>
-        <li><span class="dot"></span>No lock-in</li>
-      </ul>
-      <p class="signup-trial-sub" style="margin-top: 1.5rem;">Built for teams practising trunk-based development and continuous delivery.</p>
     </section>
-
-    <div class="signup-monitor">
-      <h3>Just want the free CI Monitor?</h3>
-      <p>Sign up, create a team, and connect GitHub. The CI Monitor is free forever, no paid plan required.</p>
-      <a href="/docs/ci-monitor" class="signup-monitor-cta">
-        Learn more
-      </a>
-    </div>
 
     <p class="login-new">Already have an account? <a href="/login">Sign in</a></p>
   </div>
@@ -184,8 +171,6 @@
     });
   });
 
-  var monitorCta = document.querySelector('.signup-monitor-cta');
-  if (monitorCta) monitorCta.addEventListener('click', function() { track('signup-ci-monitor'); });
 })();
 </script>
 </body>
