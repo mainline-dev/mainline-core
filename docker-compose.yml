@@ -1,3 +1,37 @@
+# The app and the worker boot on the same required variables.
+x-app-env: &app-env
+  RACK_ENV: development
+  MAINLINE_DATABASE_URL: postgres://mainline:password@db:5432/mainline_development
+  MAINLINE_APP_DATABASE_URL: postgres://mainline_app:app_password@db:5432/mainline_development
+  TEST_DATABASE_URL: postgres://mainline:password@db:5432/mainline_test
+  TEST_APP_DATABASE_URL: postgres://mainline_app:app_password@db:5432/mainline_test
+  MAINLINE_APP_USER_DATABASE_PASSWORD: app_password
+  MAINLINE_SESSION_SECRET: YniKJkiVWXrzVf9w70Nyp1RetneLFoZU1xp31E2x5Er3t1dr07stWnNRtRcOiXtZ
+  LOCKBOX_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+  SENTRY_DSN: dev_placeholder
+  SENTRY_ENVIRONMENT: development
+  SMTP_HOST: dev_placeholder
+  SMTP_PORT: "465"
+  SMTP_USERNAME: dev_placeholder
+  SMTP_PASSWORD: dev_placeholder
+  SMTP_TLS: tls
+  MAIL_FROM: dev@localhost
+  GOOGLE_CLIENT_ID: disabled
+  GOOGLE_CLIENT_SECRET: disabled
+  GH_OAUTH_CLIENT_ID: disabled
+  GH_OAUTH_CLIENT_SECRET: disabled
+  GITLAB_CLIENT_ID: disabled
+  GITLAB_CLIENT_SECRET: disabled
+  CI_MONITOR_GITHUB_APP_ID: dev_placeholder
+  CI_MONITOR_GITHUB_APP_SLUG: dev_placeholder
+  CI_MONITOR_GITHUB_APP_CLIENT_ID: dev_placeholder
+  CI_MONITOR_GITHUB_APP_CLIENT_SECRET: dev_placeholder
+  CI_MONITOR_GITHUB_PRIVATE_KEY: dev_placeholder
+  CI_MONITOR_GITHUB_WEBHOOK_SECRET: dev_placeholder
+  BASE_URL: http://localhost:3000
+  MAINLINE_HOST: localhost:3000
+  REDIS_URL: redis://redis:6379/0
+
 services:
   db:
     image: postgres:16
@@ -45,38 +79,7 @@ services:
     command: sh -c "bundle exec rake dev_up && bundle exec rackup -p 3000 -o 0.0.0.0"
     ports:
       - "3000:3000"
-    environment:
-      RACK_ENV: development
-      MAINLINE_DATABASE_URL: postgres://mainline:password@db:5432/mainline_development
-      MAINLINE_APP_DATABASE_URL: postgres://mainline_app:app_password@db:5432/mainline_development
-      TEST_DATABASE_URL: postgres://mainline:password@db:5432/mainline_test
-      TEST_APP_DATABASE_URL: postgres://mainline_app:app_password@db:5432/mainline_test
-      MAINLINE_APP_USER_DATABASE_PASSWORD: app_password
-      MAINLINE_SESSION_SECRET: YniKJkiVWXrzVf9w70Nyp1RetneLFoZU1xp31E2x5Er3t1dr07stWnNRtRcOiXtZ
-      LOCKBOX_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
-      SENTRY_DSN: dev_placeholder
-      SENTRY_ENVIRONMENT: development
-      SMTP_HOST: dev_placeholder
-      SMTP_PORT: "465"
-      SMTP_USERNAME: dev_placeholder
-      SMTP_PASSWORD: dev_placeholder
-      SMTP_TLS: tls
-      MAIL_FROM: dev@localhost
-      GOOGLE_CLIENT_ID: disabled
-      GOOGLE_CLIENT_SECRET: disabled
-      GH_OAUTH_CLIENT_ID: disabled
-      GH_OAUTH_CLIENT_SECRET: disabled
-      GITLAB_CLIENT_ID: disabled
-      GITLAB_CLIENT_SECRET: disabled
-      CI_MONITOR_GITHUB_APP_ID: dev_placeholder
-      CI_MONITOR_GITHUB_APP_SLUG: dev_placeholder
-      CI_MONITOR_GITHUB_APP_CLIENT_ID: dev_placeholder
-      CI_MONITOR_GITHUB_APP_CLIENT_SECRET: dev_placeholder
-      CI_MONITOR_GITHUB_PRIVATE_KEY: dev_placeholder
-      CI_MONITOR_GITHUB_WEBHOOK_SECRET: dev_placeholder
-      BASE_URL: http://localhost:3000
-      MAINLINE_HOST: localhost:3000
-      REDIS_URL: redis://redis:6379/0
+    environment: *app-env
     depends_on:
       db:
         condition: service_healthy
@@ -89,19 +92,7 @@ services:
     build: .
     container_name: mainline_worker
     command: bundle exec sidekiq -r ./sidekiq_boot.rb
-    environment:
-      RACK_ENV: development
-      MAINLINE_DATABASE_URL: postgres://mainline:password@db:5432/mainline_development
-      MAINLINE_APP_DATABASE_URL: postgres://mainline_app:app_password@db:5432/mainline_development
-      MAINLINE_APP_USER_DATABASE_PASSWORD: app_password
-      LOCKBOX_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
-      CI_MONITOR_GITHUB_APP_ID: dev_placeholder
-      CI_MONITOR_GITHUB_APP_SLUG: dev_placeholder
-      CI_MONITOR_GITHUB_APP_CLIENT_ID: dev_placeholder
-      CI_MONITOR_GITHUB_APP_CLIENT_SECRET: dev_placeholder
-      CI_MONITOR_GITHUB_PRIVATE_KEY: dev_placeholder
-      MAINLINE_HOST: localhost:3000
-      REDIS_URL: redis://redis:6379/0
+    environment: *app-env
     depends_on:
       db:
         condition: service_healthy
