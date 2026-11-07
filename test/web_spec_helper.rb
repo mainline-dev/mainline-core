@@ -174,8 +174,19 @@ class Minitest::HooksSpec
     puts "\nBrowser failure not saved: #{e.message}"
   end
 
+  # A request still in flight when a test ends reaches the server after its
+  # data is rolled back, and the 404 lands in whichever test runs next.
+  def let_the_browser_settle
+    return if Capybara.current_driver == Capybara.default_driver
+
+    page.driver.wait_for_network_idle(timeout: 2)
+  rescue StandardError => e
+    puts "\nBrowser did not settle: #{e.message}"
+  end
+
   after do
     save_browser_failure
+    let_the_browser_settle
     AUTH_RATE_LIMITER.reset
     LOGIN_GLOBAL_LIMITER.reset
     LOGIN_EMAIL_LIMITER.reset
