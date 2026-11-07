@@ -29,6 +29,7 @@ x-app-env: &app-env
   CI_MONITOR_GITHUB_PRIVATE_KEY: dev_placeholder
   CI_MONITOR_GITHUB_WEBHOOK_SECRET: dev_placeholder
   BASE_URL: http://localhost:3000
+  SIGNUPS: open
   MAINLINE_HOST: localhost:3000
   REDIS_URL: redis://redis:6379/0
 

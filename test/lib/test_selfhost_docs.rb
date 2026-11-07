@@ -53,6 +53,10 @@ describe 'Self-host setup' do
     assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
   end
 
+  it 'publishes the app only to the local proxy, not to the internet' do
+    assert_equal ['127.0.0.1:3000:3000'], compose.dig('services', 'app', 'ports')
+  end
+
   it 'keeps the .env file the README suggests out of git and out of the image' do
     ignored = File.readlines(File.join(root, '.gitignore'), chomp: true)
     not_in_image = File.readlines(File.join(root, '.dockerignore'), chomp: true)

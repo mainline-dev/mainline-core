@@ -35,6 +35,24 @@ describe 'Authentication' do
     ENV['GITLAB_CLIENT_ID'] = was
   end
 
+  it 'hides a disabled provider on the invite page' do
+    team = Team.create(name: 'Invite Team')
+    SetTeamContext.call(team.id)
+    inviter = driver.add_person(team, name: 'Boss', email: 'boss@acme.co')
+    Invitation.create(
+      team_id: team.id, email: 'invitee@acme.co', invited_by: inviter.id,
+      token: InviteToken.digest('provider-invite'), expires_at: Time.now + 86_400
+    )
+    was = ENV.fetch('GITLAB_CLIENT_ID')
+    ENV['GITLAB_CLIENT_ID'] = 'disabled'
+    body = driver.get('/invite/provider-invite').body
+
+    refute_includes body, 'action="/auth/gitlab"'
+    assert_includes body, 'action="/auth/github"'
+  ensure
+    ENV['GITLAB_CLIENT_ID'] = was
+  end
+
   it 'redirects unauthenticated request to /login' do
     resp = driver.visit_map(@map)
 

@@ -21,6 +21,7 @@ module EnvRequirements
     'GITLAB_CLIENT_ID'                    => 'GitLab sign-in client ID; disabled leaves GitLab sign-in out',
     'GITLAB_CLIENT_SECRET'                => 'GitLab sign-in client secret',
     'BASE_URL'                            => 'Public URL of the app, for example https://mainline.example.org',
+    'SIGNUPS'                             => 'open lets anyone sign up; anything else admits only the first person and invited people',
     'MAINLINE_HOST'                       => 'Host name of the app, for example mainline.example.org',
     'REDIS_URL'                           => 'Redis URL for the job queue, for example redis://redis:6379/0',
     'SENTRY_DSN'                          => 'Sentry DSN for error reports; a plain word such as disabled turns sending off',
