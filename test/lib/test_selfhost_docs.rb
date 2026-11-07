@@ -53,6 +53,20 @@ describe 'Self-host setup' do
     assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
   end
 
+  it 'changes into the folder the quick start clone creates' do
+    readme = File.read(File.join(root, 'README.md'))
+    cloned = readme[%r{git clone \S+/([^/\s]+)\.git}, 1]
+
+    assert_includes readme, "cd #{cloned}\n"
+  end
+
+  it 'builds pull requests as well as pushes to master' do
+    triggers = YAML.safe_load_file(File.join(root, '.github/workflows/ci.yml'), aliases: true)[true]
+
+    assert_includes triggers.keys, 'pull_request'
+    assert_includes triggers.keys, 'push'
+  end
+
   it 'lists in the README exactly the variables the compose file asks for' do
     assert_equal asked_for, readme_table
   end

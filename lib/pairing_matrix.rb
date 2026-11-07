@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Who worked with whom in the window: a pair's story count and days since
-# they last paired. The team's AI agent takes a column too, once it has read
+# they last paired. The team's coding agent takes a column too, once it has read
 # a story over MCP: its pair with a person counts the stories it read while
 # that person was on them.
 module PairingMatrix

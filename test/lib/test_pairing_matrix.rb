@@ -331,7 +331,7 @@ describe PairingMatrix do
 
       result = PairingMatrix.call(team_id: @team.id)
 
-      assert_equal 'AI Agent', result.agent.name
+      assert_equal 'Coding agent', result.agent.name
       assert_equal 2, result.story_counts[agent_key(result, @alice)]
       assert_nil result.story_counts[agent_key(result, @bob)]
     end
