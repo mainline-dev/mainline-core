@@ -13,11 +13,19 @@
     <p><strong><%= @inviter.name %></strong> invited you to join <strong><%= @team.name %></strong> on Mainline.</p>
     <p>Sign in to accept the invitation.</p>
     <div class="auth-buttons">
+      <% if SignInProviders.enabled?('google_oauth2') %>
       <form method="post" action="/auth/google_oauth2"><input type="hidden" name="authenticity_token" value="<%= @authenticity_token %>"><button type="submit" class="btn">Sign in with Google</button></form>
+      <% end %>
+      <% if SignInProviders.enabled?('github') %>
       <form method="post" action="/auth/github"><input type="hidden" name="authenticity_token" value="<%= @authenticity_token %>"><button type="submit" class="btn">Sign in with GitHub</button></form>
+      <% end %>
+      <% if SignInProviders.enabled?('gitlab') %>
       <form method="post" action="/auth/gitlab"><input type="hidden" name="authenticity_token" value="<%= @authenticity_token %>"><button type="submit" class="btn">Sign in with GitLab</button></form>
+      <% end %>
     </div>
+    <% if SignInProviders.any? %>
     <div class="login-divider">or</div>
+    <% end %>
     <form method="post" action="/login" class="email-auth-form" aria-label="Sign in with email" data-test-id="email-login-form">
       <%== csrf_tag('/login') %>
       <label for="login-email">Email</label>

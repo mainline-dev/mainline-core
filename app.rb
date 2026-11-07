@@ -65,6 +65,7 @@ require_relative 'lib/rate_limiter'
 require_relative 'lib/login_link_throttle'
 require_relative 'lib/mcp_actor'
 require_relative 'lib/sign_in_providers'
+require_relative 'lib/signups'
 require_relative 'lib/mcp_server'
 require_relative 'lib/flash_adapter'
 require_relative 'lib/request_logger'
@@ -324,6 +325,8 @@ class Mainline < Roda
 
     r.is 'signup' do
       r.get do
+        next view('signups_closed', layout: false) unless Signups.available?(invite_token: session['invite_token'])
+
         session['signup_plan'] = r.params['plan'] if r.params['plan']
         @authenticity_token = session['csrf'] ||= SecureRandom.base64(32)
         @form_started = SignupTimer.token
@@ -485,10 +488,7 @@ class Mainline < Roda
 
     r.on 'invite' do
       r.get String do |token|
-        invitation = BypassRLS.call {
-          Invitation.where(token: InviteToken.digest(token), accepted_at: nil)
-            .where { expires_at > Time.now }.first
-        }
+        invitation = Invitation.pending(token)
         next view('invite_expired', layout: false) unless invitation
 
         @team = Team[invitation.team_id]
@@ -543,23 +543,19 @@ class Mainline < Roda
     req.redirect('/signup')
   end
 
+  SIGNUPS_CLOSED = 'Sign-ups are closed. Ask someone on your team to send you an invitation.'
+
   def handle_email_signup(params)
     name     = params['name'].to_s.strip
     email    = params['email'].to_s.strip.downcase
     password = params['password'].to_s
 
+    return { error: SIGNUPS_CLOSED } unless Signups.allowed?(email: email, invite_token: session['invite_token'])
+
     error = validate_signup(name, email, password)
     return { error: error } if error
 
-    person = DB.transaction {
-      p = Person.create(name: name, email: email)
-      email_bidx = BlindIndex.generate_bidx(email, key: Lockbox.master_key)
-      PersonIdentity.create(
-        person_id: p.id, provider: 'email', provider_subject: email_bidx,
-        email: email, password_digest: BCrypt::Password.create(password, cost: 12)
-      )
-      p
-    }
+    person = create_email_person(name, email, password)
     CoreEvents.publish(:person_signed_up, person_id: person.id, provider: 'email', session: session)
     token = SignedState.generate("verify:#{person.id}")
     result = SendVerificationEmail.call(person: person, token: token)
@@ -572,6 +568,18 @@ class Mainline < Roda
   # has to go on the page or the person can never verify.
   def verify_link_notice(verification)
     " Verify your email: #{verification}" if verification.is_a?(String)
+  end
+
+  def create_email_person(name, email, password)
+    DB.transaction {
+      p = Person.create(name: name, email: email)
+      email_bidx = BlindIndex.generate_bidx(email, key: Lockbox.master_key)
+      PersonIdentity.create(
+        person_id: p.id, provider: 'email', provider_subject: email_bidx,
+        email: email, password_digest: BCrypt::Password.create(password, cost: 12)
+      )
+      p
+    }
   end
 
   def validate_signup(name, email, password)
@@ -710,6 +718,11 @@ class Mainline < Roda
       flash['error'] = 'An account with that email already exists.'
       return nil
     end
+    unless Signups.allowed?(email: email, invite_token: session['invite_token'])
+      clear_pending_signup
+      flash['error'] = SIGNUPS_CLOSED
+      return nil
+    end
     person = create_oauth_person(pending, email)
     clear_pending_signup
     CoreEvents.publish(:person_signed_up, person_id: person.id, provider: pending['provider'], session: session)
@@ -751,10 +764,7 @@ class Mainline < Roda
     invite_token = sess.delete('invite_token')
     return unless invite_token
 
-    invitation = BypassRLS.call {
-      Invitation.where(token: InviteToken.digest(invite_token), accepted_at: nil)
-        .where { expires_at > Time.now }.first
-    }
+    invitation = Invitation.pending(invite_token)
     email_bidx = BlindIndex.generate_bidx(email, key: Lockbox.master_key)
     return unless invitation && invitation.email_bidx == email_bidx
 

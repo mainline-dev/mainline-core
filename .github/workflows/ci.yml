@@ -34,6 +34,7 @@ jobs:
       CI_MONITOR_GITHUB_PRIVATE_KEY: test
       CI_MONITOR_GITHUB_WEBHOOK_SECRET: test
       BASE_URL: http://localhost:3000
+      SIGNUPS: open
 
     steps:
       - uses: actions/checkout@v4

@@ -41,6 +41,7 @@ docker compose -f docker-compose.selfhost.yml up -d --build
 | `MAINLINE_SESSION_SECRET` | Session cookie secret, at least 64 random characters (`openssl rand -hex 32`) |
 | `LOCKBOX_MASTER_KEY` | 64 hex characters used to encrypt email addresses at rest (`openssl rand -hex 32`) |
 | `BASE_URL` | Public URL of the app, for example `https://mainline.example.org` |
+| `SIGNUPS` | `open` lets anyone sign up. Anything else lets in only the first person and people with an invite |
 | `MAINLINE_HOST` | Host name of the app, for example `mainline.example.org` |
 | `SMTP_HOST` | Mail server host name |
 | `SMTP_PORT` | Mail server port, usually 587 |
@@ -62,6 +63,20 @@ docker compose -f docker-compose.selfhost.yml up -d --build
 | `CI_MONITOR_GITHUB_WEBHOOK_SECRET` | CI Monitor GitHub App webhook signing secret |
 | `SENTRY_DSN` | Sentry DSN for error reports; a plain word such as `disabled` turns sending off |
 | `SENTRY_ENVIRONMENT` | Label on error reports, for example `production` |
+
+### HTTPS and public installs
+
+The app listens on `127.0.0.1:3000` and needs HTTPS in front of it, because session cookies in production are HTTPS only. Caddy fetches a certificate for you. With your domain pointing at the server, install Caddy there and put this in its `Caddyfile`:
+
+```
+mainline.example.org {
+    reverse_proxy 127.0.0.1:3000
+}
+```
+
+Set `BASE_URL` to `https://mainline.example.org` and `MAINLINE_HOST` to `mainline.example.org`.
+
+Set `SIGNUPS=closed` on anything reachable from the internet, and sign up as soon as it starts, because the first person to sign up gets in. After that, people need an invitation. New email accounts verify their address before creating a team, so SMTP has to work.
 
 ## Running the tests
 

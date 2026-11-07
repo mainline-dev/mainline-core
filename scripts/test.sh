@@ -40,5 +40,6 @@ export GH_OAUTH_CLIENT_SECRET=test
 export GITLAB_CLIENT_ID=test
 export GITLAB_CLIENT_SECRET=test
 export BASE_URL=http://localhost:3000
+export SIGNUPS=open
 export RACK_ENV=test
 bundle exec rake test_browser

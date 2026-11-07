@@ -62,7 +62,9 @@
       <button type="submit">Sign in with email</button>
       <p style="margin: 0.75rem 0 0; font-size: 0.8125rem; text-align: right;"><a href="/forgot-password" style="color: var(--text-tertiary); text-decoration: underline; text-underline-offset: 2px;">Forgot password?</a></p>
     </form>
-    <p class="login-new">New here? <a href="/signup">Sign up</a></p>
+    <% if Signups.available?(invite_token: session['invite_token']) %>
+      <p class="login-new" data-test-id="login-signup">New here? <a href="/signup">Sign up</a></p>
+    <% end %>
   </div>
 </body>
 </html>
