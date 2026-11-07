@@ -16,7 +16,7 @@ describe '.well-known/mcp.json' do
     body = JSON.parse(resp.body)
     server = body.dig('mcpServers', 'mainline')
 
-    assert_equal 'https://mainline.dev/mcp/{team_id}', server['url']
+    assert_equal "#{ENV.fetch('BASE_URL')}/mcp/{team_id}", server['url']
     assert_equal 'bearer', server.dig('authentication', 'type')
   end
 end
