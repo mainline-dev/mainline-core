@@ -59,6 +59,23 @@ describe 'Suspended teams' do
     assert_equal "/teams/#{@team.id}/account", URI.parse(resp['Location']).path
   end
 
+  it 'lets the account holder export the team data' do
+    suspend_team
+    login_as(@holder)
+
+    resp = driver.get "/teams/#{@team.id}/account/export"
+
+    assert_equal 200, resp.status
+    assert_includes resp.content_type, 'application/json'
+  end
+
+  it 'lets the account holder reach the page that deletes the team' do
+    suspend_team
+    login_as(@holder)
+
+    assert_equal 200, driver.get("/teams/#{@team.id}/account/delete").status
+  end
+
   it 'keeps the CI Monitor open' do
     suspend_team
 
