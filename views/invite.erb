@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join <%= @team.name %> - Mainline</title>
+  <%== assets(:css) %>
+  <%== public_head_tags %>
+</head>
+<body class="landing">
+  <div class="hero">
+    <h1>You're invited</h1>
+    <p><strong><%= @inviter.name %></strong> invited you to join <strong><%= @team.name %></strong> on Mainline.</p>
+    <p>Sign in to accept the invitation.</p>
+    <div class="auth-buttons">
+      <form method="post" action="/auth/google_oauth2"><input type="hidden" name="authenticity_token" value="<%= @authenticity_token %>"><button type="submit" class="btn">Sign in with Google</button></form>
+      <form method="post" action="/auth/github"><input type="hidden" name="authenticity_token" value="<%= @authenticity_token %>"><button type="submit" class="btn">Sign in with GitHub</button></form>
+      <form method="post" action="/auth/gitlab"><input type="hidden" name="authenticity_token" value="<%= @authenticity_token %>"><button type="submit" class="btn">Sign in with GitLab</button></form>
+    </div>
+    <div class="login-divider">or</div>
+    <form method="post" action="/login" class="email-auth-form" aria-label="Sign in with email" data-test-id="email-login-form">
+      <%== csrf_tag('/login') %>
+      <label for="login-email">Email</label>
+      <input type="email" id="login-email" name="email" required autocomplete="email" maxlength="254">
+      <label for="login-password">Password</label>
+      <input type="password" id="login-password" name="password" required autocomplete="current-password">
+      <button type="submit">Sign in with email</button>
+    </form>
+    <p class="login-new">New here? <a href="/signup">Create an account</a></p>
+  </div>
+</body>
+</html>

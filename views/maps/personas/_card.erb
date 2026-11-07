@@ -1,0 +1,19 @@
+<div class="persona-card" id="persona-<%= @persona.id %>" data-test-id="persona-card">
+  <div class="persona-card-header">
+    <%== render('maps/personas/_name') %>
+    <a href="/maps/<%= @map.id %>/personas/<%= @persona.id %>/edit"
+       hx-get="/maps/<%= @map.id %>/personas/<%= @persona.id %>/edit"
+       hx-target="#persona-<%= @persona.id %>" hx-swap="outerHTML"
+       class="persona-card-edit">Edit</a>
+  </div>
+  <% unless @persona.description.empty? %>
+    <p class="persona-card-desc"><%= @persona.description %></p>
+  <% end %>
+  <% if @persona.activities.any? %>
+    <div class="persona-card-activities">
+      <% @persona.activities.each do |activity| %>
+        <span class="persona-badge"><%= activity.name %></span>
+      <% end %>
+    </div>
+  <% end %>
+</div>

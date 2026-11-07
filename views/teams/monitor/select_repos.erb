@@ -1,0 +1,62 @@
+<h1 class="page-title">Add Repos</h1>
+
+<% if @available_repos.empty? %>
+  <p class="monitor-empty">All repos from this installation are already being monitored.</p>
+  <p><a href="/teams/<%= @team.id %>/monitor">Back to dashboard</a></p>
+<% else %>
+  <% repos_by_org = @available_repos.group_by { |r| r[:full_name].split('/').first } %>
+  <form method="post" action="/teams/<%= @team.id %>/monitor/repos/import" data-test-id="repo-picker">
+    <%== csrf_tag("/teams/#{@team.id}/monitor/repos/import") %>
+    <div class="monitor-repo-picker">
+      <label class="monitor-repo-option monitor-repo-option--all">
+        <input type="checkbox" data-test-id="select-all-repos" />
+        <span><strong>Select all</strong></span>
+      </label>
+      <% repos_by_org.each do |org, repos| %>
+        <div class="monitor-org-group" data-test-id="org-group-<%= org %>">
+          <label class="monitor-repo-option monitor-repo-option--org">
+            <input type="checkbox" data-test-id="org-toggle" data-org="<%= org %>" />
+            <span><strong><%= org %></strong> (<%= repos.size %>)</span>
+          </label>
+          <% repos.each do |repo| %>
+            <label class="monitor-repo-option monitor-repo-option--repo">
+              <input type="checkbox" name="repo_ids[]" value="<%= repo[:id] %>" data-org="<%= org %>" />
+              <span><%= repo[:full_name].split('/').last %></span>
+            </label>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+    <button type="submit" class="btn">Add selected repos</button>
+  </form>
+  <%== "<script nonce=\"#{@csp_nonce}\">" %>
+  (function() {
+    var selectAll = document.querySelector('[data-test-id="select-all-repos"]');
+    var orgToggles = document.querySelectorAll('[data-test-id="org-toggle"]');
+    var boxes = document.querySelectorAll('input[name="repo_ids[]"]');
+
+    selectAll.addEventListener('change', function() {
+      boxes.forEach(function(cb) { cb.checked = selectAll.checked; });
+      orgToggles.forEach(function(cb) { cb.checked = selectAll.checked; });
+    });
+
+    orgToggles.forEach(function(toggle) {
+      toggle.addEventListener('change', function() {
+        var org = toggle.dataset.org;
+        document.querySelectorAll('input[data-org="' + org + '"][name="repo_ids[]"]')
+          .forEach(function(cb) { cb.checked = toggle.checked; });
+      });
+    });
+
+    boxes.forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var org = cb.dataset.org;
+        var orgBoxes = document.querySelectorAll('input[data-org="' + org + '"][name="repo_ids[]"]');
+        var orgToggle = document.querySelector('[data-test-id="org-toggle"][data-org="' + org + '"]');
+        orgToggle.checked = Array.from(orgBoxes).every(function(b) { return b.checked; });
+      });
+    });
+  })();
+  <%== "</script>" %>
+  <p><a href="/teams/<%= @team.id %>/monitor">Back to dashboard</a></p>
+<% end %>

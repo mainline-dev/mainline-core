@@ -1,0 +1,54 @@
+name: Build and test
+
+on:
+  push:
+    branches: [ master ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      LOCKBOX_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      SMTP_HOST: test
+      SMTP_PORT: "465"
+      SMTP_USERNAME: test
+      SMTP_PASSWORD: test
+      SMTP_TLS: tls
+      MAIL_FROM: test@localhost
+      GOOGLE_CLIENT_ID: test
+      GOOGLE_CLIENT_SECRET: test
+      GH_OAUTH_CLIENT_ID: test
+      GH_OAUTH_CLIENT_SECRET: test
+      GITLAB_CLIENT_ID: test
+      GITLAB_CLIENT_SECRET: test
+      MAINLINE_HOST: localhost:3000
+      CI_MONITOR_GITHUB_APP_ID: test
+      CI_MONITOR_GITHUB_APP_SLUG: test
+      CI_MONITOR_GITHUB_APP_CLIENT_ID: test
+      CI_MONITOR_GITHUB_APP_CLIENT_SECRET: test
+      CI_MONITOR_GITHUB_PRIVATE_KEY: test
+      CI_MONITOR_GITHUB_WEBHOOK_SECRET: test
+      BASE_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: docker compose build
+
+      - name: Start DB
+        run: docker compose up -d db
+
+      - name: Wait for DB
+        run: until docker compose exec db pg_isready -U mainline -d mainline_development; do sleep 2; done
+        timeout-minutes: 1
+
+      - name: Run tests
+        run: ./scripts/ci_test.sh
+
+      - name: Stop services
+        if: always()
+        run: docker compose down

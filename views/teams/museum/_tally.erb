@@ -1,0 +1,5 @@
+<%# locals: (in_place:) %>
+<span id="mu-tally" class="mu-tally"<% if in_place %> hx-swap-oob="true"<% end %>>
+  <span class="mu-count"><%= @museum.total %> <%= @museum.total == 1 ? 'exhibit' : 'exhibits' %><% unless @filters.empty? %> <%= @museum.total == 1 ? 'matches' : 'match' %><% end %></span>
+  <% unless @filters.empty? %><a href="<%= @museum_path %>" class="mu-clear" data-test-id="museum-clear">Clear</a><% end %>
+</span>

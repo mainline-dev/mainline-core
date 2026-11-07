@@ -1,0 +1,67 @@
+<nav class="subnav">
+  <a href="/maps/<%= @map.id %>"
+     class="subnav-link<%= ' active' if @subnav_active == 'map' %>">Map</a>
+  <a href="/maps/<%= @map.id %>/personas"
+     class="subnav-link<%= ' active' if @subnav_active == 'personas' %>">Personas</a>
+  <a href="/maps/<%= @map.id %>/activities"
+     class="subnav-link<%= ' active' if @subnav_active == 'activities' %>">Activities</a>
+  <a href="/maps/<%= @map.id %>/release_slices"
+     class="subnav-link<%= ' active' if @subnav_active == 'slices' %>">Slices</a>
+  <a href="/maps/<%= @map.id %>/history"
+     class="subnav-link<%= ' active' if @subnav_active == 'history' %>">History</a>
+  <% if @subnav_active == 'map' %>
+    <span class="subnav-divider"></span>
+    <span class="subnav-filter-label">Filters</span>
+    <div class="subnav-filters">
+      <%
+        filter_q = ->(over = {}) {
+          p = { active: @active_filter ? '1' : '0', slices: @slices_view ? '1' : '0',
+                hide_released: @hide_released ? '1' : '0', slice_filter: @slice_filter.to_s }.merge(over)
+          "/maps/#{@map.id}?" + p.map { |k, v| "#{k}=#{v}" }.join('&')
+        }
+      %>
+      <a href="<%= filter_q.call(active: @active_filter ? '0' : '1') %>" class="filter-toggle<%= ' active' if @active_filter %>" data-test-id="toggle-active-only" aria-pressed="<%= @active_filter ? 'true' : 'false' %>">Active only</a>
+      <% if @release_slices.any? %>
+        <a href="<%= filter_q.call(slices: @slices_view ? '0' : '1') %>" class="filter-toggle<%= ' active' if @slices_view %>" data-test-id="toggle-slices" aria-pressed="<%= @slices_view ? 'true' : 'false' %>">Sliced</a>
+      <% end %>
+      <a href="<%= filter_q.call(hide_released: @hide_released ? '0' : '1') %>" class="filter-toggle<%= ' active' if @hide_released %>" data-test-id="toggle-hide-released" aria-pressed="<%= @hide_released ? 'true' : 'false' %>">Hide released</a>
+      <% if @release_slices.any? %>
+        <% current_slice = @slice_filter && @release_slices.find { |s| s.id == @slice_filter } %>
+        <details class="nav-dropdown slice-filter" data-test-id="slice-filter">
+          <summary class="filter-toggle nav-dropdown-trigger<%= ' active' if current_slice %>"><%= current_slice ? current_slice.name : 'All slices' %></summary>
+          <div class="nav-dropdown-menu">
+            <a href="<%= filter_q.call(slice_filter: '') %>">All slices</a>
+            <% @release_slices.each do |s| %>
+              <a href="<%= filter_q.call(slice_filter: s.id) %>"><%= s.name %></a>
+            <% end %>
+          </div>
+        </details>
+      <% end %>
+    </div>
+    <details class="subnav-kebab" data-test-id="subnav-kebab">
+      <summary aria-label="Map options">&vellip;</summary>
+      <div class="subnav-kebab-menu">
+        <form method="post" action="/maps/<%= @map.id %>/lock" style="margin:0">
+          <%== csrf_tag('/maps/' + @map.id + '/lock') %>
+          <button type="submit" data-test-id="lock-map" data-locked="<%= @locked ? 'true' : 'false' %>"><%= @locked ? 'Unlock map' : 'Lock map' %></button>
+        </form>
+        <button type="button" data-density="comfortable" data-test-id="density-comfortable">Comfortable</button>
+        <button type="button" data-density="compact" data-test-id="density-compact">Compact</button>
+        <% if @map_archivable %>
+          <button type="button" class="archive-btn delete-confirm"
+                  data-delete-url="/maps/<%= @map.id %>/archive"
+                  data-delete-target=".subnav-kebab"
+                  data-label="Archive map"
+                  data-test-id="archive-map">Archive map</button>
+        <% end %>
+      </div>
+    </details>
+  <% elsif @subnav_active == 'personas' %>
+    <a href="/maps/<%= @map.id %>/personas/new" class="subnav-action">+ Persona</a>
+  <% elsif @subnav_active == 'activities' %>
+    <a href="/maps/<%= @map.id %>/activities/new" class="subnav-action">+ Activity</a>
+  <% elsif @subnav_active == 'slices' %>
+    <a href="/maps/<%= @map.id %>/release_slices/new" class="subnav-action">+ Slice</a>
+  <% end %>
+</nav>
+

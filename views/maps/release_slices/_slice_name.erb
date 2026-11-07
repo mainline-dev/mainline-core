@@ -1,0 +1,9 @@
+<strong class="inline-editable"
+        hx-get="/maps/<%= @map.id %>/release_slices/<%= @release_slice.id %>/edit_name"
+        hx-target="#slice-name-<%= @release_slice.id %>"
+        hx-swap="innerHTML"><%= @release_slice.name %></strong>
+<button type="button" class="delete-btn delete-confirm"
+        data-label="&times;"
+        data-delete-url="/maps/<%= @map.id %>/release_slices/<%= @release_slice.id %>/delete"
+        data-delete-target="#slice-name-<%= @release_slice.id %>"
+        aria-label="Delete slice">&times;</button>

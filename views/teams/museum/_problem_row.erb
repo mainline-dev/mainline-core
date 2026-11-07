@@ -1,0 +1,7 @@
+<%# locals: (problem:, key_at:, summary_at:) %>
+<div class="mu-problem" data-test-id="museum-import-problem" data-row="<%= problem['row'] %>" data-reason="<%= problem['reason'] %>">
+  <span class="mu-problem-row"><%= problem['row'] %></span>
+  <span class="mu-problem-why"><%= JiraCsv::PROBLEMS[problem['reason']] %></span>
+  <span class="mu-problem-key"><%= problem['cells'][key_at] if key_at %></span>
+  <span class="mu-problem-summary"><%= problem['cells'][summary_at].to_s[0, 120] if summary_at %></span>
+</div>

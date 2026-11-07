@@ -1,0 +1,34 @@
+<%== render('maps/_subnav') %>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<% if @personas.empty? %>
+  <p class="empty-state">Create a persona first -- every activity must serve at least one.</p>
+  <a href="/maps/<%= @map.id %>/personas/new" class="btn">+ Persona</a>
+<% else %>
+  <div class="form-container">
+    <form method="post" action="/maps/<%= @map.id %>/activities">
+      <%== csrf_tag('/maps/' + @map.id + '/activities') %>
+
+      <label for="name">Name</label>
+      <input type="text" id="name" name="name" value=""
+             placeholder="e.g. Browse catalogue" maxlength="100" autofocus>
+
+      <label>Personas (select at least one)</label>
+      <div class="checkbox-group">
+        <% @personas.each do |p| %>
+          <label>
+            <input type="checkbox" name="persona_ids[]" value="<%= p.id %>"
+                   <%= 'checked' if @selected_persona_ids&.include?(p.id) %>>
+            <%= p.name %>
+          </label>
+        <% end %>
+      </div>
+
+      <button type="submit" class="btn">Create Activity</button>
+      <a href="/maps/<%= @map.id %>" class="cancel-link">Cancel</a>
+    </form>
+  </div>
+<% end %>

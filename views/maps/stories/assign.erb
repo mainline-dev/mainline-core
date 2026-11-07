@@ -1,0 +1,30 @@
+<h1 class="page-title">Assign Person</h1>
+<p class="page-subtitle">
+  Assign a team member to &ldquo;<%= @story.title %>&rdquo;
+</p>
+<%== render('maps/stories/_subnav') %>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <% if @available_people.empty? %>
+    <p class="empty-state">No available team members to assign.</p>
+  <% else %>
+    <form method="post" action="/maps/<%= @map.id %>/stories/<%= @story.id %>/assignments">
+      <%== csrf_tag('/maps/' + @map.id + '/stories/' + @story.id + '/assignments') %>
+
+      <label for="person_id">Person</label>
+      <select id="person_id" name="person_id">
+        <option value="">Select a person</option>
+        <% @available_people.each do |person| %>
+          <% busy = @busy_person_ids&.include?(person.id) %>
+          <option value="<%= person.id %>"<% if busy %> disabled data-test-id="busy-person"<% end %>><%= person.name %><%= ' (on active story)' if busy %></option>
+        <% end %>
+      </select>
+
+      <button type="submit" class="btn">Assign</button>
+    </form>
+  <% end %>
+</div>

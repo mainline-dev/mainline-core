@@ -1,0 +1,52 @@
+<div id="story-form-container"<%= ' data-save-success' if @save_success %>>
+  <% if @errors&.any? %>
+    <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
+
+  <form method="post" action="/maps/<%= @map.id %>/stories/<%= @story.id %>"
+        hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>"
+        hx-target="#story-form-container" hx-swap="outerHTML"
+        class="story-edit-form">
+    <%== csrf_tag('/maps/' + @map.id + '/stories/' + @story.id) %>
+
+    <label for="title">Title</label>
+    <input type="text" id="title" name="title" value="<%= @title %>" maxlength="200" <%= 'disabled' if @story.status == 'released' %> autofocus>
+
+    <label for="task_id">Task</label>
+    <select id="task_id" name="task_id" <%= 'disabled' if @story.status == 'released' %>>
+      <option value="">&mdash; select &mdash;</option>
+      <% @tasks.each do |t| %>
+        <option value="<%= t.id %>" <%= 'selected' if @selected_task_id == t.id %>>
+          <%= t.activity.name %> &rarr; <%= t.name %>
+        </option>
+      <% end %>
+    </select>
+
+    <% if @release_slices.any? %>
+      <label for="release_slice_id">Release Slice</label>
+      <select id="release_slice_id" name="release_slice_id" <%= 'disabled' if @story.status == 'released' %>>
+        <option value="">None</option>
+        <% @release_slices.each do |s| %>
+          <option value="<%= s.id %>" <%= 'selected' if @selected_release_slice_id == s.id %>>
+            <%= s.name %>
+          </option>
+        <% end %>
+      </select>
+    <% end %>
+
+    <label for="decoupling_strategy">Deploy-Release Decoupling Strategy</label>
+    <select id="decoupling_strategy" name="decoupling_strategy">
+      <option value="">None</option>
+      <option value="flag" <%= 'selected' if @story.decoupling_strategy == 'flag' %>>Feature flag</option>
+      <option value="bba" <%= 'selected' if @story.decoupling_strategy == 'bba' %>>Branch by Abstraction</option>
+      <option value="dark_launch" <%= 'selected' if @story.decoupling_strategy == 'dark_launch' %>>Dark launch</option>
+    </select>
+
+    <div id="decoupling-label-group" style="<%= 'display:none' if @story.decoupling_strategy.to_s.empty? %>">
+      <label for="decoupling_label">Label</label>
+      <input type="text" id="decoupling_label" name="decoupling_label" value="<%= @story.decoupling_label %>" maxlength="50" placeholder="e.g. FF_HIDE_FEATURE_B">
+    </div>
+
+    <button type="submit" class="btn">Save</button>
+  </form>
+</div>

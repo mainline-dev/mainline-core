@@ -1,0 +1,28 @@
+<h1 class="page-title">Connect GitHub</h1>
+
+<% if @all_linked %>
+<p>All installed organizations are already connected.</p>
+
+<p class="monitor-installation-alt">
+  <a href="https://github.com/apps/<%= @app_slug %>/installations/new?state=<%= Rack::Utils.escape(@install_state) %>">Install the app on another org</a>
+</p>
+<% else %>
+<p>Select which organization to connect.</p>
+
+<div class="monitor-installation-picker" data-test-id="installation-picker">
+  <% @unlinked_installations.each do |inst| %>
+    <form method="post" action="/teams/<%= @team.id %>/monitor/install" class="monitor-installation-option">
+      <%== csrf_tag("/teams/#{@team.id}/monitor/install") %>
+      <input type="hidden" name="installation_id" value="<%= inst[:id] %>" />
+      <input type="hidden" name="account_login" value="<%= inst[:account_login] %>" />
+      <button type="submit" class="btn monitor-installation-btn"><%= inst[:account_login] %></button>
+    </form>
+  <% end %>
+</div>
+
+<p class="monitor-installation-alt">
+  Don't see your organization? <a href="https://github.com/apps/<%= ENV.fetch('CI_MONITOR_GITHUB_APP_SLUG') %>/installations/new?state=<%= Rack::Utils.escape(@install_state) %>">Install the app on another org</a>
+</p>
+<% end %>
+
+<p><a href="/teams/<%= @team.id %>/monitor">Back to dashboard</a></p>

@@ -1,0 +1,16 @@
+<% @page_breadcrumb = 'Ticket Museum / Let go' %>
+<% total = @gone + @left %>
+<div class="mu-lg-done">
+  <p class="mu-label">Let go</p>
+  <p class="mu-lg-done-title" data-test-id="let-go-done" data-gone="<%= @gone %>" data-left="<%= @left %>"><%= @gone %> <%= @gone == 1 ? 'exhibit' : 'exhibits' %> let go. <%= @left %> <%= @left == 1 ? 'remains' : 'remain' %> on display.</p>
+  <div class="mu-lg-done-track"><div class="mu-lg-done-fill" style="width: <%= @left * 100 / total %>%"></div></div>
+  <p class="mu-lg-done-note">The museum is <%= @gone * 100 / total %>% smaller. <%= @gone == 1 ? 'That exhibit is' : "The #{@gone} are" %> in storage, and the next acquisition won't bring <%= @gone == 1 ? 'it' : 'them' %> back.</p>
+  <div class="mu-lg-done-actions">
+    <a href="<%= @museum_path %>" class="btn" data-test-id="let-go-back-to-museum">Back to the museum</a>
+    <form method="post" action="<%= @museum_path %>/let-go/undo">
+      <%== csrf_tag("#{@museum_path}/let-go/undo") %>
+      <button type="submit" class="btn-ghost" data-test-id="let-go-undo">Undo</button>
+    </form>
+    <span class="mu-note">or bring any back from storage later</span>
+  </div>
+</div>

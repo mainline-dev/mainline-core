@@ -1,0 +1,158 @@
+<div class="settings-page" data-test-id="settings">
+<h1 class="page-title">Settings</h1>
+<p class="settings-subtitle" data-test-id="team-wide-warning">Changes here affect the entire team.</p>
+
+<div class="settings-grid">
+  <div class="settings-card">
+    <h3 class="settings-card-title">Inventory Thresholds</h3>
+    <p class="settings-card-desc">How long a deployed story sits before it moves between inventory bands.</p>
+    <form method="post" action="/settings">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label" for="aging_days">Aging (business days)</label>
+        <input type="number" id="aging_days" name="aging_days" value="<%= @aging_days %>" min="1" max="30" class="form-input form-input--narrow">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="stale_days">Stale (business days)</label>
+        <input type="number" id="stale_days" name="stale_days" value="<%= @stale_days %>" min="2" max="60" class="form-input form-input--narrow">
+      </div>
+      <button type="submit" class="btn">Save thresholds</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h3 class="settings-card-title">Activation</h3>
+    <p class="settings-card-desc">A story activates when two people are assigned. Enable solo to allow one.</p>
+    <form method="post" action="/settings" data-test-id="solo-activation">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label form-label--checkbox" for="allow_solo_activation">
+          <input type="hidden" name="allow_solo_activation" value="0">
+          <input type="checkbox" id="allow_solo_activation" name="allow_solo_activation" value="1" class="form-checkbox" <%= 'checked' if @allow_solo_activation == 1 %>>
+          Allow solo activation
+        </label>
+      </div>
+      <button type="submit" class="btn">Save activation</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h3 class="settings-card-title">Timezone</h3>
+    <p class="settings-card-desc">Weekday boundaries for CI monitor branch age.</p>
+    <form method="post" action="/settings" data-test-id="timezone">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label" for="timezone">Team timezone</label>
+        <select id="timezone" name="timezone" class="form-input">
+          <% TZInfo::Timezone.all_identifiers.select { |id| id.include?('/') }.each do |tz_id| %>
+            <option value="<%= tz_id %>" <%= 'selected' if tz_id == @team.timezone %>><%= tz_id.gsub('_', ' ') %></option>
+          <% end %>
+        </select>
+      </div>
+      <button type="submit" class="btn">Save timezone</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h3 class="settings-card-title">Public Holidays</h3>
+    <p class="settings-card-desc">Excluded from CI monitor branch age calculations.</p>
+    <form method="post" action="/settings" data-test-id="holiday-region">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label" for="holiday_region">Holiday region</label>
+        <select id="holiday_region" name="holiday_region" class="form-input">
+          <option value="">None</option>
+          <% Holidays.available_regions.sort.each do |region| %>
+            <option value="<%= region %>" <%= 'selected' if region.to_s == @team.holiday_region %>><%= region.to_s.upcase %></option>
+          <% end %>
+        </select>
+      </div>
+      <button type="submit" class="btn">Save holidays</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h3 class="settings-card-title">Story Template</h3>
+    <p class="settings-card-desc">Default template when creating new stories.</p>
+    <form method="post" action="/settings" data-test-id="story-template">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label" for="default_story_template">Default template</label>
+        <select id="default_story_template" name="default_story_template" class="form-input">
+          <option value="connextra" <%= 'selected' if @default_story_template == 'connextra' %>>As a... I want to... so that...</option>
+          <option value="card" <%= 'selected' if @default_story_template == 'card' %>>Persona does thing</option>
+          <option value="behaviour" <%= 'selected' if @default_story_template == 'behaviour' %>>When... persona can...</option>
+        </select>
+      </div>
+      <button type="submit" class="btn">Save template</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h3 class="settings-card-title">Split Sensitivity</h3>
+    <p class="settings-card-desc">Flag active stories exceeding the team's cycle time percentile as split candidates.</p>
+    <form method="post" action="/settings">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label" for="split_percentile">Percentile</label>
+        <input type="number" id="split_percentile" name="split_percentile" value="<%= @split_percentile %>" min="50" max="100" class="form-input form-input--narrow">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="split_min_released">Min released stories</label>
+        <input type="number" id="split_min_released" name="split_min_released" value="<%= @split_min_released %>" min="5" max="50" class="form-input form-input--narrow">
+      </div>
+      <button type="submit" class="btn">Save sensitivity</button>
+    </form>
+  </div>
+</div>
+
+<% if @settings_events.any? %>
+<section class="settings-history">
+  <h2 class="section-title">History</h2>
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Who</th>
+        <th>Setting</th>
+        <th>From</th>
+        <th>To</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @settings_events.each do |event| %>
+        <tr>
+          <td class="history-when"><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+          <td><%= event.actor.person&.name || event.actor.name %></td>
+          <%
+            if event.after_state.key?('timezone')
+              setting = 'timezone'
+              label = 'Timezone'
+              from_val = event.before_state['timezone']
+              to_val = event.after_state['timezone']
+              unit = ''
+            elsif event.after_state.key?('holiday_region')
+              setting = 'holiday_region'
+              label = 'Holiday region'
+              from_val = event.before_state['holiday_region'] || 'None'
+              to_val = event.after_state['holiday_region'] || 'None'
+              unit = ''
+            else
+              key = event.after_state['constraint_key']
+              setting = key
+              label = { 'inventory_aging_days' => 'Aging', 'inventory_stale_days' => 'Stale', 'split_percentile' => 'Percentile', 'split_min_released' => 'Min released', 'allow_solo_activation' => 'Solo activation', 'default_story_template' => 'Story template' }[key] || key
+              unit = { 'inventory_aging_days' => ' days', 'inventory_stale_days' => ' days', 'split_percentile' => '%', 'split_min_released' => '', 'allow_solo_activation' => '', 'default_story_template' => '' }[key] || ''
+              from_val = event.before_state['value']
+              to_val = event.after_state['value']
+            end
+          %>
+          <td data-setting="<%= setting %>"><%= label %></td>
+          <td><%= from_val %><%= unit %></td>
+          <td><%= to_val %><%= unit %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</section>
+<% end %>
+</div>

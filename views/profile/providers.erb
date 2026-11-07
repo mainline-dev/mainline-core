@@ -1,0 +1,52 @@
+<h1 class="page-title">Connected Accounts</h1>
+
+<section class="section">
+  <p class="lens-help">Login providers linked to your account. You must keep at least one connected.</p>
+
+  <% @identities.each do |identity| %>
+    <div class="provider-row" data-test-id="provider-<%= identity.provider %>">
+      <span class="provider-name"><%= Mainline::PROVIDER_LABELS[identity.provider] || identity.provider %></span>
+      <% if @identities.length > 1 %>
+        <form method="post" action="/profile/providers/<%= identity.id %>/disconnect" class="inline-form">
+          <%== csrf_tag("/profile/providers/#{identity.id}/disconnect") %>
+          <button type="submit" class="btn btn-danger btn-sm">Disconnect</button>
+        </form>
+      <% end %>
+    </div>
+  <% end %>
+
+  <h3>Connect another provider</h3>
+  <div class="provider-connect-options">
+    <% if SignInProviders.enabled?('google_oauth2') && @identities.none? { |i| i.provider == 'google_oauth2' } %>
+      <form method="post" action="/profile/providers/connect/google_oauth2">
+        <%== csrf_tag('/profile/providers/connect/google_oauth2') %>
+        <button type="submit" class="btn">Connect Google</button>
+      </form>
+    <% end %>
+    <% if SignInProviders.enabled?('github') && @identities.none? { |i| i.provider == 'github' } %>
+      <form method="post" action="/profile/providers/connect/github">
+        <%== csrf_tag('/profile/providers/connect/github') %>
+        <button type="submit" class="btn">Connect GitHub</button>
+      </form>
+    <% end %>
+    <% if SignInProviders.enabled?('gitlab') && @identities.none? { |i| i.provider == 'gitlab' } %>
+      <form method="post" action="/profile/providers/connect/gitlab">
+        <%== csrf_tag('/profile/providers/connect/gitlab') %>
+        <button type="submit" class="btn">Connect GitLab</button>
+      </form>
+    <% end %>
+  </div>
+
+  <% has_password = @identities.any? { |i| i.provider == 'email' } %>
+  <h3><%= has_password ? 'Change password' : 'Set a password' %></h3>
+  <form method="post" action="/profile/password" data-test-id="password-form" data-has-password="<%= has_password %>" style="max-width: 320px;">
+    <%== csrf_tag('/profile/password') %>
+    <% if has_password && !@magic_login %>
+      <label for="current-password">Current password</label>
+      <input type="password" id="current-password" name="current_password" required autocomplete="current-password" minlength="12" maxlength="70">
+    <% end %>
+    <label for="new-password">New password</label>
+    <input type="password" id="new-password" name="password" required autocomplete="new-password" minlength="12" maxlength="70">
+    <button type="submit" class="btn"><%= has_password ? 'Change password' : 'Set password' %></button>
+  </form>
+</section>

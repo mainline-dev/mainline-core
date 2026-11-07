@@ -1,0 +1,50 @@
+<% @page_breadcrumb = 'Teamwork' %>
+<%== render('teams/teamwork/_subnav') %>
+
+<div class="teamwork-layout">
+  <div class="teamwork-main">
+    <h2 class="section-heading" data-test-id="teamwork-page-ensemble">Ensemble Timeline</h2>
+
+    <div class="lens-toggles">
+      <% base = "/teams/#{@team.id}/teamwork/ensemble" %>
+      <% { 90 => '90d', 180 => '180d', 365 => '1y' }.each do |days, label| %>
+        <% if @window == days %>
+          <span class="filter-toggle active" aria-current="true"><%= label %></span>
+        <% else %>
+          <a href="<%= base %>?window=<%= days %>" class="filter-toggle"><%= label %></a>
+        <% end %>
+      <% end %>
+    </div>
+
+    <p class="lens-help">Ensemble sessions (3+ people) over the last <%= @window %> days.</p>
+
+    <% if @sessions.empty? %>
+      <p class="empty-state">No ensemble sessions in the last <%= @window %> days.</p>
+    <% else %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Story</th>
+            <th>Participants</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @sessions.each do |session| %>
+            <tr>
+              <td><%= session.occurred_at.strftime('%Y-%m-%d') %></td>
+              <td><%= session.story_title %></td>
+              <td><%= session.person_names.join(', ') %></td>
+              <td><%= session.assignment_count %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
+  <div class="teamwork-sidebar">
+    <%== render('teams/teamwork/_members') %>
+  </div>
+</div>

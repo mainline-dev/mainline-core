@@ -1,0 +1,24 @@
+<div class="inline-assign-dropdown" data-test-id="inline-assign-dropdown">
+  <% if @available_people.empty? %>
+    <p class="inline-assign-empty" data-test-id="inline-assign-empty">No available people</p>
+  <% else %>
+    <% @available_people.each do |person| %>
+      <% busy = @busy_person_ids&.include?(person.id) %>
+      <% if busy %>
+        <button type="button" class="inline-assign-option" data-test-id="busy-person" disabled>
+          <%= person.name %> (busy)
+        </button>
+      <% else %>
+        <form method="post"
+              action="/maps/<%= @map.id %>/stories/<%= @story.id %>/assignments"
+              class="inline-form"
+              hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/assignments"
+              hx-target=".map-grid-container" hx-swap="outerHTML">
+          <%== csrf_tag('/maps/' + @map.id + '/stories/' + @story.id + '/assignments') %>
+          <input type="hidden" name="person_id" value="<%= person.id %>">
+          <button type="submit" class="inline-assign-option"><%= person.name %></button>
+        </form>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>

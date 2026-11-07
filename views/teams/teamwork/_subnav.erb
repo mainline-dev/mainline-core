@@ -1,0 +1,9 @@
+<nav class="subnav">
+  <% tw_base = "/teams/#{@team.id}/teamwork" %>
+  <a href="<%= tw_base %>"
+     class="subnav-link<%= ' active' if @active_tab == 'matrix' %>">Matrix</a>
+  <a href="<%= tw_base %>/ensemble"
+     class="subnav-link<%= ' active' if @active_tab == 'ensemble' %>">Ensemble</a>
+  <a href="<%= tw_base %>/solo"
+     class="subnav-link<%= ' active' if @active_tab == 'solo' %>">Solo</a>
+</nav>

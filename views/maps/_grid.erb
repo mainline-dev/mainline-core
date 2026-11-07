@@ -1,0 +1,135 @@
+<% locked = @locked %>
+<%
+  col = 1
+  act_styles = {}
+  @grid.grid_activities.each_with_index do |(activity, tasks), i|
+    span = [tasks.length, 1].max
+    act_styles[i] = "grid-column: #{col} / span #{span};"
+    col += span
+  end
+%>
+<div class="map-grid-container">
+<% if @grid.grid_activities.empty? %>
+  <p class="empty-state">
+    An empty map. Add a persona -- the kind of person you're building for. Then the activities they do.
+  </p>
+  <p class="getting-started-hint">New here? Follow the <a href="https://mainline.dev/docs/tutorial">tutorial</a> to build your first map.</p>
+<% else %>
+  <div class="map-grid" data-map-id="<%= @map.id %>" data-team-id="<%= @current_team.id %>" style="--cols: <%= @grid.total_cols %>; grid-template-columns: repeat(<%= @grid.total_cols %>, minmax(220px, 280px));">
+    <% last_act_idx = @grid.grid_activities.length - 1 %>
+    <% @grid.grid_activities.each_with_index do |(activity, tasks), i| %>
+      <div class="activity-header" style="<%= act_styles[i] %>">
+        <div class="activity-title-bar">
+          <% unless locked || @active_filter %>
+            <% if i > 0 %>
+              <form method="post" action="/maps/<%= @map.id %>/activities/<%= activity.id %>/move" class="inline-form move-left">
+                <%== csrf_tag('/maps/' + @map.id + '/activities/' + activity.id + '/move') %>
+                <input type="hidden" name="direction" value="left">
+                <button type="submit" class="move-btn" aria-label="Move left">&larr;</button>
+              </form>
+            <% end %>
+          <% end %>
+          <h3><%= activity.name %></h3>
+          <% unless locked || @active_filter %>
+            <% if i < last_act_idx %>
+              <form method="post" action="/maps/<%= @map.id %>/activities/<%= activity.id %>/move" class="inline-form move-right">
+                <%== csrf_tag('/maps/' + @map.id + '/activities/' + activity.id + '/move') %>
+                <input type="hidden" name="direction" value="right">
+                <button type="submit" class="move-btn" aria-label="Move right">&rarr;</button>
+              </form>
+            <% end %>
+          <% end %>
+        </div>
+        <div class="persona-badges">
+          <% activity.personas.each do |p| %>
+            <span class="persona-badge"><%= p.name %></span>
+          <% end %>
+        </div>
+        <% unless locked || @active_filter %>
+          <div class="grid-header-footer">
+            <a href="/maps/<%= @map.id %>/activities/<%= activity.id %>/edit" class="footer-action" title="Edit activity">&#x270E; Edit</a>
+            <a href="/maps/<%= @map.id %>/tasks/new?activity_id=<%= activity.id %>" class="footer-action" title="Add task">+ Task</a>
+            <% if tasks.empty? %>
+              <button type="button" class="archive-btn delete-confirm"
+                      data-delete-url="/maps/<%= @map.id %>/activities/<%= activity.id %>/archive"
+                      data-delete-target=".map-grid-container"
+                      data-label="Archive"
+                      data-test-id="archive-activity-<%= activity.id %>">Archive</button>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% @grid.grid_activities.each_with_index do |(activity, tasks), i| %>
+      <div class="activity-tasks" style="<%= act_styles[i] %>"
+           data-activity-id="<%= activity.id %>"
+           data-reorder-url="/maps/<%= @map.id %>/activities/<%= activity.id %>/reorder_tasks">
+        <% if tasks.empty? %>
+          <div class="task-col">
+            <% unless locked || @active_filter %>
+              <a href="/maps/<%= @map.id %>/tasks/new?activity_id=<%= activity.id %>" class="add-link">+ Task</a>
+            <% end %>
+          </div>
+        <% else %>
+          <% tasks.each do |task| %>
+            <div class="task-col" data-task-id="<%= task.id %>">
+              <div class="task-title-bar">
+                <h4><%= task.name %></h4>
+              </div>
+              <% unless locked || @active_filter %>
+                <div class="grid-header-footer">
+                  <a href="/maps/<%= @map.id %>/tasks/<%= task.id %>/edit" class="footer-action" title="Edit task">&#x270E; Edit</a>
+                  <a href="/maps/<%= @map.id %>/stories/new?task_id=<%= task.id %>" class="footer-action" title="Add story">+ Story</a>
+                  <% if task.stories.none? { |s| s.archived_at.nil? } %>
+                    <button type="button" class="archive-btn delete-confirm"
+                            data-delete-url="/maps/<%= @map.id %>/tasks/<%= task.id %>/archive"
+                            data-delete-target=".map-grid-container"
+                            data-label="Archive"
+                            data-test-id="archive-task-<%= task.id %>">Archive</button>
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <% @grid.slice_groups.each_with_index do |slice, gi| %>
+      <% if slice %>
+        <% slice_hdr_row = 4 + (gi - 1) * 2 %>
+        <div class="slice-header" style="grid-row: <%= slice_hdr_row %>; grid-column: 1 / -1;">
+          <span class="slice-label"><%= slice.name %></span>
+        </div>
+      <% end %>
+      <%
+        row_style = if @grid.sliced
+                      slice ? "grid-row: #{5 + (gi - 1) * 2};" : 'grid-row: 3;'
+                    else
+                      ''
+                    end
+      %>
+      <% @grid.grid_activities.each do |activity, tasks| %>
+        <% if tasks.empty? %>
+          <div class="task-stories" <%== "style=\"#{row_style}\"" unless row_style.empty? %>></div>
+        <% else %>
+          <% tasks.each do |task| %>
+            <div class="task-stories" <%== "style=\"#{row_style}\"" unless row_style.empty? %>
+                 data-task-id="<%= task.id %>"
+                 data-reorder-url="/maps/<%= @map.id %>/tasks/<%= task.id %>/reorder_stories"
+                 <% if @grid.sliced %>data-slice-id="<%= slice&.id %>"<% end %>>
+              <% MapGrid.visible_stories(task, slice, sliced: @grid.sliced, active_filter: @active_filter, slice_sort: @grid.slice_sort, hide_released: @hide_released, slice_filter: @slice_filter).each do |story| %>
+                <%== render('maps/stories/_card', locals: { story: story, locked: locked, map_id: @map.id, story_notes: @story_notes[story.id] || [], deploy_count: @deploy_counts[story.id] || 0 }) %>
+              <% end %>
+            </div>
+          <% end %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+  <% if @grid.grid_activities.all? { |_, tasks| tasks.all? { |t| t.stories.none? { |s| s.archived_at.nil? } } } %>
+    <p class="getting-started-hint">New here? Follow the <a href="https://mainline.dev/docs/tutorial">tutorial</a> to build your first map.</p>
+  <% end %>
+<% end %>
+</div>

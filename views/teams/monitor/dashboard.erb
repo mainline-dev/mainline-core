@@ -1,0 +1,315 @@
+<% if @repo_data.any? { |rd| rd[:repo].backfill_status == 'pending' } %>
+  <meta http-equiv="refresh" content="5">
+<% end %>
+<% csrf_hidden = %(<input type="hidden" name="_csrf" value="#{csrf_token(nil)}">) %>
+<div class="monitor-page-header">
+  <div class="monitor-header-main">
+    <% if @overall_streak %>
+      <div class="monitor-header-heatmap" data-test-id="overall-streak">
+        <div class="monitor-heatmap-header">
+          <span class="monitor-overall-title">12 weeks</span>
+          <button type="button" class="monitor-help-toggle"
+                  aria-expanded="false"
+                  aria-controls="monitor-help-popover"
+                  data-test-id="monitor-help-toggle">?</button>
+          <div class="monitor-heatmap-toggle" data-test-id="heatmap-mode">
+              <button type="button"
+                      class="monitor-mode-btn<%= ' monitor-mode-btn--active' if @heatmap_mode == 'max' %>"
+                      data-tippy-content="Most-active repo for each day"
+                      hx-post="/teams/<%= @team.id %>/monitor/heatmap-mode"
+                      hx-vals='{"mode":"max"}'
+                      hx-target="#main"
+                      hx-swap="innerHTML">Best</button>
+              <button type="button"
+                      class="monitor-mode-btn<%= ' monitor-mode-btn--active' if @heatmap_mode == 'average' %>"
+                      data-tippy-content="Combined activity across all repos for each day"
+                      hx-post="/teams/<%= @team.id %>/monitor/heatmap-mode"
+                      hx-vals='{"mode":"average"}'
+                      hx-target="#main"
+                      hx-swap="innerHTML">Average</button>
+          </div>
+        </div>
+        <div class="monitor-help-popover" id="monitor-help-popover" hidden data-test-id="monitor-help">
+          <div class="monitor-help-panel">
+            <div class="monitor-help-section">
+              <h4 class="monitor-help-heading">Heatmap</h4>
+              <dl class="monitor-help-defs">
+                <dt class="monitor-help-dt--bright">Bright bars</dt>
+                <dd>Push or timely merge to trunk</dd>
+                <dt class="monitor-help-dt--dim">Dim bars</dt>
+                <dd>Stale merge (branch open 24h+ before merging)</dd>
+                <dt class="monitor-help-dt--faint">Faint bars</dt>
+                <dd>Branch open but no push or merge that day</dd>
+                <dt class="monitor-help-dt--gap">Gaps</dt>
+                <dd>No integration activity that day</dd>
+                <dt class="monitor-help-dt--cyan">Cyan bars</dt>
+                <dd>Weekends and holidays</dd>
+              </dl>
+            </div>
+            <div class="monitor-help-section">
+              <h4 class="monitor-help-heading">Traffic light</h4>
+              <dl class="monitor-help-defs">
+                <dt class="monitor-help-dt--green">Green</dt>
+                <dd>Under threshold</dd>
+                <dt class="monitor-help-dt--amber">Amber</dt>
+                <dd>No push for 24h+</dd>
+                <dt class="monitor-help-dt--red">Red</dt>
+                <dd>Over threshold</dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+        <div class="monitor-overall-bar">
+          <% @overall_streak[:days].each do |day| %>
+            <% day_class = 'monitor-streak-day'
+               day_class += ' monitor-streak-day--weekend' if day[:weekend]
+               day_class += ' monitor-streak-day--active' if !day[:weekend] && day[:intensity].positive?
+            %><div class="<%= day_class %>"
+                 <% if !day[:weekend] && day[:intensity].positive? %>style="opacity: <%= [day[:intensity], 0.3].max %>"<% end %>
+                 data-tippy-content="<%= day[:date].strftime('%b %-d') %>"></div>
+          <% end %>
+        </div>
+        <div class="monitor-overall-dates">
+          <span><%= @overall_streak[:days].first[:date].strftime('%b %-d') %></span>
+          <span><%= @overall_streak[:days].last[:date].strftime('%b %-d') %></span>
+        </div>
+      </div>
+    <% end %>
+    <div class="monitor-header-summary" data-test-id="monitor-summary">
+      <div class="monitor-verdict-stack">
+        <div class="monitor-summary-panel monitor-summary-panel--status">
+          <span class="monitor-status-dot monitor-status-dot--<%= @overall_status %>"></span>
+          <% if @overall_status == :none %>
+            <span class="monitor-summary-alert">No repos monitored</span>
+          <% elsif @total_over > 0 %>
+            <span class="monitor-summary-alert" data-test-id="monitor-over-threshold" data-count="<%= @total_over %>"><%= @total_over %> over threshold</span>
+          <% end %>
+        </div>
+        <% if @overall_status != :none %>
+          <% hero_status = @overall_status == :red ? 'red' : 'green' %>
+          <div class="monitor-hero-metric monitor-hero-metric--<%= hero_status %>" data-test-id="monitor-hero">
+            <div class="monitor-hero-verdict" data-test-id="monitor-verdict" data-doing-ci="<%= @overall_status == :red ? 'false' : 'true' %>">
+              <% if @overall_status == :red %>
+                <em>You are not doing CI.</em>
+              <% else %>
+                <em>You are doing CI.</em>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+      <div class="monitor-mini-grid">
+        <% if @overall_branches_over_24h %>
+          <div class="monitor-mini" data-test-id="open-branch-count" data-count="<%= @total_open %>"><div class="v"><%= @overall_branches_over_24h %></div><div class="l">over 24h</div></div>
+        <% end %>
+        <div class="monitor-mini"><div class="v"><%= @repo_data.size %></div><div class="l">repos</div></div>
+        <div class="monitor-mini"><div class="v"><%= @total_open %></div><div class="l">open</div></div>
+        <% if @total_pushes %>
+          <div class="monitor-mini"><div class="v"><%= @total_pushes %></div><div class="l">pushes</div></div>
+        <% end %>
+        <% if @total_merges %>
+          <div class="monitor-mini"><div class="v"><%= @total_merges %></div><div class="l">merges</div></div>
+        <% end %>
+        <% if @overall_p90_branch_hours %>
+          <% p90_color = @overall_p90_branch_hours <= 24 ? 'green' : 'red' %>
+          <div class="monitor-mini monitor-mini--<%= p90_color %>" data-test-id="monitor-p90"><div class="v"><%= @overall_p90_branch_hours %>h</div><div class="l">P90</div></div>
+        <% end %>
+        <% if @overall_streak_count && @overall_streak_count > 0 %>
+          <div class="monitor-mini"><div class="v"><%= @overall_streak_count %></div><div class="l">CI streak</div></div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+
+<% if @repo_data.empty? %>
+  <p class="monitor-empty">No repos connected. The Monitor is free -- every repo, no upgrade required.</p>
+<% else %>
+  <div class="monitor-repos">
+    <% green_count = @repo_data.count { |rd| rd[:status] == 'green' } %>
+    <% if green_count > 0 %>
+      <div class="monitor-repos-header">
+        <button type="button" class="monitor-show-all" aria-pressed="false"
+                data-test-id="monitor-show-all">Show all repos (<%= green_count %> healthy collapsed)</button>
+      </div>
+    <% end %>
+    <% @org_groups.each do |og| %>
+      <div class="monitor-org-group" data-test-id="org-group-<%= og[:org] %>">
+        <div class="monitor-org-header">
+          <button type="button" class="monitor-org-toggle" aria-expanded="true" data-test-id="org-toggle">
+            <span class="monitor-repo-dot monitor-repo-dot--<%= og[:status] %>"></span>
+            <span class="monitor-org-name"><%= og[:org] %></span>
+            <span class="monitor-org-count"><%= og[:repos].size %> repos</span>
+          </button>
+          <% if og[:streak] %>
+            <div class="monitor-streak monitor-org-streak" data-test-id="org-streak-<%= og[:org] %>">
+              <div class="monitor-streak-bar">
+                <% og[:streak][:days].each do |day| %>
+                  <% day_class = 'monitor-streak-day'
+                     day_class += ' monitor-streak-day--weekend' if day[:weekend]
+                     day_class += ' monitor-streak-day--active' if !day[:weekend] && day[:intensity].positive?
+                  %><div class="<%= day_class %>"
+                       <% if !day[:weekend] && day[:intensity].positive? %>style="opacity: <%= [day[:intensity], 0.3].max %>"<% end %>
+                       data-tippy-content="<%= day[:date].strftime('%b %-d') %>"></div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        <div class="monitor-org-repos">
+    <% og[:repos].each do |rd| %>
+      <% syncing = rd[:repo].backfill_status == 'pending' %>
+      <% backfill_failed = rd[:repo].backfill_status == 'failed' %>
+      <div id="repo-<%= rd[:repo].id %>" class="monitor-repo" data-test-id="repo-row" data-status="<%= syncing ? 'syncing' : rd[:status] %>">
+        <div class="monitor-repo-header">
+          <button type="button" class="monitor-repo-toggle" aria-expanded="<%= rd[:status] != 'green' %>"
+                  aria-controls="repo-body-<%= rd[:repo].id %>" data-test-id="repo-toggle">
+            <span class="monitor-repo-dot monitor-repo-dot--<%= syncing ? 'amber' : backfill_failed ? 'red' : rd[:status] %>" aria-label="Status: <%= syncing ? 'syncing' : backfill_failed ? 'failed' : rd[:status] %>"></span>
+            <span class="monitor-repo-name"><%= rd[:repo].repo_name %><%= ' (syncing...)' if syncing %><%= ' (sync failed - remove and re-add)' if backfill_failed %></span>
+            <span class="monitor-repo-summary">
+              <% if @streak_data && @streak_data[rd[:repo].id] && @streak_data[rd[:repo].id][:p90_branch_hours] %>P90 <%= @streak_data[rd[:repo].id][:p90_branch_hours] %>h &middot; <% end %><%= rd[:branches].size %> open
+            </span>
+          </button>
+        </div>
+        <div id="repo-body-<%= rd[:repo].id %>" class="monitor-repo-body">
+        <div class="monitor-repo-lhs">
+          <% if @streak_data && @streak_data[rd[:repo].id] %>
+            <% streak = @streak_data[rd[:repo].id] %>
+            <div class="monitor-streak" data-test-id="streak-strip">
+              <div class="monitor-streak-bar">
+                <% streak[:days].each do |day| %>
+                  <% day_class = 'monitor-streak-day'
+                     day_class += ' monitor-streak-day--weekend' if day[:weekend]
+                     if !day[:weekend] && day[:score]&.positive?
+                       day_class += ' monitor-streak-day--active'
+                     elsif !day[:weekend] && day[:branch_open]
+                       day_class += ' monitor-streak-day--branch-open'
+                     end
+                  %><div class="<%= day_class %>"
+                       <% if !day[:weekend] && day[:intensity].positive? %>style="opacity: <%= [day[:intensity], 0.3].max %>"<% end %>
+                       data-tippy-content="<%= day[:date].strftime('%b %-d') %><%= ": #{day[:push_count]} push, #{day[:merge_count]} merge" if day[:push_count]&.positive? || day[:merge_count]&.positive? %>"></div>
+                <% end %>
+              </div>
+              <div class="monitor-streak-dates">
+                <span><%= streak[:days].first[:date].strftime('%b %-d') %></span>
+                <span><%= streak[:days].last[:date].strftime('%b %-d') %></span>
+              </div>
+            </div>
+          <% end %>
+          <% if rd[:branches].any? || rd[:spikes].any? || rd[:merged]&.any? || rd[:abandoned].any? %>
+            <div class="monitor-branches">
+              <% rd[:branches].each do |branch| %>
+                <% age_h = rd[:ages][branch.id] %>
+                <% over = age_h > rd[:repo].threshold_hours %>
+                <div class="monitor-branch" data-test-id="branch-row">
+                  <span class="monitor-branch-name"><%= branch.branch_name %></span>
+                  <span class="monitor-branch-age<%= ' monitor-branch-age--over' if over %>" data-test-id="branch-age"><%= age_h %>h</span>
+                    <form method="post" action="/teams/<%= @team.id %>/monitor/branches/<%= branch.id %>/spike" class="monitor-branch-action">
+                      <%== csrf_hidden %>
+                      <button type="submit" class="btn btn-sm monitor-spike-btn">Mark as spike</button>
+                    </form>
+                </div>
+              <% end %>
+              <% rd[:spikes].each do |branch| %>
+                <% age_h = rd[:ages][branch.id] %>
+                <div class="monitor-branch monitor-branch--spike" data-test-id="branch-row">
+                  <span class="monitor-branch-name"><%= branch.branch_name %></span>
+                  <span class="monitor-branch-age" data-test-id="branch-age"><%= age_h %>h</span>
+                  <span class="monitor-branch-tag">spike</span>
+                    <form method="post" action="/teams/<%= @team.id %>/monitor/branches/<%= branch.id %>/unspike" class="monitor-branch-action">
+                      <%== csrf_hidden %>
+                      <button type="submit" class="btn btn-sm monitor-unspike-btn">Unmark</button>
+                    </form>
+                </div>
+              <% end %>
+              <% (rd[:merged] || []).each do |branch| %>
+                <% if branch.merged_from_spike %>
+                  <div class="monitor-branch monitor-branch--merged-spike" data-test-id="merged-from-spike">
+                    <span class="monitor-branch-name"><%= branch.branch_name %></span>
+                    <span class="monitor-branch-tag monitor-branch-tag--warning">was spike</span>
+                  </div>
+                <% else %>
+                  <div class="monitor-branch monitor-branch--merged" data-test-id="merged-row">
+                    <span class="monitor-branch-name"><%= branch.branch_name %></span>
+                    <span class="monitor-branch-tag monitor-branch-tag--merged">merged</span>
+                  </div>
+                <% end %>
+              <% end %>
+              <% rd[:abandoned].each do |branch| %>
+                <div class="monitor-branch monitor-branch--abandoned" data-test-id="abandoned-row">
+                  <span class="monitor-branch-name"><%= branch.branch_name %></span>
+                  <span class="monitor-branch-tag">abandoned</span>
+                </div>
+              <% end %>
+            </div>
+          <% end %>
+        </div>
+        <div class="monitor-repo-rhs">
+          <span class="monitor-repo-meta">
+            <%= rd[:branches].size %> open <%= rd[:branches].size == 1 ? 'branch' : 'branches' %>
+          </span>
+          <% if @streak_data && @streak_data[rd[:repo].id] %>
+            <% repo_streak = @streak_data[rd[:repo].id] %>
+            <div class="monitor-repo-stats">
+              <span class="monitor-repo-stat"><%= repo_streak[:total_pushes] %> trunk pushes</span>
+              <span class="monitor-repo-stat"><%= repo_streak[:total_merges] %> merges</span>
+              <% if repo_streak[:branches_over_24h].positive? %>
+                <span class="monitor-repo-stat monitor-repo-stat--red"><%= repo_streak[:branches_over_24h] %> over 24h</span>
+              <% end %>
+              <% if repo_streak[:p90_branch_hours] %>
+                <% repo_p90_color = repo_streak[:p90_branch_hours] <= 24 ? 'green' : 'red' %>
+                <span class="monitor-repo-stat monitor-repo-stat--<%= repo_p90_color %>">P90 <%= repo_streak[:p90_branch_hours] %>h</span>
+              <% end %>
+            </div>
+          <% end %>
+            <form method="post" action="/teams/<%= @team.id %>/monitor/repos/<%= rd[:repo].id %>/threshold" class="monitor-threshold">
+              <%== csrf_hidden %>
+              <label class="monitor-threshold-label" for="threshold-<%= rd[:repo].id %>">Threshold</label>
+              <select name="threshold_hours" id="threshold-<%= rd[:repo].id %>" class="monitor-threshold-select" onchange="this.form.requestSubmit()">
+                <% @allowed_thresholds.each do |h| %>
+                  <option value="<%= h %>" <%= 'selected' if rd[:repo].threshold_hours == h %>><%= h %>h</option>
+                <% end %>
+              </select>
+            </form>
+            <button type="button" class="btn btn-sm monitor-remove-btn delete-confirm"
+                    data-delete-url="/teams/<%= @team.id %>/monitor/repos/<%= rd[:repo].id %>/remove"
+                    data-delete-target="#repo-<%= rd[:repo].id %>"
+                    data-label="Remove"
+                    data-test-id="remove-repo"
+                    aria-label="Remove <%= rd[:repo].repo_name %>">Remove</button>
+        </div>
+        </div>
+      </div>
+    <% end %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+  <div class="monitor-actions">
+    <a href="/teams/<%= @team.id %>/monitor/select-repos" class="btn" data-test-id="add-repos">Add repos</a>
+    <a href="/teams/<%= @team.id %>/monitor/install" class="btn btn-ghost" data-test-id="connect-org">Connect another org</a>
+    <a href="#" class="monitor-disconnect-link delete-confirm"
+       data-delete-url="/teams/<%= @team.id %>/monitor/disconnect"
+       data-delete-target="#main"
+       data-label="Disconnect"
+       data-test-id="disconnect-monitor">Disconnect</a>
+  </div>
+
+<details class="monitor-gaming" id="game-the-monitor" data-test-id="gaming-section">
+  <summary class="monitor-gaming-summary">The signal is only as honest as the team behind it.</summary>
+  <p class="monitor-gaming-title">You can cheat this. <em>Here's how.</em></p>
+  <ul>
+    <li><strong>Delete branches without merging.</strong> The monitor marks them as abandoned. The team sees every deletion.</li>
+    <li><strong>Work locally and push directly to trunk.</strong> The monitor cannot see local branches. If you are integrating to trunk multiple times a day, you are doing CI whether the monitor sees it or not. If you stop pushing for 24+ business hours, the monitor goes amber.</li>
+    <li><strong>Rename a branch to reset the clock.</strong> The monitor tracks branches by name. A rename gives you a fresh timer, but the effort could have been spent integrating.</li>
+    <li><strong>Mark everything as a spike.</strong> The team sees every spike. If a spike is later merged, the monitor flags it with a warning.</li>
+    <li><strong>Create fast branches to dilute the metrics.</strong> The monitor uses "over 24h" count and P90 instead of an average. Quick branches do not reduce these numbers.</li>
+  </ul>
+</details>
+
+<footer class="monitor-footer" data-test-id="monitor-footer">
+  <p>CI means integrating to trunk at least daily.<br>A branch that lives longer than a day is not continuous integration.</p>
+</footer>

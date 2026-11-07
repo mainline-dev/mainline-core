@@ -1,0 +1,232 @@
+# frozen_string_literal: true
+
+require_relative '../web_spec_helper'
+require_relative '../dsl/mainline_dsl'
+
+describe 'Scenarios' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    create_map
+    @visitor = create_persona('Visitor')
+    @browse = create_activity('Browse', for_personas: [@visitor])
+    @search = create_task('Search', under_activity: @browse)
+    @story = create_story('Find products', under_task: @search)
+  end
+
+  it 'creates a scenario' do
+    create_scenario(@story, given_text: 'a product exists',
+      when_text: 'I search for it',
+      then_text: 'I see it in results')
+
+    scenarios = Scenario.where(story_id: @story.id).order(:position).all
+
+    assert_equal 1, scenarios.size
+    assert_equal 'a product exists', scenarios[0].given_text
+    assert_equal 'I search for it', scenarios[0].when_text
+    assert_equal 'I see it in results', scenarios[0].then_text
+
+    event = Event.where(entity_id: @story.id, action: 'scenario_added').first
+
+    refute_nil event
+  end
+
+  it 'creates multiple scenarios in order' do
+    create_scenario(@story,
+      given_text: 'first', when_text: 'first', then_text: 'first')
+    create_scenario(@story,
+      given_text: 'second', when_text: 'second', then_text: 'second')
+
+    scenarios = Scenario.where(story_id: @story.id).order(:position).all
+
+    assert_equal 2, scenarios.size
+    assert_equal 'first', scenarios[0].given_text
+    assert_equal 'second', scenarios[1].given_text
+    assert_operator scenarios[0].position, :<, scenarios[1].position
+  end
+
+  it 'updates an existing scenario' do
+    create_scenario(@story,
+      given_text: 'old', when_text: 'old', then_text: 'old')
+    scenario = Scenario.where(story_id: @story.id).first
+
+    update_scenario(@story, scenario,
+      given_text: 'new given', when_text: 'new when', then_text: 'new then')
+
+    scenario.reload
+
+    assert_equal 'new given', scenario.given_text
+    assert_equal 'new when', scenario.when_text
+    assert_equal 'new then', scenario.then_text
+  end
+
+  it 'deletes a scenario' do
+    create_scenario(@story,
+      given_text: 'doomed', when_text: 'doomed', then_text: 'doomed')
+    scenario = Scenario.where(story_id: @story.id).first
+
+    delete_scenario(@story, scenario)
+
+    assert_equal 0, Scenario.where(story_id: @story.id).count
+
+    event = Event.where(entity_id: @story.id, action: 'scenario_removed').first
+
+    refute_nil event
+  end
+
+  it 'rejects scenario with empty fields' do
+    create_scenario(@story,
+      given_text: '', when_text: 'something', then_text: 'something')
+
+    assert_equal 0, Scenario.where(story_id: @story.id).count
+    assert_error_shown
+  end
+
+  it 'rejects scenario fields over 100 characters' do
+    create_scenario(@story,
+      given_text: 'x' * 101, when_text: 'something', then_text: 'something')
+
+    assert_equal 0, Scenario.where(story_id: @story.id).count
+    assert_error_shown
+  end
+
+  it 'shows existing scenarios on edit page' do
+    Scenario.create(
+      story_id: @story.id, given_text: 'a user logs in',
+      when_text: 'they click search', then_text: 'results appear',
+      position: 1000
+    )
+
+    visit_edit_story(@story)
+
+    assert_page_includes('a user logs in')
+    assert_page_includes('they click search')
+    assert_page_includes('results appear')
+  end
+end
+
+describe 'Scenarios - Released Story' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    @bob = add_person(name: 'Bob')
+    create_map
+    @visitor = create_persona('Visitor')
+    @browse = create_activity('Browse', for_personas: [@visitor])
+    @search = create_task('Search', under_activity: @browse)
+    @story = create_story('Find products', under_task: @search)
+    assign_person(@story, person: @alice)
+    assign_person(@story, person: @bob)
+    deploy_story(@story)
+    release_story(@story)
+    @story.reload
+  end
+
+  it 'released story blocks scenario creation' do
+    create_scenario(@story,
+      given_text: 'hacked', when_text: 'hacked', then_text: 'hacked')
+
+    assert_equal 0, Scenario.where(story_id: @story.id).count
+  end
+
+  it 'released story blocks scenario deletion' do
+    Scenario.create(
+      story_id: @story.id, given_text: 'original',
+      when_text: 'original', then_text: 'original', position: 1000
+    )
+    scenario = Scenario.where(story_id: @story.id).first
+
+    delete_scenario(@story, scenario)
+
+    assert_equal 1, Scenario.where(story_id: @story.id).count
+  end
+end
+
+describe 'Scenario check-off' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    @bob = add_person(name: 'Bob')
+    create_map
+    @visitor = create_persona('Visitor')
+    @browse = create_activity('Browse', for_personas: [@visitor])
+    @search = create_task('Search', under_activity: @browse)
+    @story = create_story('Find products', under_task: @search)
+    create_scenario(@story, given_text: 'a product exists',
+      when_text: 'I search for it', then_text: 'I see it in results')
+    @scenario = Scenario.where(story_id: @story.id).first
+  end
+
+  it 'marks a scenario done' do
+    mark_scenario_done(@story, @scenario)
+
+    @scenario.refresh
+
+    refute_nil @scenario.done_at
+  end
+
+  it 'unmarks a done scenario' do
+    mark_scenario_done(@story, @scenario)
+    unmark_scenario_done(@story, @scenario)
+
+    @scenario.refresh
+
+    assert_nil @scenario.done_at
+  end
+
+  it 'records events for check-off and un-check' do
+    mark_scenario_done(@story, @scenario)
+    unmark_scenario_done(@story, @scenario)
+
+    actions = Event.where(entity_id: @story.id).order(:event_no).select_map(:action)
+
+    assert_includes actions, 'scenario_done'
+    assert_includes actions, 'scenario_undone'
+  end
+
+  it 'blocks release while a scenario is not done' do
+    assign_person(@story, person: @alice)
+    assign_person(@story, person: @bob)
+    deploy_story(@story)
+
+    release_story(@story)
+    driver.follow_redirect! if driver.last_response.redirect?
+
+    assert_refused_because('unverified-scenarios')
+    @story.reload
+
+    refute_equal 'released', @story.status
+  end
+
+  it 'releases when every scenario is done' do
+    assign_person(@story, person: @alice)
+    assign_person(@story, person: @bob)
+    deploy_story(@story)
+    mark_scenario_done(@story, @scenario)
+
+    release_story(@story)
+
+    @story.reload
+
+    assert_equal 'released', @story.status
+  end
+
+  it 'releases a story that never had scenarios' do
+    bare = create_story('No criteria', under_task: @search)
+    assign_person(bare, person: @alice)
+    assign_person(bare, person: @bob)
+    deploy_story(bare)
+
+    release_story(bare)
+
+    bare.reload
+
+    assert_equal 'released', bare.status
+  end
+end

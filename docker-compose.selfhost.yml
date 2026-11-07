@@ -1,0 +1,94 @@
+name: mainline-selfhost
+
+x-app-env: &app-env
+  RACK_ENV: production
+  MAINLINE_DATABASE_URL: postgres://mainline:${POSTGRES_PASSWORD:?}@db:5432/mainline_production
+  MAINLINE_APP_DATABASE_URL: postgres://mainline_app:${MAINLINE_APP_USER_DATABASE_PASSWORD:?}@db:5432/mainline_production
+  MAINLINE_APP_USER_DATABASE_PASSWORD: ${MAINLINE_APP_USER_DATABASE_PASSWORD:?}
+  REDIS_URL: redis://redis:6379/0
+  MAINLINE_SESSION_SECRET: ${MAINLINE_SESSION_SECRET:?}
+  LOCKBOX_MASTER_KEY: ${LOCKBOX_MASTER_KEY:?}
+  BASE_URL: ${BASE_URL:?}
+  MAINLINE_HOST: ${MAINLINE_HOST:?}
+  SMTP_HOST: ${SMTP_HOST:?}
+  SMTP_PORT: ${SMTP_PORT:?}
+  SMTP_USERNAME: ${SMTP_USERNAME:?}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:?}
+  SMTP_TLS: ${SMTP_TLS:?}
+  MAIL_FROM: ${MAIL_FROM:?}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:?}
+  GH_OAUTH_CLIENT_ID: ${GH_OAUTH_CLIENT_ID:?}
+  GH_OAUTH_CLIENT_SECRET: ${GH_OAUTH_CLIENT_SECRET:?}
+  GITLAB_CLIENT_ID: ${GITLAB_CLIENT_ID:?}
+  GITLAB_CLIENT_SECRET: ${GITLAB_CLIENT_SECRET:?}
+  CI_MONITOR_GITHUB_APP_ID: ${CI_MONITOR_GITHUB_APP_ID:?}
+  CI_MONITOR_GITHUB_APP_SLUG: ${CI_MONITOR_GITHUB_APP_SLUG:?}
+  CI_MONITOR_GITHUB_APP_CLIENT_ID: ${CI_MONITOR_GITHUB_APP_CLIENT_ID:?}
+  CI_MONITOR_GITHUB_APP_CLIENT_SECRET: ${CI_MONITOR_GITHUB_APP_CLIENT_SECRET:?}
+  CI_MONITOR_GITHUB_PRIVATE_KEY: ${CI_MONITOR_GITHUB_PRIVATE_KEY:?}
+  CI_MONITOR_GITHUB_WEBHOOK_SECRET: ${CI_MONITOR_GITHUB_WEBHOOK_SECRET:?}
+  SENTRY_DSN: ${SENTRY_DSN:?}
+  SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:?}
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mainline
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: mainline_production
+      MAINLINE_APP_USER_DATABASE_PASSWORD: ${MAINLINE_APP_USER_DATABASE_PASSWORD:?}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./initdb.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mainline -d mainline_production"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --save 60 1
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment: *app-env
+    # Healthy once migrations have run and the app answers.
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    restart: unless-stopped
+    command: bundle exec sidekiq -r ./sidekiq_boot.rb
+    environment: *app-env
+    depends_on:
+      app:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  redis_data:

@@ -1,0 +1,10 @@
+<%# locals: (pair:, ticked:) %>
+<div class="mu-lg-pair" data-test-id="let-go-pair">
+  <input type="hidden" name="seen[]" value="<%= pair.keeper.item.id %>">
+  <%== render('teams/museum/_let_go_side', locals: { side: pair.keeper, goes: pair.other, name: pair.name, chosen: ticked }) %>
+  <div class="mu-lg-between">
+    <span aria-hidden="true">&asymp;</span>
+    <label class="mu-lg-both"><input type="radio" name="pairs[<%= pair.name %>]" value="both" data-test-id="let-go-keep-both"> Keep both</label>
+  </div>
+  <%== render('teams/museum/_let_go_side', locals: { side: pair.other, goes: pair.keeper, name: pair.name, chosen: false }) %>
+</div>

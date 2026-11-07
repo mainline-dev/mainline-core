@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mainline</title>
+  <%== og_tags %>
+  <%== assets(:css) %>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');</style>
+</head>
+<body class="landing">
+<%== render('site/_nav') %>
+  <div class="hero">
+    <div class="login-brand">Main<em>line</em></div>
+    <p class="login-tagline">Where Agile theatre goes to die.</p>
+    <div class="login-rule"></div>
+    <% if @send_failed %>
+      <h2 class="login-heading">Something went wrong</h2>
+      <p class="flash flash-error" role="alert" data-test-id="flash-error">Could not send the verification email. Reload the page to try again.</p>
+    <% elsif @pending_email %>
+      <h2 class="login-heading">Check your email</h2>
+      <p>We sent a verification link to <strong><%= @pending_email %></strong>.</p>
+      <p>Click the link in the email to finish creating your account.</p>
+      <% if @verify_link %>
+        <p><a href="<%= @verify_link %>">Verify email</a></p>
+      <% end %>
+    <% else %>
+      <h2 class="login-heading">Enter your email</h2>
+      <p>Your sign-in provider did not share an email address. Please enter one to create your account.</p>
+      <form method="post" action="/confirm-email" data-test-id="enter-email-form">
+        <%== csrf_tag('/confirm-email') %>
+        <label for="confirm-email" class="sr-only">Email address</label>
+        <input type="email" id="confirm-email" name="email" placeholder="you@example.com" required class="text-input" autofocus>
+        <button type="submit" class="confirm-btn">Send verification email</button>
+      </form>
+    <% end %>
+  </div>
+</body>
+</html>

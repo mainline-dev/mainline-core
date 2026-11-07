@@ -1,0 +1,42 @@
+<div class="persona-card persona-card-editing" id="persona-<%= @persona.id %>">
+  <% if @errors&.any? %>
+    <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
+  <form method="post" action="/maps/<%= @map.id %>/personas/<%= @persona.id %>"
+        hx-post="/maps/<%= @map.id %>/personas/<%= @persona.id %>"
+        hx-target="#persona-<%= @persona.id %>" hx-swap="outerHTML"
+        class="dirty-form">
+    <%== csrf_tag('/maps/' + @map.id + '/personas/' + @persona.id) %>
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @persona.name %>"
+           placeholder="e.g. Returning Customer" maxlength="100" autofocus>
+    <label for="description">Description (optional)</label>
+    <textarea id="description" name="description" maxlength="255"
+              placeholder="Brief context about this persona"><%= @persona.description %></textarea>
+    <% if @activities_for_edit&.any? %>
+      <label>Activities</label>
+      <div class="checkbox-group">
+        <% @activities_for_edit.each do |a| %>
+          <label>
+            <input type="checkbox" name="activity_ids[]" value="<%= a.id %>"
+                   <%= 'checked' if @selected_activity_ids&.include?(a.id) %>>
+            <%= a.name %>
+          </label>
+        <% end %>
+      </div>
+    <% end %>
+    <div class="form-actions-split">
+      <div>
+        <button type="submit" class="btn btn-sm" disabled>Save</button>
+        <a class="cancel-link"
+           hx-get="/maps/<%= @map.id %>/personas/<%= @persona.id %>"
+           hx-target="#persona-<%= @persona.id %>" hx-swap="outerHTML">Cancel</a>
+      </div>
+      <button type="button" class="archive-btn delete-confirm"
+              data-delete-url="/maps/<%= @map.id %>/personas/<%= @persona.id %>/archive"
+              data-delete-target="#persona-<%= @persona.id %>"
+              data-label="Archive"
+              data-test-id="archive-persona">Archive</button>
+    </div>
+  </form>
+</div>

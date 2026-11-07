@@ -1,0 +1,29 @@
+<h1 class="page-title">History</h1>
+<p class="page-subtitle"><%= @story.title %></p>
+<%== render('maps/stories/_subnav') %>
+
+<% if @events.empty? %>
+  <p class="empty-state">No events recorded.</p>
+<% else %>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Who</th>
+        <th>What</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @events.reverse.each do |event| %>
+        <tr>
+          <td class="history-when"><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+          <td class="history-who"><%= event.actor.name %></td>
+          <td class="history-what">
+            <%= EventPresenter.describe(event, { people: @people_by_id, slices: @slices_by_id, tasks: @tasks_by_id }) %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
+

@@ -1,0 +1,16 @@
+<%# locals: (items:, title:, scenarios:, tasks_by_map:, selected_task_id:, remembered_task:, return_to:, inline:, mode: 'new', action: nil, ids: [], leaving: [], button: 'Promote', count: nil) %>
+<div class="mu-slot" data-slot>
+  <div class="mu-segments">
+    <button type="button" class="mu-segment<% if mode == 'new' %> is-active<% end %>" data-segment="new" data-test-id="museum-segment-new">New story</button>
+    <button type="button" class="mu-segment<% if mode == 'add' %> is-active<% end %>" data-segment="add" data-test-id="museum-segment-add">Add to an existing story</button>
+  </div>
+  <div data-panel="new"<% if mode == 'add' %> hidden<% end %>>
+    <%== render('teams/museum/_rewrite', locals: {
+          item: items.first, title: title, scenarios: scenarios, tasks_by_map: tasks_by_map, selected_task_id: selected_task_id,
+          remembered_task: remembered_task, return_to: return_to, inline: inline, action: action, ids: ids, leaving: leaving, button: button, count: count
+        }) %>
+  </div>
+  <div data-panel="add"<% unless mode == 'add' %> hidden<% end %>>
+    <%== render('teams/museum/_add_to_story', locals: { items: items, return_to: return_to, inline: inline, open: mode == 'add' }) %>
+  </div>
+</div>

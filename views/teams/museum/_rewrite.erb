@@ -1,0 +1,77 @@
+<%# locals: (item:, title:, scenarios:, tasks_by_map:, selected_task_id:, remembered_task:, return_to:, inline:, action: nil, ids: [], leaving: [], button: 'Promote', count: nil) %>
+<% form_action = action || "#{@museum_path}/#{item.id}/promote" %>
+<% if tasks_by_map.empty? %>
+<%== render('teams/museum/_no_tasks') %>
+<% else %>
+<% cards = scenarios.empty? ? [{}] : scenarios %>
+<form method="post" action="<%= form_action %>" class="mu-rewrite" data-test-id="museum-promote-form" data-rewrite<% unless ids.empty? %> data-clears-selection="<%= @team.id %>"<% end %><% if inline %> data-draft="museum-draft:<%= item.id %>" hx-post="<%= @museum_path %>/<%= item.id %>/promote" hx-target="#mu-results"<% end %>>
+  <%== csrf_tag(form_action) %>
+  <input type="hidden" name="return_to" value="<%= return_to %>">
+  <% ids.each do |id| %><input type="hidden" name="ids[]" value="<%= id %>"><% end %>
+  <% if inline %><p class="mu-label">Rewrite as a story</p><% end %>
+
+  <label class="mu-field-label" for="mu-title-<%= item.id %>">What does someone want?</label>
+  <input type="text" id="mu-title-<%= item.id %>" class="mu-title" name="title" value="<%= title %>" placeholder="<%= item.summary %>" maxlength="200" required data-title>
+  <div class="mu-hint" data-hint data-test-id="museum-hint" hidden></div>
+  <div class="mu-title-row">
+    <button type="button" class="mu-fill" data-fill-title="<%= item.summary %>" data-test-id="museum-fill-title">Start from the Jira summary</button>
+    <span class="mu-counter" data-counter data-length="<%= title.to_s.length %>"><%= title.to_s.length %>/200</span>
+  </div>
+
+  <div class="mu-scenarios">
+    <p class="mu-scenarios-head"><span class="mu-label">Acceptance criteria</span> <span class="mu-count" data-scenario-count><%= cards.size %> <%= cards.size == 1 ? 'scenario' : 'scenarios' %></span></p>
+    <div class="mu-scenario-list" data-scenario-list>
+      <% cards.each_with_index do |card, index| %>
+        <div class="mu-scenario" data-scenario data-test-id="museum-scenario">
+          <div class="mu-scenario-head">
+            <span class="mu-scenario-n" data-scenario-n>S<%= index + 1 %></span>
+            <button type="button" class="mu-scenario-remove" data-remove-scenario aria-label="Remove this scenario">&times;</button>
+          </div>
+          <div class="mu-scenario-body">
+            <% [%w[given Given the\ starting\ situation], %w[when When what\ someone\ does], %w[then Then what\ they\ can\ see\ or\ rely\ on]].each do |part, word, hint| %>
+              <span class="mu-gwt"><%= word %></span>
+              <textarea rows="1" maxlength="100" name="scenarios[<%= index %>][<%= part %>]" placeholder="<%= hint %>" aria-label="<%= word %>"><%= card[part.to_sym] %></textarea>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+    <button type="button" class="mu-add-scenario" data-add-scenario data-test-id="museum-add-scenario">+ Add a scenario</button>
+  </div>
+
+  <label class="mu-field-label" for="mu-task-<%= item.id %>">Under task</label>
+  <select id="mu-task-<%= item.id %>" class="mu-task" name="task_id" required>
+    <% tasks_by_map.each do |(_map_id, map_name), tasks| %>
+      <optgroup label="<%= map_name %>">
+        <% tasks.each do |task| %>
+          <option value="<%= task[:id] %>"<% if selected_task_id == task[:id] %> selected<% end %>><%= task[:activity_name] %> / <%= task[:name] %></option>
+        <% end %>
+      </optgroup>
+    <% end %>
+  </select>
+  <% if remembered_task %><p class="mu-note">Remembered from your last promote.</p><% end %>
+
+  <% unless leaving.empty? %>
+    <div class="mu-leaving" data-test-id="museum-leaving">
+      <span class="mu-label">Leaving the museum</span>
+      <p><% leaving.each do |id, key| %><span data-leaving="<%= id %>"><%= key %></span> <% end %></p>
+    </div>
+  <% end %>
+
+  <div class="mu-rewrite-foot">
+    <button type="submit" class="btn" data-test-id="museum-promote-submit"<% if count %> data-count="<%= count %>"<% end %>><%= button %></button>
+    <% if inline %>
+      <button type="submit" form="mu-store-<%= item.id %>" class="mu-quiet" data-test-id="museum-case-store">Send to storage</button>
+    <% else %>
+      <a href="<%= return_to %>" class="mu-cancel">Cancel</a>
+      <span class="mu-note">You'll come back to the museum where you left off.</span>
+    <% end %>
+  </div>
+</form>
+<% if inline %>
+<form method="post" action="<%= @museum_path %>/<%= item.id %>/discard" id="mu-store-<%= item.id %>">
+  <%== csrf_tag("#{@museum_path}/#{item.id}/discard") %>
+  <input type="hidden" name="return_to" value="<%= return_to %>">
+</form>
+<% end %>
+<% end %>

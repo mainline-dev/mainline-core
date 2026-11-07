@@ -1,0 +1,57 @@
+<h1 class="team-title" data-test-id="members-page"><%= @team.name %> - Team Members</h1>
+
+<section class="section">
+  <h2 class="section-title">Working Members <span class="muted">(<%= @working_members.size %>)</span></h2>
+  <% if @working_members.any? %>
+    <ul class="plain-list">
+      <% @working_members.each do |member| %>
+        <li class="member-row">
+          <span><%= member.name %></span>
+          <% if @is_creator && member.id != @team.creator_id %>
+            <button type="button" class="btn btn-sm delete-confirm"
+                    data-delete-url="/teams/<%= @team.id %>/members/<%= member.id %>/archive"
+                    data-label="Archive"
+                    data-test-id="archive-<%= member.name.downcase.gsub(/\s+/, '-') %>">Archive</button>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p>No working members yet.</p>
+  <% end %>
+</section>
+
+<% if @archived_members.any? %>
+<section class="section">
+  <h2 class="section-title">Archived Members</h2>
+  <ul class="plain-list">
+    <% @archived_members.each do |member| %>
+      <li><%= member.name %></li>
+    <% end %>
+  </ul>
+</section>
+<% end %>
+
+<% if @is_creator %>
+<section class="section">
+  <h2 class="section-title">Invite</h2>
+
+  <form method="post" action="/teams/<%= @team.id %>/members/invites" class="inline-form" data-test-id="invite-form">
+    <%== csrf_tag("/teams/#{@team.id}/members/invites") %>
+    <label for="email">Email address</label>
+    <div class="inline-form-row">
+      <input type="email" id="email" name="email" placeholder="colleague@company.co" autofocus>
+      <button type="submit" class="btn btn-sm">Send Invite</button>
+    </div>
+  </form>
+
+  <% if @invitations.any? %>
+    <h3>Pending Invitations</h3>
+    <ul class="plain-list">
+      <% @invitations.each do |inv| %>
+        <li><%= inv.email %> <span class="muted">(expires <%= inv.expires_at.strftime('%Y-%m-%d') %>)</span></li>
+      <% end %>
+    </ul>
+  <% end %>
+</section>
+<% end %>

@@ -1,0 +1,37 @@
+<%== render('maps/_subnav') %>
+
+<section class="section">
+  <h2 class="section-title">History</h2>
+  <% if @events.empty? %>
+    <p>No events recorded yet.</p>
+  <% else %>
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Who</th>
+          <th>What</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @events.each do |event| %>
+          <tr>
+            <td><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+            <td><%= @actors[event.actor_id]&.name %></td>
+            <td>
+              <% entity_name = @entity_names[event.entity_id] %>
+              <% if entity_name %>
+                <strong><%= entity_name %></strong> - <%= EventPresenter.describe(event, @event_lookup, include_name: false) %>
+              <% else %>
+                <%= EventPresenter.describe(event, @event_lookup) %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @has_more %>
+      <a href="/maps/<%= @map.id %>/history?before=<%= @next_cursor %>" class="btn-link" data-test-id="history-load-more">Load more</a>
+    <% end %>
+  <% end %>
+</section>

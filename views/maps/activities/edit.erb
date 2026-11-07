@@ -1,0 +1,25 @@
+<%== render('maps/_subnav') %>
+
+<div class="form-container">
+  <% if @errors&.any? %>
+    <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
+  <form method="post" action="/maps/<%= @map.id %>/activities/<%= @activity.id %>"
+        class="dirty-form">
+    <%== csrf_tag('/maps/' + @map.id + '/activities/' + @activity.id) %>
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value="<%= @activity.name %>"
+           placeholder="e.g. Browse catalogue" maxlength="100" autofocus>
+    <label>Personas (select at least one)</label>
+    <div class="checkbox-group">
+      <% @personas.each do |p| %>
+        <label>
+          <input type="checkbox" name="persona_ids[]" value="<%= p.id %>"
+                 <%= 'checked' if @selected_persona_ids&.include?(p.id) %>>
+          <%= p.name %>
+        </label>
+      <% end %>
+    </div>
+    <button type="submit" class="btn" disabled>Save</button>
+  </form>
+</div>

@@ -1,0 +1,28 @@
+<div id="slice-history" <%= @oob ? 'hx-swap-oob="true"' : '' %>>
+  <% if @slice_events&.any? %>
+    <div class="section">
+      <h2 class="section-title">History</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>When</th><th>Who</th><th>What</th></tr>
+        </thead>
+        <tbody>
+          <% @slice_events.each do |event| %>
+            <tr>
+              <td style="white-space: nowrap; color: var(--text-tertiary); font-size: 0.8rem;"><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+              <td style="white-space: nowrap;"><%= event.actor.name %></td>
+              <td><%= EventPresenter.describe(event, { people: {}, slices: {}, tasks: {}, personas: {} }) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+      <% if @show_all_history %>
+        <a href="/maps/<%= @map.id %>/release_slices/history"
+           hx-get="/maps/<%= @map.id %>/release_slices/history"
+           hx-target="#slice-history"
+           hx-swap="outerHTML"
+           class="btn-link" data-test-id="history-show-all">Show all</a>
+      <% end %>
+    </div>
+  <% end %>
+</div>

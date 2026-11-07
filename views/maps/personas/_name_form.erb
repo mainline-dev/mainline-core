@@ -1,0 +1,13 @@
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+<form class="inline-edit-form" id="persona-name-<%= @persona.id %>"
+      hx-post="/maps/<%= @map.id %>/personas/<%= @persona.id %>/name"
+      hx-target="#persona-name-<%= @persona.id %>" hx-swap="outerHTML">
+  <%== csrf_tag('/maps/' + @map.id + '/personas/' + @persona.id + '/name') %>
+  <input type="text" name="name" value="<%= @persona.name %>" class="inline-edit-input" maxlength="100" autofocus>
+  <button type="submit" class="inline-edit-save">Save</button>
+  <a class="inline-edit-cancel"
+     hx-get="/maps/<%= @map.id %>/personas/<%= @persona.id %>/name"
+     hx-target="#persona-name-<%= @persona.id %>" hx-swap="outerHTML">Cancel</a>
+</form>

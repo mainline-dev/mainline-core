@@ -1,0 +1,14 @@
+<%# locals: (items:, return_to:, inline:, open:) %>
+<% action = "#{@museum_path}/add-to-story" %>
+<% label = items.size == 1 ? "Add #{items.first.source_key} to this story" : "Add #{items.size} exhibits to this story" %>
+<form method="post" action="<%= action %>" class="mu-add" data-test-id="museum-add-form"<% if items.size > 1 %> data-clears-selection="<%= @team.id %>"<% end %><% if inline %> data-in-place data-draft-key="museum-draft:<%= items.first.id %>" hx-post="<%= action %>" hx-target="#mu-results"<% end %>>
+  <%== csrf_tag(action) %>
+  <input type="hidden" name="return_to" value="<%= return_to %>">
+  <% items.each do |item| %><input type="hidden" name="ids[]" value="<%= item.id %>"><% end %>
+  <input type="search" name="q" class="mu-title" aria-label="Search stories" placeholder="Search the stories on your maps" autocomplete="off" data-story-search data-test-id="museum-story-search" hx-get="<%= @museum_path %>/stories" hx-vals='<%== { for: items.map(&:id).join(',') }.to_json %>' hx-include="closest form" hx-trigger="input changed delay:200ms, open-picker<% if open %>, load<% end %>" hx-target="next .mu-hits" hx-swap="innerHTML">
+  <div class="mu-hits"></div>
+  <div class="mu-rewrite-foot">
+    <button type="submit" class="btn" data-add-submit data-test-id="museum-add-submit"><%= label %></button>
+    <% unless inline %><a href="<%= return_to %>" class="mu-cancel">Cancel</a><% end %>
+  </div>
+</form>

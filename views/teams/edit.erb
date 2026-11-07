@@ -1,0 +1,18 @@
+<h1 class="page-title">Rename Team</h1>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/teams/<%= @team.id %>/edit">
+    <%== csrf_tag("/teams/#{@team.id}/edit") %>
+
+    <label for="name">Team name</label>
+    <input type="text" id="name" name="name" value="<%= @team_name %>"
+           placeholder="e.g. Acme Corp" maxlength="100" required autofocus>
+
+    <button type="submit" class="btn">Save</button>
+    <a href="/teams/<%= @team.id %>" class="cancel-link">Cancel</a>
+  </form>
+</div>

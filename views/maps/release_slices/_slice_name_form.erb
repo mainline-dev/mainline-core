@@ -1,0 +1,15 @@
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+<form hx-post="/maps/<%= @map.id %>/release_slices/<%= @release_slice.id %>"
+      hx-target="#slice-name-<%= @release_slice.id %>"
+      hx-swap="innerHTML"
+      class="inline-edit-form">
+  <input type="text" name="name" value="<%= @release_slice.name %>"
+         class="inline-edit-input" maxlength="100" autofocus>
+  <button type="submit" class="inline-edit-save">Save</button>
+  <button type="button" class="inline-edit-cancel"
+          hx-get="/maps/<%= @map.id %>/release_slices/<%= @release_slice.id %>/name"
+          hx-target="#slice-name-<%= @release_slice.id %>"
+          hx-swap="innerHTML">Cancel</button>
+</form>

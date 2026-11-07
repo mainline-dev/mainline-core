@@ -1,0 +1,19 @@
+<%# locals: (group:, offset:, size:, ticked:) %>
+<% page = group.suggestions.drop(offset).first(size) %>
+<% page.each do |suggestion| %>
+  <% if group.id == 'dupes' %>
+    <%== render('teams/museum/_let_go_pair', locals: { pair: suggestion, ticked: ticked }) %>
+  <% else %>
+    <%== render('teams/museum/_let_go_row', locals: { suggestion: suggestion, ticked: ticked }) %>
+  <% end %>
+<% end %>
+<% left = group.suggestions.size - offset - page.size %>
+<% if left.positive? %>
+  <div class="mu-lg-more">
+    <label class="mu-lg-more-box">
+      <input type="checkbox" class="mu-check" name="rest[]" value="<%= group.id %>" data-test-id="let-go-rest" data-rest="<%= left %>"<% if ticked %> checked<% end %>>
+      <span>+ <%= left %> more like these</span>
+    </label>
+    <button type="button" class="mu-lg-showall" data-test-id="let-go-show-all" hx-get="<%= @museum_path %>/let-go/more?group=<%= group.id %>&offset=<%= offset + page.size %>" hx-include="closest .mu-lg-more" hx-target="closest .mu-lg-more" hx-swap="outerHTML">Show all</button>
+  </div>
+<% end %>

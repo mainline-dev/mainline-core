@@ -1,0 +1,32 @@
+<!-- views/tasks/new.erb -->
+<h1 class="page-title">New Task</h1>
+<p class="page-subtitle">
+  A breakdown step within an activity. Stories go under tasks.
+</p>
+
+<% if @errors&.any? %>
+  <ul class="errors" data-test-id="form-errors"><% @errors.each do |e| %><li><%= e %></li><% end %></ul>
+<% end %>
+
+<div class="form-container">
+  <form method="post" action="/maps/<%= @map.id %>/tasks">
+    <%== csrf_tag('/maps/' + @map.id + '/tasks') %>
+
+    <label for="name">Name</label>
+    <input type="text" id="name" name="name" value=""
+           placeholder="e.g. Search products" maxlength="100" autofocus>
+
+    <label for="activity_id">Activity</label>
+    <select id="activity_id" name="activity_id">
+      <option value="">&mdash; select &mdash;</option>
+      <% @activities.each do |a| %>
+        <option value="<%= a.id %>" <%= 'selected' if @selected_activity_id == a.id %>>
+          <%= a.name %>
+        </option>
+      <% end %>
+    </select>
+
+    <button type="submit" class="btn">Create Task</button>
+    <a href="/maps/<%= @map.id %>" class="cancel-link">Cancel</a>
+  </form>
+</div>

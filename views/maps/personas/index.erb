@@ -1,0 +1,14 @@
+<%== render('maps/_subnav') %>
+
+<% if @personas.empty? %>
+  <p class="empty-state" data-test-id="personas-empty">No personas yet. Who uses your product? Start there.</p>
+<% else %>
+  <div class="persona-card-grid">
+    <% @personas.each do |persona| %>
+      <% @persona = persona %>
+      <%== render('maps/personas/_card') %>
+    <% end %>
+  </div>
+<% end %>
+
+<%== render('maps/personas/_history') %>

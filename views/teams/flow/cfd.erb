@@ -1,0 +1,172 @@
+<% @page_breadcrumb = 'Cumulative Flow' %>
+<% base = "/teams/#{@team.id}/flow" %>
+<nav class="subnav flow-subnav">
+  <span class="subnav-link active" data-test-id="flow-page-cfd">Cumulative Flow</span>
+  <a href="<%= base %>/throughput" class="subnav-link">Throughput</a>
+  <a href="<%= base %>/lead-time" class="subnav-link">Lead Time</a>
+</nav>
+
+<% map_param = @map_filter ? "&map_id=#{@map_filter}" : '' %>
+<div class="flow-filters">
+  <span class="subnav-filter-label">Window</span>
+  <% if @days == 30 %>
+    <span class="filter-toggle active" aria-current="true">30d</span>
+  <% else %>
+    <a href="<%= base %>?days=30<%= map_param %>" class="filter-toggle">30d</a>
+  <% end %>
+  <% if @days == 60 %>
+    <span class="filter-toggle active" aria-current="true">60d</span>
+  <% else %>
+    <a href="<%= base %>?days=60<%= map_param %>" class="filter-toggle">60d</a>
+  <% end %>
+  <% if @days == 90 %>
+    <span class="filter-toggle active" aria-current="true">90d</span>
+  <% else %>
+    <a href="<%= base %>?days=90<%= map_param %>" class="filter-toggle">90d</a>
+  <% end %>
+  <% if @days.nil? %>
+    <span class="filter-toggle active" aria-current="true">All</span>
+  <% else %>
+    <a href="<%= base %>?days=all<%= map_param %>" class="filter-toggle">All</a>
+  <% end %>
+  <% if @maps.length > 1 %>
+    <% days_param = @days ? "days=#{@days}" : 'days=all' %>
+    <span class="subnav-divider"></span>
+    <span class="subnav-filter-label">Map</span>
+    <% if @map_filter.nil? %>
+      <span class="filter-toggle active" aria-current="true">All</span>
+    <% else %>
+      <a href="<%= base %>?<%= days_param %>" class="filter-toggle">All</a>
+    <% end %>
+    <% @maps.each do |m| %>
+      <% if @map_filter == m.id.to_s %>
+        <span class="filter-toggle active" aria-current="true"><%= m.name %></span>
+      <% else %>
+        <a href="<%= base %>?<%= days_param %>&map_id=<%= m.id %>" class="filter-toggle"><%= m.name %></a>
+      <% end %>
+    <% end %>
+  <% end %>
+</div>
+
+<% if @cfd.dates.empty? %>
+  <p class="empty-state" data-test-id="flow-empty">Nothing has flowed yet. Pick a story. Pair on it. Deploy it. Release it. Come back.</p>
+<% else %>
+  <%
+    w = 800
+    h = 300
+    pad_left = 40
+    pad_bottom = 30
+    pad_top = 10
+    pad_right = 10
+    chart_w = w - pad_left - pad_right
+    chart_h = h - pad_top - pad_bottom
+
+    n = @cfd.dates.length
+    max_total = @cfd.dates.each_index.map { |i|
+      @cfd.planned[i] + @cfd.active[i] + @cfd.deployed[i] + @cfd.released[i]
+    }.max
+    max_total = [max_total, 1].max
+
+    x_step = n > 1 ? chart_w.to_f / (n - 1) : 0
+
+    bands = [
+      { values: @cfd.released, cls: 'cfd-released' },
+      { values: @cfd.deployed, cls: 'cfd-deployed' },
+      { values: @cfd.active,   cls: 'cfd-active' },
+      { values: @cfd.planned,  cls: 'cfd-planned' }
+    ]
+
+    cumulative = Array.new(n, 0)
+    polygons = bands.map { |band|
+      bottom_y = cumulative.map { |c| pad_top + chart_h - (c.to_f / max_total * chart_h) }
+      new_cumulative = cumulative.each_with_index.map { |c, i| c + band[:values][i] }
+      top_y = new_cumulative.map { |c| pad_top + chart_h - (c.to_f / max_total * chart_h) }
+
+      points_forward = (0...n).map { |i| "#{(pad_left + i * x_step).round(1)},#{top_y[i].round(1)}" }
+      points_back = (0...n).to_a.reverse.map { |i| "#{(pad_left + i * x_step).round(1)},#{bottom_y[i].round(1)}" }
+
+      cumulative = new_cumulative
+      { cls: band[:cls], points: (points_forward + points_back).join(' ') }
+    }
+
+    y_ticks = 5
+    tick_step = (max_total.to_f / y_ticks).ceil
+    tick_step = [tick_step, 1].max
+
+    date_labels = if n <= 10
+                    @cfd.dates.each_with_index.map { |d, i| [i, d] }
+                  else
+                    step = (n / 6.0).ceil
+                    @cfd.dates.each_with_index.select { |_d, i| (i % step).zero? || i == n - 1 }.map { |d, i| [i, d] }
+                  end
+  %>
+  <div class="chart-with-guide">
+  <div class="chart-main">
+  <div class="cfd-layout">
+    <svg class="cfd-chart" viewBox="0 0 <%= w %> <%= h %>" preserveAspectRatio="xMidYMid meet">
+      <% polygons.each do |poly| %>
+        <polygon class="<%= poly[:cls] %>" points="<%= poly[:points] %>" />
+      <% end %>
+
+      <line x1="<%= pad_left %>" y1="<%= pad_top %>" x2="<%= pad_left %>" y2="<%= pad_top + chart_h %>" class="cfd-axis" />
+      <line x1="<%= pad_left %>" y1="<%= pad_top + chart_h %>" x2="<%= pad_left + chart_w %>" y2="<%= pad_top + chart_h %>" class="cfd-axis" />
+
+      <% (0..y_ticks).each do |t| %>
+        <% val = t * tick_step %>
+        <% next if val > max_total %>
+        <% y = pad_top + chart_h - (val.to_f / max_total * chart_h) %>
+        <text x="<%= pad_left - 4 %>" y="<%= y + 3 %>" class="cfd-label cfd-label-y"><%= val %></text>
+        <line x1="<%= pad_left %>" y1="<%= y %>" x2="<%= pad_left + chart_w %>" y2="<%= y %>" class="cfd-grid" />
+      <% end %>
+
+      <% date_labels.each do |i, d| %>
+        <% x = pad_left + i * x_step %>
+        <text x="<%= x.round(1) %>" y="<%= h - 4 %>" class="cfd-label cfd-label-x"><%= d.strftime('%-m/%-d') %></text>
+      <% end %>
+    </svg>
+
+    <div class="cfd-key">
+      <div class="cfd-key-item">
+        <span class="cfd-swatch cfd-released"></span>
+        <div class="cfd-key-text">
+          <strong>Released</strong>
+          <span>Users have the feature</span>
+        </div>
+      </div>
+      <div class="cfd-key-item">
+        <span class="cfd-swatch cfd-deployed"></span>
+        <div class="cfd-key-text">
+          <strong>Deployed</strong>
+          <span>In production, not released</span>
+        </div>
+      </div>
+      <div class="cfd-key-item">
+        <span class="cfd-swatch cfd-active"></span>
+        <div class="cfd-key-text">
+          <strong>Active</strong>
+          <span>Being worked on</span>
+        </div>
+      </div>
+      <div class="cfd-key-item">
+        <span class="cfd-swatch cfd-planned"></span>
+        <div class="cfd-key-text">
+          <strong>Planned</strong>
+          <span>On the map, unassigned</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <div class="cfd-guide">
+    <h3>How to read this</h3>
+    <p>The vertical distance between two lines is the number of stories in that state. Bands should stay roughly parallel, indicating that work is flowing steadily.</p>
+    <ul>
+      <li><strong>Active band widening?</strong> Work in progress is growing. Stories are starting faster than they finish. Consider finishing something before starting something new.</li>
+      <li><strong>Deployed band widening?</strong> Code is piling up in production without being released. A release decision may be stalling.</li>
+      <li><strong>Planned band widening?</strong> Stories are being created faster than the team picks them up. Normal during planning; worth noticing if it persists.</li>
+      <li><strong>Flat top line?</strong> No new stories being created. The team is working through existing scope.</li>
+    </ul>
+  </div>
+  </div>
+<% end %>

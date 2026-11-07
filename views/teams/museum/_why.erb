@@ -1,0 +1,11 @@
+<%# locals: (in_place:) %>
+<span id="mu-why-slot" class="mu-why-slot"<% if in_place %> hx-swap-oob="true"<% end %>>
+  <% if @filters[:status] == 'in-storage' && !@museum.whys.empty? %>
+    <select name="why" class="mu-select" aria-label="Why" data-test-id="museum-filter-why">
+      <option value="">Why</option>
+      <% @museum.whys.each do |why| %>
+        <option value="<%= why %>"<% if @filters[:why] == why %> selected<% end %>>Why: <%= LetGoReview.title(why) %></option>
+      <% end %>
+    </select>
+  <% end %>
+</span>

@@ -1,0 +1,61 @@
+<h1 class="page-title">MCP Server</h1>
+
+<div class="banner-info">Read-only access to your story maps for AI coding assistants like Claude Code.</div>
+
+<% if @generated_token %>
+  <section class="section">
+    <h2 class="section-title">Your Token</h2>
+    <p><strong>Copy this now - it won't be shown again.</strong></p>
+    <code class="token"><%= @generated_token %></code>
+  </section>
+<% end %>
+
+<% if @team.mcp_token %>
+  <section class="section">
+    <h2 class="section-title">Endpoint</h2>
+    <code><%= ENV.fetch('BASE_URL') %>/mcp/<%= @team.id %></code>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Claude Code Setup</h2>
+    <p>Run this in your project directory:</p>
+    <pre>claude mcp add --transport http mainline \
+  <%= ENV.fetch('BASE_URL') %>/mcp/<%= @team.id %> \
+  --header "Authorization: Bearer YOUR_TOKEN"</pre>
+  </section>
+
+  <section class="section">
+    <h2 class="section-title">Available Tools</h2>
+    <dl>
+      <dt><code>list_maps</code></dt>
+      <dd>List all maps for this team</dd>
+      <dt><code>get_map</code></dt>
+      <dd>Get full map hierarchy: activities, tasks, stories, personas, release slices</dd>
+      <dt><code>get_story</code></dt>
+      <dd>Get story detail: description, scenarios, deploy history</dd>
+    </dl>
+  </section>
+
+  <section class="section">
+    <% if @is_creator %>
+    <form method="post" action="/teams/<%= @team.id %>/mcp_token">
+      <%== csrf_tag('/teams/' + @team.id + '/mcp_token') %>
+      <button type="submit" class="btn">Regenerate Token</button>
+    </form>
+    <% else %>
+      <p class="muted">Only the account holder can generate or rotate this token.</p>
+    <% end %>
+  </section>
+<% else %>
+  <p>Generate a token to enable AI coding assistants to read your story maps.</p>
+  <p><strong>The token will only be displayed once.</strong> Store it somewhere safe before leaving this page.</p>
+
+  <% if @is_creator %>
+  <form method="post" action="/teams/<%= @team.id %>/mcp_token">
+    <%== csrf_tag('/teams/' + @team.id + '/mcp_token') %>
+    <button type="submit" class="btn">Generate Token</button>
+  </form>
+  <% else %>
+    <p class="muted">Only the account holder can generate or rotate this token.</p>
+  <% end %>
+<% end %>

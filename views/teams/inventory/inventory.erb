@@ -1,0 +1,77 @@
+<% @page_breadcrumb = 'Inventory' %>
+<p class="lens-help">Code in production that users don't have yet.</p>
+
+<% if @inventory.items.empty? %>
+  <p class="empty-state" data-test-id="inventory-empty">Nothing is sitting in production unreleased. That is the goal.</p>
+<% else %>
+  <p class="inventory-summary">
+    <span class="inventory-count inventory-band-stale"><%= @inventory.stale %> stale</span>
+    <span class="inventory-sep">&middot;</span>
+    <span class="inventory-count inventory-band-aging"><%= @inventory.aging %> aging</span>
+    <span class="inventory-sep">&middot;</span>
+    <span class="inventory-count inventory-band-in-flight" data-test-id="inventory-in-flight" data-count="<%= @inventory.in_flight %>"><%= @inventory.in_flight %> in flight</span>
+  </p>
+
+  <% bands = [[:stale, 'Stale'], [:aging, 'Aging'], [:in_flight, 'In flight']] %>
+  <% bands.each do |band_key, band_label| %>
+    <% band_entries = @inventory.items.select { |e| e.band == band_key } %>
+    <% unless band_entries.empty? %>
+      <h2 class="inventory-band-heading inventory-band-<%= band_key %>"><%= band_label %></h2>
+      <table class="history-table">
+        <thead>
+          <tr>
+            <th>Story</th>
+            <th>Deployed</th>
+            <th>Business days</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% band_entries.each do |entry| %>
+            <tr data-test-id="inventory-row">
+              <td><%= entry.story.title %></td>
+              <td class="history-when"><%= entry.story.last_deployed_at.strftime('%Y-%m-%d') %></td>
+              <td><%= entry.business_days_since_deploy %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  <% end %>
+<% end %>
+
+<% if @inventory.cleanup.any? %>
+  <h2 class="inventory-band-heading" data-test-id="inventory-cleanup">Cleanup needed</h2>
+  <p class="lens-help">Released stories that carried a decoupling strategy. Assess whether feature flag or abstraction is ready to remove.</p>
+  <table class="history-table">
+    <thead>
+      <tr>
+        <th>Story</th>
+        <th>Strategy</th>
+        <th>Label</th>
+        <th>Released</th>
+        <th>Age</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% strategy_code = { 'flag' => 'FF', 'bba' => 'BBA', 'dark_launch' => 'DL' } %>
+      <% @inventory.cleanup.each do |story| %>
+        <%
+          days = story.released_at ? BusinessDays.between(story.released_at, Time.now) : 0
+          age_bucket = if days >= 10 then 'stale'
+                       elsif days >= 4 then 'aging'
+                       else 'recent'
+                       end
+        %>
+        <tr>
+          <td><%= story.title %></td>
+          <td><span class="decoupling-pill"><%= strategy_code[story.decoupling_strategy] %></span></td>
+          <td><%= story.decoupling_label %></td>
+          <td class="history-when"><%= story.released_at&.strftime('%Y-%m-%d') %></td>
+          <td class="cleanup-age" data-age-bucket="<%= age_bucket %>"><%= days %>d</td>
+          <td><a href="/maps/<%= story.map_id %>/stories/<%= story.id %>/edit" class="add-link">Edit</a></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

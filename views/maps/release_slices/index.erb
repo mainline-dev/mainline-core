@@ -1,0 +1,16 @@
+<%== render('maps/_subnav') %>
+
+<% if @release_slices.empty? %>
+  <p class="empty-state">No release slices yet.</p>
+<% else %>
+  <ul class="plain-list">
+    <% @release_slices.each do |slice| %>
+      <li id="slice-name-<%= slice.id %>">
+        <% @release_slice = slice %>
+        <%== render('maps/release_slices/_slice_name') %>
+      </li>
+    <% end %>
+  </ul>
+<% end %>
+
+<%== render('maps/release_slices/_history_oob') %>

@@ -1,0 +1,30 @@
+<h1 class="team-title">Delete <%= @team.name %></h1>
+
+<section class="section danger">
+  <p>This will permanently delete <strong><%= @team.name %></strong> and all its data:</p>
+  <ul>
+    <li>All maps, activities, tasks, and stories</li>
+    <li>All event history</li>
+    <li>All team memberships and invitations</li>
+    <li>Your account (if you have no other teams)</li>
+  </ul>
+  <p><strong>This action cannot be undone.</strong></p>
+
+  <form method="post" action="/teams/<%= @team.id %>/account/delete" id="delete-form" data-team-name="<%= @team.name %>">
+    <%== csrf_tag("/teams/#{@team.id}/account/delete") %>
+    <label for="confirmation">Type <strong class="errors" style="text-transform: none;">DELETE <%= @team.name %></strong> to confirm</label>
+    <input type="text" id="confirmation" name="confirmation" autocomplete="off" autofocus>
+    <button type="submit" class="btn btn-danger" id="delete-btn" disabled>Delete Team Permanently</button>
+  </form>
+</section>
+
+<script nonce="<%= @csp_nonce %>">
+(function() {
+  var input = document.getElementById('confirmation');
+  var btn = document.getElementById('delete-btn');
+  var expected = 'DELETE ' + document.getElementById('delete-form').dataset.teamName;
+  input.addEventListener('input', function() {
+    btn.disabled = (input.value !== expected);
+  });
+})();
+</script>
