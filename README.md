@@ -4,6 +4,8 @@ Mainline is project tooling for teams that practise continuous integration and c
 
 Documentation and practice guides: https://mainline.dev/docs
 
+A hosted service built on this code runs at https://mainline.dev.
+
 ## Quick start
 
 You need Docker with Compose.
