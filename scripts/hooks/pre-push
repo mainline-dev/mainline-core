@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Runs the whole suite before anything leaves this machine. Turn it on once
+# after cloning: git config core.hooksPath scripts/hooks
+set -euo pipefail
+
+exec "$(git rev-parse --show-toplevel)/scripts/test.sh"
