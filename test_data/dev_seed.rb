@@ -416,7 +416,7 @@ class DevSeed # rubocop:disable Metrics/ClassLength
       permissions: create_task('Permissions',      under_activity: @settings),
       config:      create_task('Configuration',    under_activity: @settings)
     }
-    puts "  Created map: #{@map.name} (4 activities, 8 tasks)"
+    puts "  Created map: #{@map.name} (4 activities, 8 steps)"
   end
 
   def simulate_work
