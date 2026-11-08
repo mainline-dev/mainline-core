@@ -137,10 +137,10 @@ describe 'MCP server' do
     assert_equal 'Product Map', map_data['name']
     assert_equal 1, map_data['activities'].length
     assert_equal 'Browse', map_data['activities'][0]['name']
-    assert_equal 1, map_data['activities'][0]['tasks'].length
-    assert_equal 'Search', map_data['activities'][0]['tasks'][0]['name']
-    assert_equal 1, map_data['activities'][0]['tasks'][0]['stories'].length
-    assert_equal 'Show results', map_data['activities'][0]['tasks'][0]['stories'][0]['title']
+    assert_equal 1, map_data['activities'][0]['steps'].length
+    assert_equal 'Search', map_data['activities'][0]['steps'][0]['name']
+    assert_equal 1, map_data['activities'][0]['steps'][0]['stories'].length
+    assert_equal 'Show results', map_data['activities'][0]['steps'][0]['stories'][0]['title']
   end
 
   it 'get_story returns story detail with scenarios' do

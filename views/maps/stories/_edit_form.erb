@@ -12,7 +12,7 @@
     <label for="title">Title</label>
     <input type="text" id="title" name="title" value="<%= @title %>" maxlength="200" <%= 'disabled' if @story.status == 'released' %> autofocus>
 
-    <label for="task_id">Task</label>
+    <label for="task_id">Step</label>
     <select id="task_id" name="task_id" <%= 'disabled' if @story.status == 'released' %>>
       <option value="">&mdash; select &mdash;</option>
       <% @tasks.each do |t| %>

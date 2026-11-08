@@ -48,7 +48,7 @@
         <% unless locked || @active_filter %>
           <div class="grid-header-footer">
             <a href="/maps/<%= @map.id %>/activities/<%= activity.id %>/edit" class="footer-action" title="Edit activity">&#x270E; Edit</a>
-            <a href="/maps/<%= @map.id %>/tasks/new?activity_id=<%= activity.id %>" class="footer-action" title="Add task">+ Task</a>
+            <a href="/maps/<%= @map.id %>/tasks/new?activity_id=<%= activity.id %>" class="footer-action" title="Add step">+ Step</a>
             <% if tasks.empty? %>
               <button type="button" class="archive-btn delete-confirm"
                       data-delete-url="/maps/<%= @map.id %>/activities/<%= activity.id %>/archive"
@@ -68,7 +68,7 @@
         <% if tasks.empty? %>
           <div class="task-col">
             <% unless locked || @active_filter %>
-              <a href="/maps/<%= @map.id %>/tasks/new?activity_id=<%= activity.id %>" class="add-link">+ Task</a>
+              <a href="/maps/<%= @map.id %>/tasks/new?activity_id=<%= activity.id %>" class="add-link">+ Step</a>
             <% end %>
           </div>
         <% else %>

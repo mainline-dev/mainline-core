@@ -33,8 +33,8 @@ module CreateStory
     errors << 'This map has reached its story limit' if ResourceCap.stories_per_map(Story.where(map_id: map.id).count) == :blocked
     errors << 'Title is required' unless title
     errors << 'Title must be 200 characters or fewer' if title && title.length > 200
-    errors << 'Task is required' unless task_id
-    errors << 'Task not found' if task_id && Task.where(id: task_id, map_id: map.id, archived_at: nil).none?
+    errors << 'Step is required' unless task_id
+    errors << 'Step not found' if task_id && Task.where(id: task_id, map_id: map.id, archived_at: nil).none?
     errors
   end
   private_class_method :validate

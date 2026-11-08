@@ -122,7 +122,7 @@ class Mainline
           @errors = []
           @errors << 'Title is required' unless title
           @errors << 'Title must be 200 characters or fewer' if title && title.length > 200
-          @errors << 'Task is required' unless task_id
+          @errors << 'Step is required' unless task_id
 
           unless @errors.empty?
             @subnav_active = 'edit'
