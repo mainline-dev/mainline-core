@@ -35,14 +35,14 @@ class Mainline
             next view('edit')
           end
 
-          flash['notice'] = "Task '#{@task.name}' updated"
+          flash['notice'] = "Step '#{@task.name}' updated"
           r.redirect "/maps/#{@map.id}"
         end
       end
 
       r.post 'archive' do
         if Story.where(task_id: @task.id, archived_at: nil).any?
-          flash_msg.error('Cannot archive a task that has stories')
+          flash_msg.error('Cannot archive a step that has stories')
           next htmx_grid_or_redirect(r)
         end
 
@@ -56,7 +56,7 @@ class Mainline
           )
         end
 
-        flash_msg.notice("Task '#{@task.name}' archived")
+        flash_msg.notice("Step '#{@task.name}' archived")
         htmx_grid_or_redirect(r)
       end
 
@@ -99,7 +99,7 @@ class Mainline
         next view('new')
       end
 
-      flash['notice'] = "Task '#{result.task.name}' created"
+      flash['notice'] = "Step '#{result.task.name}' created"
       r.redirect "/maps/#{@map.id}"
     end
   end

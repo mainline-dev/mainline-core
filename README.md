@@ -2,7 +2,7 @@
 
 Mainline is project tooling for teams that practise continuous integration and continuous delivery. Work lives on a user story map instead of a backlog: activities across the top, releases sliced down in priority order. Each person has one active story at a time, enforced by the system. A team can raise its limit, and the change is an event everyone sees. Deploy and release are separate events with separate buttons, so nothing is called done until users have it. There are no story points, no sprints and no individual metrics. Every change is an immutable event and the whole team sees the same views: the map, flow, teamwork and inventory. The CI Monitor shows how long each branch has lived on every connected GitHub repo.
 
-![A story map in Mainline: activities across the top, tasks beneath them, and stories under each task](docs/images/map.png)
+![A story map in Mainline: activities across the top, steps beneath them, and stories under each step](docs/images/map.png)
 
 Bring a Jira backlog in from a CSV export. It lands in the Ticket Museum, frozen, and you promote what's worth building onto the map one story at a time, rewritten with its acceptance scenarios.
 

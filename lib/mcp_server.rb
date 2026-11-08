@@ -34,7 +34,7 @@ module MainlineMCP
   def self.define_get_map(server)
     server.define_tool(
       name:         'get_map',
-      description:  'Get full map hierarchy: activities, tasks, stories, personas, release slices',
+      description:  'Get full map hierarchy: activities, steps, stories, personas, release slices',
       input_schema: {
         type:       'object',
         properties: { map_id: { type: 'string', description: 'UUID of the map' } },
@@ -120,7 +120,7 @@ module MainlineMCP
       id:       activity.id,
       name:     activity.name,
       position: activity.position,
-      tasks:    tasks.map { |t| build_task_data(t) }
+      steps:    tasks.map { |t| build_task_data(t) }
     }
   end
 

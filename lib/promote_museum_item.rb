@@ -96,7 +96,7 @@ module PromoteMuseumItem
     elsif items.any? { |item| item.epic? || item.sub_task? }
       'Epics and sub-tasks stay in the museum; promote the ticket itself'
     elsif !task
-      'Choose a task on one of your maps'
+      'Choose a step on one of your maps'
     end
   end
   private_class_method :promote, :refusal, :add_scenarios, :failure

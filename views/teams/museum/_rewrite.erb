@@ -39,7 +39,7 @@
     <button type="button" class="mu-add-scenario" data-add-scenario data-test-id="museum-add-scenario">+ Add a scenario</button>
   </div>
 
-  <label class="mu-field-label" for="mu-task-<%= item.id %>">Under task</label>
+  <label class="mu-field-label" for="mu-task-<%= item.id %>">Under step</label>
   <select id="mu-task-<%= item.id %>" class="mu-task" name="task_id" required>
     <% tasks_by_map.each do |(_map_id, map_name), tasks| %>
       <optgroup label="<%= map_name %>">

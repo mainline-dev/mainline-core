@@ -11,7 +11,7 @@
   <form method="post" action="/maps/<%= @map.id %>/stories">
     <%== csrf_tag('/maps/' + @map.id + '/stories') %>
 
-    <label for="task_id">Task</label>
+    <label for="task_id">Step</label>
     <select id="task_id" name="task_id">
       <option value="">&mdash; select &mdash;</option>
       <% @tasks.each do |t| %>

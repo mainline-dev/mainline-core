@@ -129,7 +129,7 @@ describe EventPresenter do
     )
     tasks = { 't1' => Struct.new(:name).new('Register'), 't2' => Struct.new(:name).new('Login') }
 
-    assert_equal 'moved from task: Register to task: Login', EventPresenter.describe(event, lookup(tasks: tasks))
+    assert_equal 'moved from step: Register to step: Login', EventPresenter.describe(event, lookup(tasks: tasks))
   end
 
   it 'describes edited with title rename' do
@@ -211,7 +211,7 @@ describe EventPresenter do
     )
     tasks = { 't1' => Struct.new(:name).new('Register'), 't2' => Struct.new(:name).new('Login') }
 
-    assert_equal 'moved from task: Register to task: Login, renamed to "New"',
+    assert_equal 'moved from step: Register to step: Login, renamed to "New"',
       EventPresenter.describe(event, lookup(tasks: tasks))
   end
 
@@ -233,7 +233,7 @@ describe EventPresenter do
     )
     tasks = { 't1' => Struct.new(:name).new('Register'), 't2' => Struct.new(:name).new('Login') }
 
-    assert_equal 'moved from task: Register to task: Login', EventPresenter.describe(event, lookup(tasks: tasks))
+    assert_equal 'moved from step: Register to step: Login', EventPresenter.describe(event, lookup(tasks: tasks))
   end
 
   it 'describes collaboration_changed from solo to paired' do

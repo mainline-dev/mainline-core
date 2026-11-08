@@ -70,7 +70,7 @@ module EventPresenter
   def self.describe_task_change(event, lookup, _include_name)
     from_name = resolve(lookup, :tasks, event.before_state['task_id']) || 'unknown'
     to_name = resolve(lookup, :tasks, event.after_state['task_id']) || 'unknown'
-    "moved from task: #{from_name} to task: #{to_name}"
+    "moved from step: #{from_name} to step: #{to_name}"
   end
 
   def self.describe_collaboration_change(event, _lookup, _include_name)
