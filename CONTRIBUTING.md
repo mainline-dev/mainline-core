@@ -11,4 +11,4 @@ Mainline is built the way it asks teams to work.
 
 Pull requests that add story points, sprints, velocity or individual metrics will be closed.
 
-Before your first pull request can be merged, you sign the [contributor licence agreement](CLA.md); a bot asks you on the pull request. You keep the copyright in your work. Mainline's hosted service includes private code, so the agreement lets Kipple PTY LTD use your contribution there as well as in this repository, which stays under the GNU Affero General Public License v3.0.
+Before your first pull request can be merged, you sign the [contributor licence agreement](CLA.md); a bot asks you on the pull request. You keep the copyright in your work. Mainline's hosted service includes private code, so the agreement lets Kipple Pty Ltd use your contribution there as well as in this repository, which stays under the GNU Affero General Public License v3.0.
