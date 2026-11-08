@@ -10,7 +10,7 @@ Bring a Jira backlog in from a CSV export. It lands in the Ticket Museum, frozen
 
 Documentation and practice guides: https://mainline.dev/docs
 
-A hosted service built on this code runs at https://mainline.dev.
+Mainline was developed privately before this public release. The hosted service at https://mainline.dev runs this same code.
 
 ## Quick start
 
