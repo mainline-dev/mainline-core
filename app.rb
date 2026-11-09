@@ -41,6 +41,7 @@ require_relative 'lib/add_to_story'
 require_relative 'lib/story_picker'
 require_relative 'lib/jobs/let_go_job'
 require_relative 'lib/cloudflare_client_ip'
+require_relative 'lib/request_size_limit'
 require_relative 'lib/signup_timer'
 require_relative 'lib/event_presenter'
 require_relative 'lib/cumulative_flow'
@@ -126,6 +127,7 @@ class Mainline < Roda
   opts[:check_dynamic_arity] = false
   opts[:check_arity] = :warn
 
+  use RequestSizeLimit
   use CloudflareClientIp
   use Rack::Session::Cookie,
     key:       '_Mainline.sid',
