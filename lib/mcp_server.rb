@@ -2,13 +2,15 @@
 
 require 'mcp'
 require_relative 'core_events'
+require_relative 'feature_file'
 
 module MainlineMCP
   def self.build_server
     instructions = 'Read-only access to a Mainline story map, except that ' \
                    'fetching a story marks it as agent-assisted. ' \
                    'Use list_maps to see available maps, get_map for the full hierarchy, ' \
-                   'and get_story for details including scenarios (acceptance criteria). ' \
+                   'get_story for details including scenarios (acceptance criteria), ' \
+                   'and get_feature_file for those scenarios as a Gherkin feature file. ' \
                    'Work on one story at a time. Finish the current story before starting another. ' \
                    'Do not start work on a story that has zero scenarios. ' \
                    'Scenarios are the acceptance criteria. Without them you are guessing what done means. ' \
@@ -19,6 +21,7 @@ module MainlineMCP
     define_list_maps(server)
     define_get_map(server)
     define_get_story(server)
+    define_get_feature_file(server)
     CoreEvents.publish(:mcp_server_built, server: server)
     server
   end
@@ -56,6 +59,19 @@ module MainlineMCP
     ) { |story_id:| MainlineMCP.call_get_story(story_id) }
   end
 
+  def self.define_get_feature_file(server)
+    server.define_tool(
+      name:         'get_feature_file',
+      description:  "Get a story's scenarios as a Gherkin .feature file, tagged with the story and scenario IDs. " \
+                    'Marks the story as agent-assisted.',
+      input_schema: {
+        type:       'object',
+        properties: { story_id: { type: 'string', description: 'UUID of the story' } },
+        required:   ['story_id']
+      }
+    ) { |story_id:| MainlineMCP.call_get_feature_file(story_id) }
+  end
+
   def self.current_team_id
     Thread.current[:mcp_team_id]
   end
@@ -78,11 +94,31 @@ module MainlineMCP
   end
 
   def self.call_get_story(story_id)
-    team_id = current_team_id
-    story = Story[story_id]
+    story = team_story(story_id)
     return error_response('Story not found') unless story
-    return error_response('Story not found') unless story.team_id == team_id
 
+    mark_agent_read(story)
+    json = build_story_data(story)
+    MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
+  end
+
+  def self.call_get_feature_file(story_id)
+    story = team_story(story_id)
+    return error_response('Story not found') unless story
+
+    mark_agent_read(story)
+    MCP::Tool::Response.new([{ type: 'text', text: FeatureFile.for(story) }])
+  end
+
+  def self.team_story(story_id)
+    story = Story[story_id]
+    story if story && story.team_id == current_team_id
+  end
+
+  # Reading a story, in any form, marks it as agent-assisted and records who
+  # was on it.
+  def self.mark_agent_read(story)
+    team_id = current_team_id
     DB.transaction do
       DB[:stories].where(id: story.id).update(agent_assisted: true) unless story.agent_assisted
       RecordEvent.call(
@@ -95,9 +131,6 @@ module MainlineMCP
         }.compact
       )
     end
-
-    json = build_story_data(story)
-    MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
   end
 
   def self.build_map_data(map)

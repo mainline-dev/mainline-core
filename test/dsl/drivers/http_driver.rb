@@ -259,6 +259,11 @@ class HttpDriver
     Nokogiri::HTML(last_response.body).css(%([data-test-id="#{test_id}"])).map { |node| node.text.strip }
   end
 
+  def download_feature_file(map, story)
+    get "/maps/#{map.id}/stories/#{story.id}/feature"
+    last_response
+  end
+
   def submit_delete_scenario(map, story, scenario)
     post "/maps/#{map.id}/stories/#{story.id}/scenarios/#{scenario.id}/delete"
     last_response

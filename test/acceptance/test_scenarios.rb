@@ -146,6 +146,30 @@ describe 'Scenarios' do
 
     assert_equal ['results appear', 'Search by product name'], scenario_names_shown
   end
+
+  it 'downloads the scenarios as a feature file named after the story' do
+    create_scenario(@story, name: 'Search by product name', given_text: 'a product exists',
+      when_text: 'I search for it', then_text: 'I see it in results')
+
+    resp = download_feature_file(@story)
+
+    assert_equal 200, resp.status
+    assert_includes resp['Content-Disposition'], 'filename="find-products.feature"'
+    assert_includes resp.body, 'Feature: Find products'
+    assert_includes resp.body, 'Scenario: Search by product name'
+  end
+
+  it 'offers the feature file once a story has a scenario' do
+    visit_edit_story(@story)
+
+    refute driver.response_includes?('data-test-id="feature-download"')
+
+    create_scenario(@story, given_text: 'a product exists', when_text: 'I search for it', then_text: 'I see it in results')
+    visit_edit_story(@story)
+
+    assert driver.response_includes?('data-test-id="feature-download"')
+    assert driver.response_includes?('data-test-id="feature-copy"')
+  end
 end
 
 describe 'Scenarios - Released Story' do

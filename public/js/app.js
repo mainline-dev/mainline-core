@@ -391,6 +391,17 @@ document.addEventListener('click', function(e) {
   });
 });
 
+// Copies a story's scenarios as a Gherkin feature file.
+document.addEventListener('click', function(e) {
+  var btn = e.target.closest('.feature-copy');
+  if (!btn) return;
+  var original = btn.textContent;
+  navigator.clipboard.writeText(btn.dataset.feature).then(function() {
+    btn.textContent = 'Copied';
+    setTimeout(function() { btn.textContent = original; }, 1500);
+  });
+});
+
 (function() {
   var KEBAB = 'details.card-kebab, details.subnav-kebab';
 

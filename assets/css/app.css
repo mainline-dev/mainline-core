@@ -4747,6 +4747,23 @@ footer.landing a:hover {
 }
 
 /* Editable scenario form - CSS grid layout */
+.feature-export {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+}
+
+.feature-copy {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--accent-cyan);
+    font: inherit;
+    cursor: pointer;
+}
+
 .scenario-name {
     font-weight: 600;
     margin-bottom: 0.25rem;
