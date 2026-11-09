@@ -19,7 +19,8 @@ describe 'MCP server' do
     task     = create_task('Search', under_activity: activity)
     @story = create_story('Show results', under_task: task)
     @story.update(description: 'Display search results')
-    create_scenario(@story, given_text: 'a query', when_text: 'I search', then_text: 'I see results')
+    create_scenario(@story, name: 'Search shows matching results', given_text: 'a query', when_text: 'I search',
+      then_text: 'I see results')
     @story.refresh
   end
 
@@ -161,6 +162,21 @@ describe 'MCP server' do
     assert_equal 'a query', story_data['scenarios'][0]['given']
     assert_equal 'I search', story_data['scenarios'][0]['when']
     assert_equal 'I see results', story_data['scenarios'][0]['then']
+    assert_equal 'Search shows matching results', story_data['scenarios'][0]['name']
+  end
+
+  it 'get_story names a scenario written before names by its Then line' do
+    Scenario.create(story_id: @story.id, given_text: 'no query', when_text: 'I search', then_text: 'I see a prompt',
+      position: 2000)
+    generate_mcp_token
+    mcp_initialize
+
+    resp = mcp_call_tool('get_story', arguments: { 'story_id' => @story.id })
+    text = JSON.parse(resp.body).dig('result', 'content')&.find { |c| c['type'] == 'text' }
+
+    names = JSON.parse(text['text'])['scenarios'].map { |sc| sc['name'] }
+
+    assert_equal ['Search shows matching results', 'I see a prompt'], names
   end
 
   it 'get_story does not expose deploy webhook URL' do

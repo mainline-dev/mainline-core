@@ -389,12 +389,13 @@ class Mainline
           r.post do
             next render('maps/stories/_scenarios') if @story.status == 'released'
 
+            name  = typecast_params.str('name').to_s.strip
             given = typecast_params.str('given').to_s.strip
             whn   = typecast_params.str('when').to_s.strip
             thn   = typecast_params.str('then').to_s.strip
 
-            @scenario_errors = AddScenario.call(story: @story, actor: @current_actor, given_text: given, when_text: whn,
-              then_text: thn).errors
+            @scenario_errors = AddScenario.call(story: @story, actor: @current_actor, name: name, given_text: given,
+              when_text: whn, then_text: thn).errors
 
             @scenarios = Scenario.where(story_id: @story.id).order(:position).all
             with_preview(render('maps/stories/_scenarios'))
@@ -457,13 +458,14 @@ class Mainline
             r.post do
               next render('maps/stories/_scenarios') if @story.status == 'released'
 
+              name  = typecast_params.str('name').to_s.strip
               given = typecast_params.str('given').to_s.strip
               whn   = typecast_params.str('when').to_s.strip
               thn   = typecast_params.str('then').to_s.strip
 
-              @scenario_errors = validate_scenario_fields(given, whn, thn)
+              @scenario_errors = AddScenario.errors(name, given, whn, thn)
 
-              scenario.update(given_text: given, when_text: whn, then_text: thn) if @scenario_errors.empty?
+              scenario.update(name: name, given_text: given, when_text: whn, then_text: thn) if @scenario_errors.empty?
 
               @scenarios = Scenario.where(story_id: @story.id).order(:position).all
               with_preview(render('maps/stories/_scenarios'))
@@ -491,10 +493,6 @@ class Mainline
       .exclude(Sequel[:people][:id] => excluded_ids)
       .select_all(:people)
       .all
-  end
-
-  def validate_scenario_fields(given, whn, thn)
-    AddScenario.errors(given, whn, thn)
   end
 
   def load_edit_form_data

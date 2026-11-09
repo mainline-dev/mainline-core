@@ -382,6 +382,23 @@ describe 'Ticket Museum' do
       assert_equal [['a basket', 'I continue as a guest', 'I can pay']], story_scenarios('Buy without an account')
     end
 
+    it 'keeps the names given to scenarios written while promoting' do
+      promote_museum_item('SHOP-10', title: 'Buy without an account', task: @task,
+        scenarios: [['a basket', 'I continue as a guest', 'I can pay', 'Guest pays by email']])
+
+      names = BypassRLS.call { Scenario.where(story_id: Story.where(title: 'Buy without an account').select(:id)).select_map(:name) }
+
+      assert_equal ['Guest pays by email'], names
+    end
+
+    it 'refuses to promote with a scenario that has no name' do
+      promote_museum_item('SHOP-10', title: 'Buy without an account', task: @task,
+        scenarios: [['a basket', 'I continue as a guest', 'I can pay', '']])
+
+      assert_error_shown
+      assert_equal(0, BypassRLS.call { Story.where(title: 'Buy without an account').count })
+    end
+
     it 'remembers the task last promoted under' do
       other = create_task('Track', under_activity: create_activity('After', for_personas: [create_persona('Buyer')]))
       import_jira_csv(JiraExport.csv({ key: 'SHOP-20', id: '20', summary: 'Order tracking' }))

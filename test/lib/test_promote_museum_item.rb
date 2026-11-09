@@ -29,8 +29,9 @@ describe PromoteMuseumItem do
       scenarios: scenarios)
   end
 
+  # Named after its Then line, as the DSL does.
   def scenario(given, whn, thn)
-    { given: given, when: whn, then: thn }
+    { name: thn, given: given, when: whn, then: thn }
   end
 
   it 'turns the item into a planned story under the task, with the new title and no description' do

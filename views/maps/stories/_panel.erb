@@ -44,6 +44,7 @@
       <ol class="story-expand-scenarios">
         <% scenarios.each do |sc| %>
           <li class="story-expand-scenario">
+            <div class="scenario-name"><%= sc.display_name %></div>
             <div><span class="story-expand-kw">Given</span> <%= sc.given_text %></div>
             <div><span class="story-expand-kw">When</span> <%= sc.when_text %></div>
             <div><span class="story-expand-kw">Then</span> <%= sc.then_text %></div>

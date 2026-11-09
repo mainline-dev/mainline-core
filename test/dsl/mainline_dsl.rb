@@ -329,14 +329,20 @@ module MainlineDSL
     driver.submit_scenario_undone(@map, story, scenario)
   end
 
-  def create_scenario(story, given_text:, when_text:, then_text:)
+  # A scenario's name defaults to its Then line, so tests about something else
+  # needn't invent one; pass name: '' to leave it out.
+  def create_scenario(story, given_text:, when_text:, then_text:, name: nil)
     driver.submit_create_scenario(@map, story,
-      given: given_text, when: when_text, then: then_text)
+      name: name || then_text, given: given_text, when: when_text, then: then_text)
   end
 
-  def update_scenario(story, scenario, given_text:, when_text:, then_text:)
+  def update_scenario(story, scenario, given_text:, when_text:, then_text:, name: nil)
     driver.submit_update_scenario(@map, story, scenario,
-      given: given_text, when: when_text, then: then_text)
+      name: name || then_text, given: given_text, when: when_text, then: then_text)
+  end
+
+  def scenario_names_shown
+    driver.texts_of('scenario-name')
   end
 
   def delete_scenario(story, scenario)

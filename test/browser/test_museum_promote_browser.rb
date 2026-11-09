@@ -20,8 +20,13 @@ describe 'Ticket Museum promote form (browser)' do
     visit "/teams/#{@team.id}/museum/#{museum_item('SHOP-22').id}/promote"
   end
 
-  def write_scenario(card, *parts)
-    card.all('textarea').zip(parts).each { |box, text| box.set(text) }
+  # Fills a scenario card; its name defaults to the Then line.
+  def write_scenario(card, given, whn, thn, name: thn)
+    { name: name, given: given, when: whn, then: thn }.each { |part, text| card.find(%(textarea[name$="[#{part}]"])).set(text) }
+  end
+
+  def scenario_parts(card)
+    %w[given when then].map { |part| card.find(%(textarea[name$="[#{part}]"])).value }
   end
 
   def title_field
@@ -38,7 +43,7 @@ describe 'Ticket Museum promote form (browser)' do
     assert_selector '[data-test-id="museum-scenario"]', count: 2
     assert_equal 'Shoppers can filter results by price', title_field.value
     assert_equal ['a filtered search', 'I share the link', 'the range is applied'],
-      all('[data-test-id="museum-scenario"]')[1].all('textarea').map(&:value)
+      scenario_parts(all('[data-test-id="museum-scenario"]')[1])
     assert_equal task.id, find('select[name="task_id"]').value
   end
 
@@ -204,7 +209,7 @@ describe 'Ticket Museum promote form (browser)' do
 
       assert_selector '[data-test-id="flash-error"]'
       assert_selector %([data-test-id="museum-case"][data-key="#{@first}"])
-      assert_equal 'a filtered search', find('[data-test-id="museum-scenario"] textarea', match: :first).value
+      assert_equal 'a filtered search', scenario_parts(find('[data-test-id="museum-scenario"]')).first
       assert evaluate_script('window.stayed')
     end
   end

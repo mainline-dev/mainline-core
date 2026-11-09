@@ -18,7 +18,7 @@ describe UnpromoteMuseumItem do
     @item = MuseumItem.create(team_id: @team.id, source_key: 'SHOP-10', issue_type: 'Story', summary: 'Guest checkout')
     @story = PromoteMuseumItem.call(item: @item, team: @team, actor: @person.actor, person: @person,
       title: 'Buy without an account', task_id: @task.id,
-      scenarios: [{ given: 'a basket', when: 'I continue as a guest', then: 'I can pay' }]).story
+      scenarios: [{ name: 'Guest pays', given: 'a basket', when: 'I continue as a guest', then: 'I can pay' }]).story
   end
 
   def unpromote(item = @item)
@@ -36,7 +36,7 @@ describe UnpromoteMuseumItem do
   end
 
   it 'keeps the story when something has happened to it since' do
-    AddScenario.call(story: @story, actor: @person.actor, given_text: 'a', when_text: 'b', then_text: 'c')
+    AddScenario.call(story: @story, actor: @person.actor, name: 'n', given_text: 'a', when_text: 'b', then_text: 'c')
 
     result = unpromote
 

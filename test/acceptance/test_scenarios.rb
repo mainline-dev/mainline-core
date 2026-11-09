@@ -104,6 +104,48 @@ describe 'Scenarios' do
     assert_page_includes('they click search')
     assert_page_includes('results appear')
   end
+
+  it 'needs a name for a new scenario' do
+    create_scenario(@story, name: '', given_text: 'a product exists', when_text: 'I search for it',
+      then_text: 'I see it in results')
+
+    assert_equal(0, BypassRLS.call { Scenario.where(story_id: @story.id).count })
+    assert_error_shown
+  end
+
+  it 'keeps the name a scenario is given' do
+    create_scenario(@story, name: 'Search finds a product by name', given_text: 'a product exists',
+      when_text: 'I search for it', then_text: 'I see it in results')
+
+    assert_equal 'Search finds a product by name', Scenario.where(story_id: @story.id).get(:name)
+  end
+
+  it 'refuses a scenario name over 80 characters' do
+    create_scenario(@story, name: 'x' * 81, given_text: 'a', when_text: 'b', then_text: 'c')
+
+    assert_equal(0, BypassRLS.call { Scenario.where(story_id: @story.id).count })
+    assert_error_shown
+  end
+
+  it 'needs a name when a scenario written before names is edited' do
+    scenario = Scenario.create(story_id: @story.id, given_text: 'old', when_text: 'old', then_text: 'old', position: 1000)
+
+    update_scenario(@story, scenario, name: '', given_text: 'new', when_text: 'new', then_text: 'new')
+
+    assert_error_shown
+    assert_equal 'old', scenario.reload.given_text
+  end
+
+  it "shows each scenario's name, and the Then line for one written before names" do
+    Scenario.create(story_id: @story.id, given_text: 'a user logs in', when_text: 'they click search',
+      then_text: 'results appear', position: 1000)
+    create_scenario(@story, name: 'Search by product name', given_text: 'a product exists',
+      when_text: 'I search for it', then_text: 'I see it in results')
+
+    visit_edit_story(@story)
+
+    assert_equal ['results appear', 'Search by product name'], scenario_names_shown
+  end
 end
 
 describe 'Scenarios - Released Story' do

@@ -237,14 +237,26 @@ class HttpDriver
 
   def submit_create_scenario(map, story, attrs)
     post "/maps/#{map.id}/stories/#{story.id}/scenarios",
-      'given' => attrs[:given], 'when' => attrs[:when], 'then' => attrs[:then]
+      'name' => attrs[:name], 'given' => attrs[:given], 'when' => attrs[:when], 'then' => attrs[:then]
     last_response
   end
 
   def submit_update_scenario(map, story, scenario, attrs)
     post "/maps/#{map.id}/stories/#{story.id}/scenarios/#{scenario.id}",
-      'given' => attrs[:given], 'when' => attrs[:when], 'then' => attrs[:then]
+      'name' => attrs[:name], 'given' => attrs[:given], 'when' => attrs[:when], 'then' => attrs[:then]
     last_response
+  end
+
+  # Each scenario is [given, when, then] or [given, when, then, name]; the
+  # name defaults to the Then line.
+  def scenario_cards(scenarios)
+    scenarios.each_with_index.to_h do |(given, whn, thn, name), i|
+      [i.to_s, { 'name' => name || thn, 'given' => given, 'when' => whn, 'then' => thn }]
+    end
+  end
+
+  def texts_of(test_id)
+    Nokogiri::HTML(last_response.body).css(%([data-test-id="#{test_id}"])).map { |node| node.text.strip }
   end
 
   def submit_delete_scenario(map, story, scenario)
@@ -635,7 +647,7 @@ class HttpDriver
   end
 
   def promote_museum_item(team, item, title:, task_id:, scenarios: [], return_to: nil)
-    cards = scenarios.each_with_index.to_h { |(given, whn, thn), i| [i.to_s, { 'given' => given, 'when' => whn, 'then' => thn }] }
+    cards = scenario_cards(scenarios)
     params = { 'title' => title, 'task_id' => task_id, 'scenarios' => cards }
     params['return_to'] = return_to if return_to
     post "/teams/#{team.id}/museum/#{item.id}/promote", params
@@ -729,7 +741,7 @@ class HttpDriver
   end
 
   def promote_together(team, ids, title:, task_id:, scenarios: [], return_to: nil)
-    cards = scenarios.each_with_index.to_h { |(given, whn, thn), i| [i.to_s, { 'given' => given, 'when' => whn, 'then' => thn }] }
+    cards = scenario_cards(scenarios)
     params = { 'ids' => ids, 'title' => title, 'task_id' => task_id, 'scenarios' => cards }
     params['return_to'] = return_to if return_to
     post "/teams/#{team.id}/museum/together/promote", params
