@@ -2,7 +2,7 @@
 
 require_relative '../lib/rate_limiter'
 
-INVITE_RATE_LIMITER = RateLimiter.new(capacity: 10, refill_rate: 10.0 / 3600)
+INVITE_RATE_LIMITER = SharedRateLimiter.new(name: 'invite', capacity: 10, refill_rate: 10.0 / 3600)
 
 class Mainline
   hash_branch('teams') do |r|

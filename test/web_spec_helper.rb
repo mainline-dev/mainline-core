@@ -11,6 +11,7 @@ raise "test database doesn't end with test" if DB.opts[:database] && !DB.opts[:d
 # Overlapping test runs share one Redis; each run keeps its login link marks
 # under its own prefix so one run's cleanup cannot clear another's.
 LoginLinkThrottle.prefix = "login_link_sent:#{SecureRandom.hex(4)}:"
+SharedRateLimiter.prefix = "rate_limit:#{SecureRandom.hex(4)}:"
 
 require 'monitor'
 require 'capybara'

@@ -3,7 +3,7 @@
 require 'bcrypt'
 require_relative '../lib/rate_limiter'
 
-DEPLOY_RATE_LIMITER = RateLimiter.new(capacity: 10, refill_rate: 0.2)
+DEPLOY_RATE_LIMITER = SharedRateLimiter.new(name: 'deploy', capacity: 10, refill_rate: 0.2)
 
 class Mainline
   hash_branch('api') do |r|
