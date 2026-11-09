@@ -28,7 +28,7 @@ describe 'Release a story' do
 
     assert_equal 'released', @story.status
     refute_nil @story.released_at
-    assert_equal 0, StoryAssignment.where(story_id: @story.id).count
+    assert_equal(0, BypassRLS.call { StoryAssignment.where(story_id: @story.id).count })
     assert_event_recorded(entity: @story, action: 'released')
     assert_event_recorded(entity: @story, action: 'person_unassigned')
   end

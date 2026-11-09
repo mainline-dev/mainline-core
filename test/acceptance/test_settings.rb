@@ -52,13 +52,13 @@ describe 'Settings' do
   it 'rejects stale less than or equal to aging' do
     update_settings(aging_days: 10, stale_days: 5)
 
-    assert_equal 0, TeamConstraint.where(team_id: @team.id).count
+    assert_equal(0, BypassRLS.call { TeamConstraint.where(team_id: @team.id).count })
   end
 
   it 'rejects out-of-range values' do
     update_settings(aging_days: 0, stale_days: 10)
 
-    assert_equal 0, TeamConstraint.where(team_id: @team.id).count
+    assert_equal(0, BypassRLS.call { TeamConstraint.where(team_id: @team.id).count })
   end
 
   it 'shows warning banner' do

@@ -69,8 +69,7 @@ describe 'Scenarios' do
 
     delete_scenario(@story, scenario)
 
-    assert_equal 0, Scenario.where(story_id: @story.id).count
-
+    assert_equal(0, BypassRLS.call { Scenario.where(story_id: @story.id).count })
     event = Event.where(entity_id: @story.id, action: 'scenario_removed').first
 
     refute_nil event
@@ -80,7 +79,7 @@ describe 'Scenarios' do
     create_scenario(@story,
       given_text: '', when_text: 'something', then_text: 'something')
 
-    assert_equal 0, Scenario.where(story_id: @story.id).count
+    assert_equal(0, BypassRLS.call { Scenario.where(story_id: @story.id).count })
     assert_error_shown
   end
 
@@ -88,7 +87,7 @@ describe 'Scenarios' do
     create_scenario(@story,
       given_text: 'x' * 101, when_text: 'something', then_text: 'something')
 
-    assert_equal 0, Scenario.where(story_id: @story.id).count
+    assert_equal(0, BypassRLS.call { Scenario.where(story_id: @story.id).count })
     assert_error_shown
   end
 
@@ -130,7 +129,7 @@ describe 'Scenarios - Released Story' do
     create_scenario(@story,
       given_text: 'hacked', when_text: 'hacked', then_text: 'hacked')
 
-    assert_equal 0, Scenario.where(story_id: @story.id).count
+    assert_equal(0, BypassRLS.call { Scenario.where(story_id: @story.id).count })
   end
 
   it 'released story blocks scenario deletion' do

@@ -32,7 +32,7 @@ describe 'Tasks' do
 
     submit_create_task(name: '', activity_id: browse.id)
 
-    assert_equal 0, Task.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Task.where(map_id: @map.id).count })
     assert_error_shown
   end
 
@@ -42,14 +42,14 @@ describe 'Tasks' do
 
     submit_create_task(name: 'x' * 101, activity_id: browse.id)
 
-    assert_equal 0, Task.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Task.where(map_id: @map.id).count })
     assert_error_shown
   end
 
   it 'rejects a non-existent activity' do
     submit_create_task(name: 'Orphan', activity_id: SecureRandom.uuid)
 
-    assert_equal 0, Task.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Task.where(map_id: @map.id).count })
     assert_error_shown
   end
 end

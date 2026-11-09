@@ -69,7 +69,7 @@ describe 'Story templates' do
       benefit:  ''
     )
 
-    assert_equal 0, Story.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Story.where(map_id: @map.id).count })
   end
 
   it 'rejects unknown template' do
@@ -79,7 +79,7 @@ describe 'Story templates' do
       role:     'Foo'
     )
 
-    assert_equal 0, Story.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Story.where(map_id: @map.id).count })
   end
 
   it 'shows template on map card' do

@@ -23,14 +23,14 @@ describe 'Maps' do
   it 'requires a name' do
     submit_create_map(name: '')
 
-    assert_equal 0, Map.where(team_id: @team.id).count
+    assert_equal(0, BypassRLS.call { Map.where(team_id: @team.id).count })
     assert_error_shown
   end
 
   it 'rejects a map name over 100 characters' do
     submit_create_map(name: 'x' * 101)
 
-    assert_equal 0, Map.where(team_id: @team.id).count
+    assert_equal(0, BypassRLS.call { Map.where(team_id: @team.id).count })
     assert_error_shown
   end
 

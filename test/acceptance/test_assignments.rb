@@ -137,7 +137,7 @@ describe 'Assignments' do
   it 'rejects assigning without selecting a person' do
     driver.submit_assign_person(@map, @story, person_id: '')
 
-    assert_equal 0, StoryAssignment.where(story_id: @story.id).count
+    assert_equal(0, BypassRLS.call { StoryAssignment.where(story_id: @story.id).count })
     assert_error_shown
   end
 
