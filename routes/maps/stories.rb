@@ -67,6 +67,12 @@ class Mainline
         view 'edit'
       end
 
+      r.get 'feature' do
+        response['Content-Type'] = 'text/plain; charset=utf-8'
+        response['Content-Disposition'] = %(attachment; filename="#{FeatureFile.file_name(@story)}")
+        FeatureFile.for(@story)
+      end
+
       r.get 'card' do
         @story = Story.where(id: @story.id).eager(story_assignments: :person).first
         split_flags = SplitCandidate.check_batch([@story], team_id: @current_team.id)

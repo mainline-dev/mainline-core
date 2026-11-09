@@ -165,6 +165,36 @@ describe 'MCP server' do
     assert_equal 'Search shows matching results', story_data['scenarios'][0]['name']
   end
 
+  it 'get_feature_file returns the scenarios as a feature file and marks the story as agent-read' do
+    generate_mcp_token
+    mcp_initialize
+
+    resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id })
+    text = JSON.parse(resp.body).dig('result', 'content')&.find { |c| c['type'] == 'text' }
+
+    assert_includes text['text'], "@story-#{@story.id}"
+    assert_includes text['text'], 'Scenario: Search shows matching results'
+    assert_equal(1, BypassRLS.call { Event.where(entity_id: @story.id, action: 'agent_read').count })
+  end
+
+  it "get_feature_file refuses another team's story" do
+    other = BypassRLS.call {
+      team = Team.create(name: 'Other')
+      map = Map.create(team_id: team.id, name: 'Theirs', position: 1000)
+      activity = Activity.create(map_id: map.id, team_id: team.id, name: 'A', position: 1000)
+      task = Task.create(activity_id: activity.id, map_id: map.id, team_id: team.id, name: 'T', position: 1000)
+      creator = Person.create(name: 'Them', email: 'them@other.test')
+      Story.create(task_id: task.id, map_id: map.id, team_id: team.id, title: 'Theirs', position: 1000,
+        created_by_id: creator.id)
+    }
+    generate_mcp_token
+    mcp_initialize
+
+    resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => other.id })
+
+    assert JSON.parse(resp.body).dig('result', 'isError')
+  end
+
   it 'get_story names a scenario written before names by its Then line' do
     Scenario.create(story_id: @story.id, given_text: 'no query', when_text: 'I search', then_text: 'I see a prompt',
       position: 2000)

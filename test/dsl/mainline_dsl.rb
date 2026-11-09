@@ -345,6 +345,10 @@ module MainlineDSL
     driver.texts_of('scenario-name')
   end
 
+  def download_feature_file(story)
+    driver.download_feature_file(@map, story)
+  end
+
   def delete_scenario(story, scenario)
     driver.submit_delete_scenario(@map, story, scenario)
   end

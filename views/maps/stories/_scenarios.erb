@@ -1,5 +1,11 @@
 <div id="scenarios-container" class="scenarios">
   <h2 class="scenarios-heading">Scenarios</h2>
+  <% if (@scenarios || []).any? %>
+    <p class="feature-export">
+      <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/feature" download data-test-id="feature-download">Download .feature</a>
+      <button type="button" class="feature-copy" data-feature="<%= FeatureFile.for(@story) %>" data-test-id="feature-copy">Copy</button>
+    </p>
+  <% end %>
 
   <% if @story.status != 'released' && (@scenarios || []).any? { |sc| sc.done_at.nil? } && (@scenarios || []).any? { |sc| sc.done_at } %>
     <p class="split-remaining-hint">
