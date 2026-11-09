@@ -58,6 +58,7 @@
     <% @split_scenarios.each do |sc| %>
       <% picked = form.empty? || Array(form['scenario_ids']).include?(sc.id) %>
       <div class="scenario-row split-scenario-row">
+        <div class="scenario-name"><%= sc.display_name %></div>
         <label class="split-scenario-pick">
           <input type="checkbox" name="scenario_ids[]" value="<%= sc.id %>" <%= 'checked' if picked %>
                  data-test-id="split-pick-<%= sc.id %>">

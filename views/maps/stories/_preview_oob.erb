@@ -8,6 +8,7 @@
     <ol class="preview-scenarios">
       <% scenarios.each do |sc| %>
         <li class="preview-scenario">
+          <div class="scenario-name"><%= sc.display_name %></div>
           <div><span class="preview-kw">Given</span> <%= sc.given_text %></div>
           <div><span class="preview-kw">When</span> <%= sc.when_text %></div>
           <div><span class="preview-kw">Then</span> <%= sc.then_text %></div>

@@ -28,9 +28,9 @@
             <button type="button" class="mu-scenario-remove" data-remove-scenario aria-label="Remove this scenario">&times;</button>
           </div>
           <div class="mu-scenario-body">
-            <% [%w[given Given the\ starting\ situation], %w[when When what\ someone\ does], %w[then Then what\ they\ can\ see\ or\ rely\ on]].each do |part, word, hint| %>
+            <% [%w[name Name what\ this\ scenario\ checks 80], %w[given Given the\ starting\ situation 100], %w[when When what\ someone\ does 100], %w[then Then what\ they\ can\ see\ or\ rely\ on 100]].each do |part, word, hint, limit| %>
               <span class="mu-gwt"><%= word %></span>
-              <textarea rows="1" maxlength="100" name="scenarios[<%= index %>][<%= part %>]" placeholder="<%= hint %>" aria-label="<%= word %>"><%= card[part.to_sym] %></textarea>
+              <textarea rows="1" maxlength="<%= limit %>" name="scenarios[<%= index %>][<%= part %>]" placeholder="<%= hint %>" aria-label="<%= word %>"><%= card[part.to_sym] %></textarea>
             <% end %>
           </div>
         </div>

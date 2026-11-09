@@ -167,7 +167,7 @@ module MainlineMCP
 
   def self.scenario_data(story)
     Scenario.where(story_id: story.id).order(:position).all.map { |s|
-      { given: s.given_text, when: s.when_text, then: s.then_text, done: !s.done_at.nil? }
+      { name: s.display_name, given: s.given_text, when: s.when_text, then: s.then_text, done: !s.done_at.nil? }
     }
   end
 

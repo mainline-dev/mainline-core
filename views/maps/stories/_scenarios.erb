@@ -15,6 +15,7 @@
 
   <% (@scenarios || []).each do |sc| %>
     <div class="scenario-row card-deletable<%= ' scenario-done' if sc.done_at %>">
+      <div class="scenario-name" data-test-id="scenario-name"><%= sc.display_name %></div>
       <% if released %>
         <div><span class="scenario-kw">Given</span> <%= sc.given_text %></div>
         <div><span class="scenario-kw">When</span> <%= sc.when_text %></div>
@@ -36,6 +37,8 @@
         <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>"
               hx-target="#scenarios-container" hx-swap="outerHTML"
               class="scenario-form">
+          <label class="scenario-label">Name</label>
+          <input type="text" name="name" value="<%= sc.name %>" maxlength="80" class="scenario-input" placeholder="<%= sc.then_text %>">
           <label class="scenario-label">Given</label>
           <input type="text" name="given" value="<%= sc.given_text %>" maxlength="100" class="scenario-input">
           <label class="scenario-label">When</label>
@@ -55,6 +58,8 @@
       <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios"
             hx-target="#scenarios-container" hx-swap="outerHTML"
             class="scenario-form scenario-add-form">
+        <label class="scenario-label">Name</label>
+        <input type="text" name="name" maxlength="80" class="scenario-input" placeholder="what this scenario checks">
         <label class="scenario-label">Given</label>
         <input type="text" name="given" maxlength="100" class="scenario-input" placeholder="precondition">
         <label class="scenario-label">When</label>

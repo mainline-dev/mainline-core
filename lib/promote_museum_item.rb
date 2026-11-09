@@ -68,8 +68,8 @@ module PromoteMuseumItem
     scenarios.map { |parts| parts.transform_values { |text| text.to_s.strip } }
       .reject { |parts| parts.values.all?(&:empty?) }
       .flat_map { |parts|
-        AddScenario.call(story: story, actor: actor, given_text: parts[:given], when_text: parts[:when],
-          then_text: parts[:then]).errors
+        AddScenario.call(story: story, actor: actor, name: parts[:name], given_text: parts[:given],
+          when_text: parts[:when], then_text: parts[:then]).errors
       }
   end
 

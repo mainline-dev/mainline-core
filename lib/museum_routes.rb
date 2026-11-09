@@ -104,7 +104,9 @@ class Mainline
   # Scenario cards as posted (scenarios[0][given] and so on), in order.
   def museum_scenarios(posted)
     cards = posted.is_a?(Hash) ? posted.sort_by { |index, _card| index.to_i }.map(&:last) : Array(posted)
-    cards.grep(Hash).first(MAX_MUSEUM_SCENARIOS).map { |card| { given: card['given'], when: card['when'], then: card['then'] } }
+    cards.grep(Hash).first(MAX_MUSEUM_SCENARIOS).map do |card|
+      { name: card['name'], given: card['given'], when: card['when'], then: card['then'] }
+    end
   end
 
   def museum_filter_path(changes)

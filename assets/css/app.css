@@ -4747,6 +4747,11 @@ footer.landing a:hover {
 }
 
 /* Editable scenario form - CSS grid layout */
+.scenario-name {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
 .scenario-form {
     display: grid;
     grid-template-columns: auto 1fr;
