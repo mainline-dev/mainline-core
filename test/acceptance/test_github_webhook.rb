@@ -176,6 +176,36 @@ describe 'GitHub webhook' do
     end
   end
 
+  def push_to_main(sha:, at:)
+    post_webhook(
+      event:   'push',
+      payload: {
+        ref:          'refs/heads/main',
+        after:        sha,
+        head_commit:  { id: sha, timestamp: at },
+        installation: { id: 55555 },
+        repository:   { id: 100 }
+      }
+    )
+  end
+
+  it 'counts a redelivered push once' do
+    push_to_main(sha: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2', at: '2026-11-02T09:30:00+11:00')
+    response = push_to_main(sha: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2', at: '2026-11-02T09:30:00+11:00')
+
+    assert_equal 200, response.status
+    BypassRLS.call { assert_equal 1, IntegrationEvent.where(monitored_repo_id: @repo.id, event_type: 'push').count }
+  end
+
+  it 'times a push from the commit it pushed' do
+    push_to_main(sha: 'f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5', at: '2026-11-02T09:30:00+11:00')
+
+    BypassRLS.call do
+      assert_equal Time.parse('2026-11-02T09:30:00+11:00'), IntegrationEvent.where(monitored_repo_id: @repo.id).get(:occurred_at)
+      assert_equal Time.parse('2026-11-02T09:30:00+11:00'), @repo.refresh.last_push_at
+    end
+  end
+
   it 'does not record integration event on push to non-default branch' do
     post_webhook(
       event:   'push',

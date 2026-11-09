@@ -2,6 +2,9 @@
 
 module CIMonitor
   class GithubWebhookHandler
+    # The commit GitHub sends as `after` when a branch is deleted.
+    NO_COMMIT = '0' * 40
+
     def initialize(event, payload)
       @event = event
       @payload = payload
@@ -103,13 +106,17 @@ module CIMonitor
       )
     end
 
+    # A push is timed from the commit it pushed and keyed on it, so the same
+    # delivery handled twice counts once.
     def handle_push(repo)
       return unless @payload[:ref] == "refs/heads/#{repo.default_branch}"
 
-      now = Time.now
-      repo.update(last_push_at: now)
-      IntegrationEvent.create(
-        monitored_repo_id: repo.id, event_type: 'push', occurred_at: now
+      sha = @payload[:after] unless @payload[:after] == NO_COMMIT
+      stamp = @payload.dig(:head_commit, :timestamp)
+      pushed_at = (stamp ? Time.parse(stamp.to_s) : Time.now).utc
+      repo.update(last_push_at: pushed_at)
+      IntegrationEvent.dataset.insert_conflict.insert(
+        monitored_repo_id: repo.id, event_type: 'push', occurred_at: pushed_at, commit_sha: sha
       )
     end
 
