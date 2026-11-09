@@ -42,6 +42,7 @@ require_relative 'lib/story_picker'
 require_relative 'lib/jobs/let_go_job'
 require_relative 'lib/cloudflare_client_ip'
 require_relative 'lib/request_size_limit'
+require_relative 'lib/shared_rate_limiter'
 require_relative 'lib/signup_timer'
 require_relative 'lib/event_presenter'
 require_relative 'lib/cumulative_flow'
@@ -95,26 +96,16 @@ end
 
 OmniAuth.config.allowed_request_methods = [:post]
 
-AUTH_RATE_LIMITER = RateLimiter.new(
-  capacity: 10, refill_rate: 10.0 / 3600, max_keys: 10_000,
-  sweep_interval: 600, stale_after: 1800
-)
+# Sign-in, MCP and deploy limits are shared through Redis, so every worker and
+# instance counts together.
+AUTH_RATE_LIMITER = SharedRateLimiter.new(name: 'auth', capacity: 10, refill_rate: 10.0 / 3600)
 
 # Museum uploads per team: a person acquires a few files in a sitting, not hundreds.
 MUSEUM_UPLOAD_RATE_LIMITER = RateLimiter.new(capacity: 20, refill_rate: 20.0 / 3600)
-LOGIN_GLOBAL_LIMITER = RateLimiter.new(capacity: 60, refill_rate: 1.0)
-LOGIN_EMAIL_LIMITER = RateLimiter.new(
-  capacity: 5, refill_rate: 5.0 / 900, max_keys: 10_000,
-  sweep_interval: 600, stale_after: 1800
-)
-MCP_RATE_LIMITER = RateLimiter.new(
-  capacity: 10, refill_rate: 10.0 / 3600, max_keys: 10_000,
-  sweep_interval: 600, stale_after: 1800
-)
-DEPLOY_AUTH_RATE_LIMITER = RateLimiter.new(
-  capacity: 10, refill_rate: 0.05, max_keys: 10_000,
-  sweep_interval: 600, stale_after: 1800
-)
+LOGIN_GLOBAL_LIMITER = SharedRateLimiter.new(name: 'login_global', capacity: 60, refill_rate: 1.0)
+LOGIN_EMAIL_LIMITER = SharedRateLimiter.new(name: 'login_email', capacity: 5, refill_rate: 5.0 / 900)
+MCP_RATE_LIMITER = SharedRateLimiter.new(name: 'mcp', capacity: 10, refill_rate: 10.0 / 3600)
+DEPLOY_AUTH_RATE_LIMITER = SharedRateLimiter.new(name: 'deploy_auth', capacity: 10, refill_rate: 0.05)
 
 class Mainline < Roda
   PROVIDER_LABELS = {
