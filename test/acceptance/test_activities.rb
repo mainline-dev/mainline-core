@@ -28,7 +28,7 @@ describe 'Activities' do
   it 'requires at least one persona' do
     submit_create_activity(name: 'Orphan', persona_ids: [])
 
-    assert_equal 0, Activity.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Activity.where(map_id: @map.id).count })
   end
 
   it 'allows multiple personas' do
@@ -46,7 +46,7 @@ describe 'Activities' do
   it 'rejects non-existent personas' do
     submit_create_activity(name: 'Orphan', persona_ids: [SecureRandom.uuid])
 
-    assert_equal 0, Activity.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Activity.where(map_id: @map.id).count })
     assert_error_shown
   end
 
@@ -55,7 +55,7 @@ describe 'Activities' do
 
     submit_create_activity(name: '', persona_ids: [persona.id])
 
-    assert_equal 0, Activity.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Activity.where(map_id: @map.id).count })
     assert_error_shown
   end
 
@@ -64,7 +64,7 @@ describe 'Activities' do
 
     submit_create_activity(name: 'x' * 101, persona_ids: [persona.id])
 
-    assert_equal 0, Activity.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Activity.where(map_id: @map.id).count })
     assert_error_shown
   end
 end

@@ -33,9 +33,9 @@ describe 'Account deletion' do
     assert_equal '/', URI.parse(resp['Location']).path
 
     assert_nil Team[team_id]
-    assert_equal 0, Story.where(team_id: team_id).count
-    assert_equal 0, Event.where(team_id: team_id).count
-    assert_equal 0, Map.where(team_id: team_id).count
+    assert_equal(0, BypassRLS.call { Story.where(team_id: team_id).count })
+    assert_equal(0, BypassRLS.call { Event.where(team_id: team_id).count })
+    assert_equal(0, BypassRLS.call { Map.where(team_id: team_id).count })
     assert_equal 0, TeamMembership.where(team_id: team_id).count
     assert_nil Person[holder_id]
   end
@@ -65,6 +65,23 @@ describe 'Account deletion' do
     resp = driver.visit_delete_team(@team)
 
     assert_equal 403, resp.status
+  end
+
+  it 'a member who is not the account holder cannot delete the team, even with the right confirmation' do
+    holder = Person.create(name: 'Buyer', email: 'buyer@corp.co')
+    TeamMembership.create(team_id: @team.id, person_id: holder.id, working: false)
+    @team.update(creator_id: holder.id)
+    create_map
+
+    alice = add_person(name: 'Alice')
+    login_as(alice)
+
+    resp = driver.submit_delete_team(@team, confirmation: "DELETE #{@team.name}")
+
+    assert_equal 403, resp.status
+    refute_nil Team[@team.id]
+    assert_equal(1, BypassRLS.call { Map.where(team_id: @team.id).count })
+    assert_equal 2, TeamMembership.where(team_id: @team.id).count
   end
 
   it 'person kept if they have other team memberships' do

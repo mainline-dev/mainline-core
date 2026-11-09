@@ -47,8 +47,7 @@ describe 'Smoke test: happy path end-to-end' do
     release_story(story_a)
 
     assert_equal 'released', story_a.refresh.status
-    assert_equal 0, StoryAssignment.where(story_id: story_a.id).count
-
+    assert_equal(0, BypassRLS.call { StoryAssignment.where(story_id: story_a.id).count })
     # Archive story_b (no assignments, still planned)
     archive_story(story_b)
 

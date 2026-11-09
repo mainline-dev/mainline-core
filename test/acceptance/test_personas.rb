@@ -29,14 +29,14 @@ describe 'Personas' do
   it 'requires a name' do
     submit_create_persona(name: '', description: '')
 
-    assert_equal 0, Persona.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Persona.where(map_id: @map.id).count })
     assert_error_shown
   end
 
   it 'rejects a name over 100 characters' do
     submit_create_persona(name: 'x' * 101)
 
-    assert_equal 0, Persona.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Persona.where(map_id: @map.id).count })
     assert_error_shown
   end
 end

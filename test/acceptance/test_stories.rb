@@ -51,14 +51,14 @@ describe 'Stories' do
 
     submit_create_story(title: '', task_id: search.id, description: '')
 
-    assert_equal 0, Story.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Story.where(map_id: @map.id).count })
     assert_error_shown
   end
 
   it 'rejects a non-existent task' do
     submit_create_story(title: 'Orphan', task_id: SecureRandom.uuid, description: '')
 
-    assert_equal 0, Story.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { Story.where(map_id: @map.id).count })
     assert_error_shown
   end
 end
@@ -335,7 +335,7 @@ describe 'Stories - Release' do
     deploy_story(story)
     release_story(story)
 
-    assert_equal 0, StoryAssignment.where(story_id: story.id).count
+    assert_equal(0, BypassRLS.call { StoryAssignment.where(story_id: story.id).count })
     assert_event_recorded(entity: story, action: 'person_unassigned')
   end
 

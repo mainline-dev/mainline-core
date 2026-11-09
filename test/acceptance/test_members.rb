@@ -93,8 +93,9 @@ describe 'Team members page' do
     resp = driver.follow_invite_redirect if resp.redirect?
 
     assert_error_shown(resp.body)
-    assert_equal 0, Invitation.where(team_id: @team.id,
-      email_bidx: BlindIndex.generate_bidx('alice@corp.co', key: Lockbox.master_key)).count
+    bidx = BlindIndex.generate_bidx('alice@corp.co', key: Lockbox.master_key)
+
+    assert_equal(0, BypassRLS.call { Invitation.where(team_id: @team.id, email_bidx: bidx).count })
   end
 
   it 'allows re-inviting an archived member' do
@@ -169,7 +170,7 @@ describe 'Archive member' do
 
     driver.submit_archive_member(@team, @alice)
 
-    assert_equal 0, StoryAssignment.where(person_id: @alice.id).count
+    assert_equal(0, BypassRLS.call { StoryAssignment.where(person_id: @alice.id).count })
     assert_event_recorded(entity: story, action: 'person_unassigned')
   end
 

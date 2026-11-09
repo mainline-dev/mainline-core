@@ -57,13 +57,13 @@ describe 'Release slices' do
   it 'cannot create slice without name' do
     submit_create_release_slice(name: '')
 
-    assert_equal 0, ReleaseSlice.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { ReleaseSlice.where(map_id: @map.id).count })
   end
 
   it 'rejects a slice name over 100 characters' do
     submit_create_release_slice(name: 'x' * 101)
 
-    assert_equal 0, ReleaseSlice.where(map_id: @map.id).count
+    assert_equal(0, BypassRLS.call { ReleaseSlice.where(map_id: @map.id).count })
     assert_error_shown
   end
 
@@ -357,7 +357,7 @@ describe 'Release slices - Delete' do
 
     driver.submit_delete_release_slice(@map, slice)
 
-    assert_nil ReleaseSlice[slice.id]
+    assert_nil(BypassRLS.call { ReleaseSlice[slice.id] })
   end
 
   it 'shows deleted slice in history' do
@@ -429,8 +429,7 @@ describe 'Release slices - Delete' do
 
     driver.submit_delete_release_slice(@map, slice)
 
-    assert_nil ReleaseSlice[slice.id]
-
+    assert_nil(BypassRLS.call { ReleaseSlice[slice.id] })
     story.refresh
 
     assert_nil story.release_slice_id
