@@ -30,7 +30,7 @@ For sample teams, seed the empty database before signing up. It writes a login l
 docker compose exec app bundle exec rake dev_seed
 ```
 
-To start from nothing instead, sign up with an email address. Development sends no mail, so the page shows your verification link. The Google, GitHub and GitLab buttons appear once their variables hold real OAuth apps.
+To start from nothing instead, sign up with an email address. Development sends no mail, so it doesn't ask you to verify the address. The Google, GitHub and GitLab buttons appear once their variables hold real OAuth apps.
 
 ## Self-host
 

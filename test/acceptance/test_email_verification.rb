@@ -213,3 +213,89 @@ describe 'Email verification - verify link' do
     end
   end
 end
+
+describe 'Email verification - the reminder that stays' do
+  include MainlineDSL
+
+  before do
+    AUTH_RATE_LIMITER.reset
+    driver.submit_email_signup(name: 'Alice', email: 'alice@acme.co', password: 'longpassword12')
+    driver.follow_redirect!
+  end
+
+  def banner_link
+    driver.attributes_of('verify-banner-link', 'href').first
+  end
+
+  it 'is still there on a later page, after the sign-up notice has gone' do
+    resp = driver.visit_teams
+
+    assert_shown('verify-email-banner', resp.body)
+    assert_shown('verify-banner-resend', resp.body)
+    refute_shown('flash-notice', resp.body)
+  end
+
+  it 'carries a link that verifies the email, where no mail is sent' do
+    driver.visit_teams
+
+    driver.post URI.parse(banner_link).path
+
+    refute_nil Person.find_by_email('alice@acme.co').email_verified_at
+  end
+
+  it 'has no link where the mail is sent' do
+    SendVerificationEmail.stub(:screen_link, nil) do
+      resp = driver.visit_teams
+
+      assert_shown('verify-email-banner', resp.body)
+      refute_shown('verify-banner-link', resp.body)
+    end
+  end
+
+  it 'goes once the email is verified' do
+    Person.find_by_email('alice@acme.co').update(email_verified_at: Time.now)
+
+    refute_shown('verify-email-banner', driver.visit_teams.body)
+  end
+
+  it 'is not shown to someone who signed in through a provider' do
+    setup_team
+    add_person(name: 'Bob')
+    Person.where(name: 'Bob').update(email_verified_at: nil)
+
+    refute_shown('verify-email-banner', driver.visit_teams.body)
+  end
+end
+
+describe 'Email verification - a local development install' do
+  include MainlineDSL
+
+  before { AUTH_RATE_LIMITER.reset }
+
+  def sign_up_locally
+    EmailVerification.stub(:required?, false) do
+      driver.submit_email_signup(name: 'Alice', email: 'alice@acme.co', password: 'longpassword12')
+    end
+  end
+
+  it 'counts an email sign-up as verified, since no mail can be sent' do
+    sent = verification_emails_sent { sign_up_locally }
+
+    refute_nil Person.find_by_email('alice@acme.co').email_verified_at
+    assert_empty sent
+  end
+
+  it 'lets that person create a team straight away, with no reminder' do
+    sign_up_locally
+
+    refute_shown('verify-email-banner', driver.follow_redirect.body)
+    assert_equal 302, driver.submit_create_team(team_name: 'My Team').status
+    assert_equal 1, Team.where(name: 'My Team').count
+  end
+
+  it 'is the only place verification is not required' do
+    assert_predicate EmailVerification, :required?
+    refute(ENV.stub(:fetch, 'development') { EmailVerification.required? })
+    assert(ENV.stub(:fetch, 'production') { EmailVerification.required? })
+  end
+end

@@ -43,6 +43,7 @@ require_relative 'lib/jobs/let_go_job'
 require_relative 'lib/cloudflare_client_ip'
 require_relative 'lib/request_size_limit'
 require_relative 'lib/shared_rate_limiter'
+require_relative 'lib/email_verification'
 require_relative 'lib/feature_file'
 require_relative 'lib/step_stubs'
 require_relative 'lib/signup_timer'
@@ -342,7 +343,7 @@ class Mainline < Roda
         end
         regenerate_session(preserve_keys: ['signup_plan'])
         session['person_id'] = result[:person].id
-        flash['notice'] = "Signed in as #{result[:person].name}.#{verify_link_notice(result[:verification])}"
+        flash['notice'] = "Signed in as #{result[:person].name}."
         has_team = TeamMembership.where(person_id: result[:person].id, left_at: nil).any?
         r.redirect(has_team ? '/teams' : '/teams/new')
       end
@@ -469,7 +470,7 @@ class Mainline < Roda
         if result == :failed
           flash['error'] = 'Could not send the verification email. Please try again.'
         else
-          flash['notice'] = verify_link_notice(result) || 'Verification email sent. Check your inbox.'
+          flash['notice'] = result.is_a?(String) ? 'New verification link ready.' : 'Verification email sent. Check your inbox.'
         end
       end
       r.redirect '/teams'
@@ -552,17 +553,21 @@ class Mainline < Roda
 
     person = create_email_person(name, email, password)
     CoreEvents.publish(:person_signed_up, person_id: person.id, provider: 'email', session: session)
-    token = SignedState.generate("verify:#{person.id}")
-    result = SendVerificationEmail.call(person: person, token: token)
+    result = ask_to_verify(person)
     flash['error'] = 'Could not send the verification email. Please try again.' if result == :failed
     accept_invite(person, email, session)
     { person: person, verification: result }
   end
 
-  # Outside production no mail goes out and the link comes back instead, so it
-  # has to go on the page or the person can never verify.
-  def verify_link_notice(verification)
-    " Verify your email: #{verification}" if verification.is_a?(String)
+  # Sends the verification email, or where none is required counts the
+  # address as verified.
+  def ask_to_verify(person)
+    if EmailVerification.required?
+      SendVerificationEmail.call(person: person, token: SignedState.generate("verify:#{person.id}"))
+    else
+      person.update(email_verified_at: Time.now)
+      nil
+    end
   end
 
   def create_email_person(name, email, password)
@@ -857,6 +862,13 @@ class Mainline < Roda
       <meta name="twitter:description" content="#{d}">
       <meta name="twitter:image" content="#{img}">
     HTML
+  end
+
+  # Signed in with an email address that has not been verified yet. People who
+  # came in through a provider have nothing to verify.
+  def email_unverified?
+    @current_person && @current_person.email_verified_at.nil? &&
+      PersonIdentity.where(person_id: @current_person.id, provider: 'email').any?
   end
 
   def load_current_team

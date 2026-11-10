@@ -13,6 +13,11 @@ module SendVerificationEmail
     )
   end
 
+  # Where no mail is sent, the link a person can follow from the page.
+  def self.screen_link(person)
+    dev_link(SignedState.generate("verify:#{person.id}")) unless ENV['RACK_ENV'] == 'production'
+  end
+
   def self.dev_link(token)
     "http://#{ENV.fetch('MAINLINE_HOST')}/verify-email/#{token}"
   end

@@ -53,6 +53,15 @@ describe 'Self-host setup' do
     assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
   end
 
+  # The quick start's stack: on a fresh clone the app runs the migrations, so
+  # a worker started before it finds no tables and exits.
+  it 'starts the quick start worker once the app answers its health check too' do
+    services = YAML.safe_load_file(File.join(root, 'docker-compose.yml'), aliases: true)['services']
+
+    assert_includes services.dig('app', 'healthcheck', 'test').join(' '), '/up'
+    assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
+  end
+
   it 'publishes the app only to the local proxy, not to the internet' do
     assert_equal ['127.0.0.1:3000:3000'], compose.dig('services', 'app', 'ports')
   end

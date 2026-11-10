@@ -81,6 +81,12 @@ services:
     ports:
       - "3000:3000"
     environment: *app-env
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/up"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
     depends_on:
       db:
         condition: service_healthy
@@ -94,7 +100,10 @@ services:
     container_name: mainline_worker
     command: bundle exec sidekiq -r ./sidekiq_boot.rb
     environment: *app-env
+    # The app runs the migrations; a worker started before it finds no tables.
     depends_on:
+      app:
+        condition: service_healthy
       db:
         condition: service_healthy
       redis:
