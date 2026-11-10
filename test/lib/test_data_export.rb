@@ -178,6 +178,51 @@ describe DataExport do
     assert_nil m[:left_at]
   end
 
+  it "exports a story's description, delivery details and scenarios in order" do
+    @story.update(description: 'Email and password', decoupling_strategy: 'flag', decoupling_label: 'FF_REGISTER',
+      agent_assisted: true)
+    Scenario.create(story_id: @story.id, given_text: 'an old one', when_text: 'w', then_text: 'no name yet', position: 2000)
+    Scenario.create(story_id: @story.id, name: 'Registers with an email', given_text: 'no account',
+      when_text: 'I register', then_text: 'I am signed in', position: 1000, done_at: Time.now)
+
+    s = DataExport.call(team_id: @team.id)[:stories].first
+
+    assert_equal ['Email and password', 'flag', 'FF_REGISTER', 0, true],
+      s.values_at(:description, :decoupling_strategy, :decoupling_label, :deploy_count, :agent_assisted)
+    assert_empty %i[first_deployed_at last_deployed_at released_at created_at] - s.keys
+    parts = s[:scenarios].map { |sc| sc.values_at(:name, :given, :when, :then) }
+
+    assert_equal [['Registers with an email', 'no account', 'I register', 'I am signed in'],
+                  [nil, 'an old one', 'w', 'no name yet']], parts
+    assert s[:scenarios].first[:done_at]
+    assert_nil s[:scenarios].last[:done_at]
+  end
+
+  it 'exports the ticket museum, with what became of each exhibit' do
+    MuseumItem.create(team_id: @team.id, source_key: 'SHOP-10', issue_type: 'Story', summary: 'Guest checkout',
+      description: 'As a guest', story_id: @story.id, promoted_at: Time.now)
+    MuseumItem.create(team_id: @team.id, source_key: 'SHOP-11', issue_type: 'Bug', summary: 'Old bug',
+      discarded_at: Time.now, storage_note: 'Untouched for over a year')
+
+    items = DataExport.call(team_id: @team.id)[:museum_items].sort_by { |item| item[:source_key] }
+
+    assert_equal(%w[SHOP-10 SHOP-11], items.map { |item| item[:source_key] })
+    assert_equal ['Story', 'Guest checkout', 'As a guest', @story.id],
+      items[0].values_at(:issue_type, :summary, :description, :story_id)
+    assert items[0][:promoted_at]
+    assert_equal 'Untouched for over a year', items[1][:storage_note]
+    assert items[1][:discarded_at]
+    assert_empty %i[labels comments links parent_key source_created_at source_updated_at kept_at] - items[0].keys
+  end
+
+  it "leaves another team's exhibits out" do
+    other = Team.create(name: 'Other')
+    SetTeamContext.call(other.id)
+    MuseumItem.create(team_id: other.id, source_key: 'THEM-1', issue_type: 'Story', summary: 'Not ours')
+
+    assert_empty DataExport.call(team_id: @team.id)[:museum_items]
+  end
+
   it 'returns empty arrays for team with no maps' do
     empty_team = Team.create(name: 'Empty')
     SetTeamContext.call(empty_team.id)
