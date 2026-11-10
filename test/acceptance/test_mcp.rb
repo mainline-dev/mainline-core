@@ -177,6 +177,26 @@ describe 'MCP server' do
     assert_equal(1, BypassRLS.call { Event.where(entity_id: @story.id, action: 'agent_read').count })
   end
 
+  it 'get_feature_file adds step stubs in the language asked for' do
+    generate_mcp_token
+    mcp_initialize
+
+    resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id, 'language' => 'typescript' })
+    texts = JSON.parse(resp.body).dig('result', 'content').map { |c| c['text'] }
+
+    assert_includes texts[0], 'Feature: Show results'
+    assert_includes texts[1], "Given('a query', function () {"
+  end
+
+  it 'get_feature_file refuses a language it does not know' do
+    generate_mcp_token
+    mcp_initialize
+
+    resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id, 'language' => 'cobol' })
+
+    assert JSON.parse(resp.body).dig('result', 'isError')
+  end
+
   it "get_feature_file refuses another team's story" do
     other = BypassRLS.call {
       team = Team.create(name: 'Other')

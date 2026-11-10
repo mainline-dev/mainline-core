@@ -264,6 +264,15 @@ class HttpDriver
     last_response
   end
 
+  def download_step_stubs(map, story, language)
+    get "/maps/#{map.id}/stories/#{story.id}/steps/#{language}"
+    last_response
+  end
+
+  def attributes_of(test_id, attribute)
+    Nokogiri::HTML(last_response.body).css(%([data-test-id="#{test_id}"])).map { |node| node[attribute] }
+  end
+
   def submit_delete_scenario(map, story, scenario)
     post "/maps/#{map.id}/stories/#{story.id}/scenarios/#{scenario.id}/delete"
     last_response

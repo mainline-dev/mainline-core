@@ -3,6 +3,7 @@
 require 'mcp'
 require_relative 'core_events'
 require_relative 'feature_file'
+require_relative 'step_stubs'
 
 module MainlineMCP
   def self.build_server
@@ -63,13 +64,16 @@ module MainlineMCP
     server.define_tool(
       name:         'get_feature_file',
       description:  "Get a story's scenarios as a Gherkin .feature file, tagged with the story and scenario IDs. " \
-                    'Marks the story as agent-assisted.',
+                    'With a language, also pending step definitions for it. Marks the story as agent-assisted.',
       input_schema: {
         type:       'object',
-        properties: { story_id: { type: 'string', description: 'UUID of the story' } },
+        properties: {
+          story_id: { type: 'string', description: 'UUID of the story' },
+          language: { type: 'string', enum: StepStubs::LANGUAGES.keys, description: 'Language for step stubs' }
+        },
         required:   ['story_id']
       }
-    ) { |story_id:| MainlineMCP.call_get_feature_file(story_id) }
+    ) { |story_id:, language: nil| MainlineMCP.call_get_feature_file(story_id, language) }
   end
 
   def self.current_team_id
@@ -102,12 +106,15 @@ module MainlineMCP
     MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
   end
 
-  def self.call_get_feature_file(story_id)
+  def self.call_get_feature_file(story_id, language = nil)
     story = team_story(story_id)
     return error_response('Story not found') unless story
+    return error_response("Unknown language: #{language}") if language && !StepStubs::LANGUAGES.key?(language)
 
     mark_agent_read(story)
-    MCP::Tool::Response.new([{ type: 'text', text: FeatureFile.for(story) }])
+    files = [FeatureFile.for(story)]
+    files << StepStubs.for(story, language) if language
+    MCP::Tool::Response.new(files.map { |text| { type: 'text', text: text } })
   end
 
   def self.team_story(story_id)

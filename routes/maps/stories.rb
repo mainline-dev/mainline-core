@@ -73,6 +73,14 @@ class Mainline
         FeatureFile.for(@story)
       end
 
+      r.get 'steps', String do |language|
+        next unless StepStubs::LANGUAGES.key?(language)
+
+        response['Content-Type'] = 'text/plain; charset=utf-8'
+        response['Content-Disposition'] = %(attachment; filename="#{StepStubs.file_name(@story, language)}")
+        StepStubs.for(@story, language)
+      end
+
       r.get 'card' do
         @story = Story.where(id: @story.id).eager(story_assignments: :person).first
         split_flags = SplitCandidate.check_batch([@story], team_id: @current_team.id)

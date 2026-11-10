@@ -5,6 +5,12 @@
       <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/feature" download data-test-id="feature-download">Download .feature</a>
       <button type="button" class="feature-copy" data-feature="<%= FeatureFile.for(@story) %>" data-test-id="feature-copy">Copy</button>
     </p>
+    <p class="feature-export feature-stubs">
+      <span>Step stubs:</span>
+      <% StepStubs::LANGUAGES.each do |language, label| %>
+        <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/steps/<%= language %>" download data-test-id="stub-download" data-language="<%= language %>"><%= label %></a>
+      <% end %>
+    </p>
   <% end %>
 
   <% if @story.status != 'released' && (@scenarios || []).any? { |sc| sc.done_at.nil? } && (@scenarios || []).any? { |sc| sc.done_at } %>

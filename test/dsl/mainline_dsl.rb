@@ -349,6 +349,10 @@ module MainlineDSL
     driver.download_feature_file(@map, story)
   end
 
+  def download_step_stubs(story, language)
+    driver.download_step_stubs(@map, story, language)
+  end
+
   def delete_scenario(story, scenario)
     driver.submit_delete_scenario(@map, story, scenario)
   end

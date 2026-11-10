@@ -169,6 +169,25 @@ describe 'Scenarios' do
 
     assert driver.response_includes?('data-test-id="feature-download"')
     assert driver.response_includes?('data-test-id="feature-copy"')
+    assert_equal StepStubs::LANGUAGES.keys, driver.attributes_of('stub-download', 'data-language')
+  end
+
+  it 'downloads step stubs in a chosen language, named for it' do
+    create_scenario(@story, given_text: 'a product exists', when_text: 'I search for it', then_text: 'I see it in results')
+
+    resp = download_step_stubs(@story, 'kotlin')
+
+    assert_equal 200, resp.status
+    assert_includes resp['Content-Disposition'], 'filename="FindProductsSteps.kt"'
+    assert_includes resp.body, '@Given("a product exists")'
+  end
+
+  it 'has no step stubs in a language it does not know' do
+    create_scenario(@story, given_text: 'a product exists', when_text: 'I search for it', then_text: 'I see it in results')
+
+    err = assert_raises(RuntimeError) { download_step_stubs(@story, 'cobol') }
+
+    assert_match(/404/, err.message)
   end
 end
 
