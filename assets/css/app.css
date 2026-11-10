@@ -4778,8 +4778,16 @@ footer.landing a:hover {
     font-size: 0.8125rem;
 }
 
-.feature-stubs {
+.feature-export.feature-stubs {
     flex-wrap: nowrap;
+    margin-bottom: 1rem;
+}
+
+/* Forms add a top margin to their labels and buttons; this row is one line. */
+.feature-stubs label,
+.feature-stubs select,
+.feature-stubs .btn {
+    margin: 0;
 }
 
 .feature-stubs label {
