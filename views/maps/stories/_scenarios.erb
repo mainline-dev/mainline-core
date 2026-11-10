@@ -2,8 +2,8 @@
   <h2 class="scenarios-heading">Scenarios</h2>
   <% if (@scenarios || []).any? %>
     <p class="feature-export">
-      <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/feature" download data-test-id="feature-download">Download .feature</a>
-      <button type="button" class="feature-copy" data-feature="<%= FeatureFile.for(@story) %>" data-test-id="feature-copy">Copy</button>
+      <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/feature" download data-tippy-content="The scenarios as a Gherkin file for your repo" data-test-id="feature-download">Download .feature</a>
+      <button type="button" class="preview-copy-id" data-copy="<%= FeatureFile.for(@story) %>" data-tooltip="Copy the feature file" data-test-id="feature-copy">Copy</button>
     </p>
     <form method="get" action="/maps/<%= @map.id %>/stories/<%= @story.id %>/steps" class="feature-export feature-stubs">
       <label for="stub-language-<%= @story.id %>">Step stubs</label>

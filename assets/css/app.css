@@ -4793,15 +4793,6 @@ footer.landing a:hover {
     font-size: 0.8125rem;
 }
 
-.feature-copy {
-    background: none;
-    border: none;
-    padding: 0;
-    color: var(--accent-cyan);
-    font: inherit;
-    cursor: pointer;
-}
-
 .scenario-name {
     font-weight: 600;
     margin-bottom: 0.25rem;
@@ -7190,8 +7181,9 @@ ol.mu-md-list { padding-left: 20px; }
 .mu-lg-bar-note { flex: 1; font-size: 14px; color: var(--text-secondary); }
 .mu-case.has-rewrite { grid-template-columns: minmax(0, 1fr) 400px; gap: 32px; }
 .mu-slot { display: grid; gap: 12px; align-self: start; min-width: 0; }
-.mu-case .mu-add { padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 6px; }
-.mu-case .mu-rewrite { align-self: start; gap: 12px; padding: 18px; background: var(--bg-surface); border: 1px solid var(--border-default); border-radius: 6px; }
+.mu-case .mu-add { padding: 18px; background: var(--bg-raised); border: 1px solid var(--border-default); border-left: 3px solid var(--accent-cyan); border-radius: 6px; }
+/* The story being written looks like a story card on the map, so it stands apart from the Jira record beside it. */
+.mu-case .mu-rewrite { align-self: start; gap: 12px; padding: 18px; background: var(--bg-raised); border: 1px solid var(--border-default); border-left: 3px solid var(--accent-cyan); border-radius: 6px; }
 .mu-case .mu-rewrite input.mu-title, .mu-case .mu-rewrite select.mu-task { height: 36px; margin-top: -6px; font-size: 15px; }
 
 @media (max-width: 768px) {

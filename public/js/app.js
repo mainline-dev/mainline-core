@@ -1,4 +1,8 @@
+// A form being sent has its button held, so it can't be sent twice. A form
+// that only fetches (a search, a download) leaves the page as it is, so its
+// button stays ready for the next one.
 document.addEventListener('submit', function(e) {
+  if (e.target.method === 'get') return;
   var btn = e.target.querySelector('button[type="submit"]');
   if (btn && !e.target.hasAttribute('hx-post')) btn.disabled = true;
 });
@@ -373,14 +377,42 @@ document.addEventListener('htmx:afterSwap', function() {
   });
 })();
 
+// Copies text to the clipboard. The clipboard API only exists on https and
+// localhost, so anywhere else (a self-hosted install on plain http) it falls
+// back to copying from a hidden box.
+function copyText(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    return navigator.clipboard.writeText(text).catch(function() { return copyFromBox(text); });
+  }
+  return copyFromBox(text);
+}
+
+function copyFromBox(text) {
+  return new Promise(function(resolve, reject) {
+    var box = document.createElement('textarea');
+    box.value = text;
+    box.setAttribute('readonly', '');
+    box.style.position = 'fixed';
+    box.style.opacity = '0';
+    document.body.appendChild(box);
+    box.focus();
+    box.select();
+    var copied = false;
+    try { copied = document.execCommand('copy'); } catch (e) { copied = false; }
+    box.remove();
+    if (copied) resolve(); else reject(new Error('copy failed'));
+  });
+}
+
 document.addEventListener('click', function(e) {
   var btn = e.target.closest('.preview-copy-id');
   if (!btn) return;
-  var id = btn.dataset.storyId;
+  // The story's ID, or whatever else the button carries to copy.
+  var id = btn.dataset.copy || btn.dataset.storyId;
   if (!id) return;
   var original = btn.textContent;
   btn.style.minWidth = btn.offsetWidth + 'px';
-  navigator.clipboard.writeText(id).then(function() {
+  copyText(id).then(function() {
     btn.classList.add('copied');
     btn.textContent = 'Copied';
     setTimeout(function() {
@@ -388,17 +420,6 @@ document.addEventListener('click', function(e) {
       btn.textContent = original;
       btn.style.minWidth = '';
     }, 1500);
-  });
-});
-
-// Copies a story's scenarios as a Gherkin feature file.
-document.addEventListener('click', function(e) {
-  var btn = e.target.closest('.feature-copy');
-  if (!btn) return;
-  var original = btn.textContent;
-  navigator.clipboard.writeText(btn.dataset.feature).then(function() {
-    btn.textContent = 'Copied';
-    setTimeout(function() { btn.textContent = original; }, 1500);
   });
 });
 
