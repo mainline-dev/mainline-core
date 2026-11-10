@@ -15,10 +15,16 @@ module StepStubs
     'behave'     => 'Python (behave)'
   }.freeze
 
-  Step = Struct.new(:keyword, :text)
+  # Cucumber matches a step whatever its keyword, so the same text under Given
+  # and Then is one step there; pytest-bdd and behave keep them apart.
+  KEYWORD_BLIND = %w[kotlin java ruby typescript].freeze
+
+  Step = Struct.new(:keyword, :text, :name)
 
   def self.for(story, language)
-    send(:"#{language.tr('-', '_')}_stubs", story, steps(story))
+    steps = steps(story)
+    steps = steps.uniq(&:text) if KEYWORD_BLIND.include?(language)
+    send(:"#{language.tr('-', '_')}_stubs", story, named(steps, language))
   end
 
   def self.file_name(story, language)
@@ -34,12 +40,25 @@ module StepStubs
 
   def self.steps(story)
     Scenario.where(story_id: story.id).order(:position).all.flat_map { |scenario|
-      [Step.new('Given', scenario.given_text), Step.new('When', scenario.when_text), Step.new('Then', scenario.then_text)]
+      { 'Given' => scenario.given_text, 'When' => scenario.when_text, 'Then' => scenario.then_text }
+        .map { |keyword, text| Step.new(keyword, FeatureFile.one_line(text)) }
     }.uniq
   end
 
+  # Gives each step the name of its method or function, numbering any that
+  # would otherwise repeat (steps that differ only in punctuation, or have no
+  # Latin letters at all).
+  def self.named(steps, language)
+    seen = Hash.new(0)
+    steps.map do |step|
+      name = %w[kotlin java].include?(language) ? method_name(step) : function_name(step)
+      count = seen[name] += 1
+      Step.new(step.keyword, step.text, count == 1 ? name : "#{name}#{count}")
+    end
+  end
+
   def self.header(story, comment)
-    "#{comment} Step stubs for \"#{story.title}\". Every step is pending until a person or an agent makes it pass.\n"
+    "#{comment} Step stubs for \"#{FeatureFile.one_line(story.title)}\". Every step is pending until a person or an agent makes it pass.\n"
   end
 
   def self.words(text)
@@ -47,7 +66,8 @@ module StepStubs
   end
 
   def self.class_name(story)
-    "#{words(story.title).map(&:capitalize).join}Steps"
+    name = "#{words(story.title).map(&:capitalize).join}Steps"
+    name.match?(/\A\d/) ? "Story#{name}" : name
   end
 
   def self.method_name(step)
@@ -76,7 +96,7 @@ module StepStubs
     methods = steps.map { |step|
       <<~KOTLIN.gsub(/^/, '    ')
         @#{step.keyword}("#{double_quoted(expression(step.text), dollar: true)}")
-        fun #{method_name(step)}() {
+        fun #{step.name}() {
             throw PendingException()
         }
       KOTLIN
@@ -91,7 +111,7 @@ module StepStubs
     methods = steps.map { |step|
       <<~JAVA.gsub(/^/, '    ')
         @#{step.keyword}("#{double_quoted(expression(step.text))}")
-        public void #{method_name(step)}() {
+        public void #{step.name}() {
             throw new PendingException();
         }
       JAVA
@@ -116,7 +136,7 @@ module StepStubs
 
   def self.pytest_bdd_stubs(story, steps)
     functions = steps.map { |step|
-      "@#{step.keyword.downcase}(#{single_quoted(step.text)})\ndef #{function_name(step)}():\n    raise NotImplementedError\n"
+      "@#{step.keyword.downcase}(#{single_quoted(step.text)})\ndef #{step.name}():\n    raise NotImplementedError\n"
     }
     "#{header(story, '#')}from pytest_bdd import given, scenarios, then, when\n\n" \
       "scenarios(#{single_quoted(FeatureFile.file_name(story))})\n\n\n#{functions.join("\n\n")}"
@@ -134,7 +154,7 @@ module StepStubs
     "#{header(story, '#')}from behave import given, then, when\n\n\n#{functions.join("\n\n")}"
   end
 
-  private_class_method :steps, :header, :words, :class_name, :method_name, :function_name, :expression,
+  private_class_method :steps, :named, :header, :words, :class_name, :method_name, :function_name, :expression,
     :double_quoted, :single_quoted, :kotlin_stubs, :java_stubs, :ruby_stubs, :typescript_stubs,
     :pytest_bdd_stubs, :behave_stubs
 end

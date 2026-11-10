@@ -72,6 +72,43 @@ describe StepStubs do
     KOTLIN
   end
 
+  describe 'a step that is the outcome of one scenario and the start of the next' do
+    before { add('Order history', "it's 10% off/now", 'I look at my orders', 'I see the discount') }
+
+    it 'gets one stub where the framework matches a step whatever its keyword' do
+      %w[kotlin java ruby typescript].each do |language|
+        assert_equal 1, StepStubs.for(@story, language).scan('10% off').size, language
+      end
+    end
+
+    it 'gets a stub for each keyword where the framework keeps them apart' do
+      assert_equal 2, StepStubs.for(@story, 'pytest-bdd').scan('10% off').size
+      assert_equal 2, StepStubs.for(@story, 'behave').scan(/^@\w+\('it\\'s 10% off/).size
+    end
+  end
+
+  it 'numbers names that would otherwise be the same' do
+    add('Punctuation only', 'I pay $5', 'I pay 5', 'お支払い完了')
+    add('No Latin letters', '支払う', 'I pay 5!', '完了')
+
+    java = StepStubs.for(@story, 'java')
+    python = StepStubs.for(@story, 'pytest-bdd')
+
+    assert_equal java.scan(/public void (\w+)\(/).flatten.uniq, java.scan(/public void (\w+)\(/).flatten
+    assert_includes java, 'public void givenIPay5()'
+    assert_includes java, 'public void whenIPay5()'
+    assert_includes java, 'public void whenIPay52()'
+    assert_includes java, 'public void thenStory2()'
+    assert_equal python.scan(/^def (\w+)\(/).flatten.uniq, python.scan(/^def (\w+)\(/).flatten
+  end
+
+  it 'gives a story whose title starts with a digit a class name that compiles' do
+    @story.update(title: '3D Secure works')
+
+    assert_includes StepStubs.for(@story, 'kotlin'), 'class Story3dSecureWorksSteps {'
+    assert_equal 'Story3dSecureWorksSteps.java', StepStubs.file_name(@story, 'java')
+  end
+
   it 'writes Java stubs for Cucumber-JVM' do
     assert_equal <<~'JAVA', StepStubs.for(@story, 'java')
       // Step stubs for "Guests can check out". Every step is pending until a person or an agent makes it pass.
