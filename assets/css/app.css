@@ -367,7 +367,10 @@ hr {
     transform: translateX(-50%);
     z-index: 1000;
     padding: 0.75rem 1.5rem;
-    background: var(--accent-emerald-bg);
+    /* The tint sits on a solid surface, so the page behind doesn't show through. */
+    --flash-tint: var(--accent-emerald-bg);
+    background: linear-gradient(var(--flash-tint), var(--flash-tint)), var(--bg-raised);
+    box-shadow: var(--shadow-lg);
     border: 1px solid rgba(0, 230, 138, 0.2);
     border-left: 3px solid var(--accent-emerald);
     border-radius: 4px;
@@ -400,14 +403,14 @@ hr {
 }
 
 .flash-warning {
-    background: var(--accent-amber-bg);
+    --flash-tint: var(--accent-amber-bg);
     border-color: rgba(255, 187, 51, 0.2);
     border-left-color: var(--accent-amber);
     color: var(--accent-amber);
 }
 
 .flash-error {
-    background: var(--accent-red-bg);
+    --flash-tint: var(--accent-red-bg);
     border-color: rgba(255, 68, 102, 0.2);
     border-left-color: var(--accent-red);
     color: var(--accent-red);
@@ -4772,6 +4775,21 @@ footer.landing a:hover {
     gap: 0.75rem;
     align-items: center;
     margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+}
+
+.feature-stubs {
+    flex-wrap: nowrap;
+}
+
+.feature-stubs label {
+    white-space: nowrap;
+}
+
+.feature-stubs select {
+    width: auto;
+    min-width: 0;
+    padding: 0.25rem 1.75rem 0.25rem 0.5rem;
     font-size: 0.8125rem;
 }
 

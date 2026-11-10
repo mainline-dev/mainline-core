@@ -5,12 +5,15 @@
       <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/feature" download data-test-id="feature-download">Download .feature</a>
       <button type="button" class="feature-copy" data-feature="<%= FeatureFile.for(@story) %>" data-test-id="feature-copy">Copy</button>
     </p>
-    <p class="feature-export feature-stubs">
-      <span>Step stubs:</span>
-      <% StepStubs::LANGUAGES.each do |language, label| %>
-        <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/steps/<%= language %>" download data-test-id="stub-download" data-language="<%= language %>"><%= label %></a>
-      <% end %>
-    </p>
+    <form method="get" action="/maps/<%= @map.id %>/stories/<%= @story.id %>/steps" class="feature-export feature-stubs">
+      <label for="stub-language-<%= @story.id %>">Step stubs</label>
+      <select id="stub-language-<%= @story.id %>" name="language">
+        <% StepStubs::LANGUAGES.each do |language, label| %>
+          <option value="<%= language %>" data-test-id="stub-language"><%= label %></option>
+        <% end %>
+      </select>
+      <button type="submit" class="btn btn-sm" data-test-id="stub-download">Download</button>
+    </form>
   <% end %>
 
   <% if @story.status != 'released' && (@scenarios || []).any? { |sc| sc.done_at.nil? } && (@scenarios || []).any? { |sc| sc.done_at } %>

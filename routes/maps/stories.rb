@@ -73,6 +73,14 @@ class Mainline
         FeatureFile.for(@story)
       end
 
+      # The story's Step stubs list sends the language as a form field.
+      r.get 'steps' do
+        language = typecast_params.str('language')
+        next unless StepStubs::LANGUAGES.key?(language)
+
+        r.redirect "/maps/#{@map.id}/stories/#{@story.id}/steps/#{language}"
+      end
+
       r.get 'steps', String do |language|
         next unless StepStubs::LANGUAGES.key?(language)
 

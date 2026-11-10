@@ -353,6 +353,11 @@ module MainlineDSL
     driver.download_step_stubs(@map, story, language)
   end
 
+  # As the story's Step stubs list does it: the language is a form field.
+  def pick_step_stubs(story, language)
+    driver.pick_step_stubs(@map, story, language)
+  end
+
   def delete_scenario(story, scenario)
     driver.submit_delete_scenario(@map, story, scenario)
   end
