@@ -8,7 +8,12 @@ module FeatureFile
   def self.for(story)
     scenarios = Scenario.where(story_id: story.id).order(:position).all
     blocks = scenarios.map { |scenario| scenario_block(story, scenario) }
-    ["@story-#{story.id}\nFeature: #{story.title}\n", *blocks].join("\n")
+    ["@story-#{story.id}\nFeature: #{one_line(story.title)}\n", *blocks].join("\n")
+  end
+
+  # A line break inside a title, name or step would start a new Gherkin line.
+  def self.one_line(text)
+    text.to_s.split.join(' ')
   end
 
   def self.file_name(story)
@@ -19,10 +24,10 @@ module FeatureFile
   def self.scenario_block(story, scenario)
     <<~SCENARIO.gsub(/^/, '  ')
       @story-#{story.id} @scenario-#{scenario.id}
-      Scenario: #{scenario.display_name}
-        Given #{scenario.given_text}
-        When #{scenario.when_text}
-        Then #{scenario.then_text}
+      Scenario: #{one_line(scenario.display_name)}
+        Given #{one_line(scenario.given_text)}
+        When #{one_line(scenario.when_text)}
+        Then #{one_line(scenario.then_text)}
     SCENARIO
   end
   private_class_method :scenario_block

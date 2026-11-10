@@ -106,18 +106,18 @@ module CIMonitor
       )
     end
 
-    # A push is timed from the commit it pushed and keyed on it, so the same
-    # delivery handled twice counts once.
+    # A push is timed from when it arrives (the commit it pushed may be days
+    # old) and keyed on that commit, so the same delivery handled twice counts
+    # once and leaves the last push time alone.
     def handle_push(repo)
       return unless @payload[:ref] == "refs/heads/#{repo.default_branch}"
 
       sha = @payload[:after] unless @payload[:after] == NO_COMMIT
-      stamp = @payload.dig(:head_commit, :timestamp)
-      pushed_at = (stamp ? Time.parse(stamp.to_s) : Time.now).utc
-      repo.update(last_push_at: pushed_at)
-      IntegrationEvent.dataset.insert_conflict.insert(
-        monitored_repo_id: repo.id, event_type: 'push', occurred_at: pushed_at, commit_sha: sha
+      now = Time.now.utc
+      recorded = IntegrationEvent.dataset.insert_conflict.insert(
+        monitored_repo_id: repo.id, event_type: 'push', occurred_at: now, commit_sha: sha
       )
+      repo.update(last_push_at: now) if recorded
     end
 
     def installation_removed?

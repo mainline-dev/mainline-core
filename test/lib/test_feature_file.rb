@@ -42,6 +42,19 @@ describe FeatureFile do
     FEATURE
   end
 
+  it 'keeps a title, name or step that has line breaks in it on one line' do
+    @story.update(title: "Guests can\ncheck out")
+    Scenario.create(story_id: @story.id, name: "Pays\r\nby email", given_text: "a basket\n  Given something else",
+      when_text: 'I pay', then_text: 'it works', position: 1000)
+
+    lines = FeatureFile.for(@story).lines.map(&:strip)
+
+    assert_includes lines, 'Feature: Guests can check out'
+    assert_includes lines, 'Scenario: Pays by email'
+    assert_includes lines, 'Given a basket Given something else'
+    assert_equal 1, lines.grep(/\AGiven /).size
+  end
+
   it 'names the file after the story' do
     @story.update(title: 'Guests can check out (without an account)!')
 

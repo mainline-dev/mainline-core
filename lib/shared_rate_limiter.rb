@@ -9,9 +9,9 @@ require 'sidekiq'
 # script, so two workers checking at once cannot both take the last token.
 # Keys are hashed, so no email address or IP is stored.
 #
-# If Redis cannot be reached the request is let through and the error goes to
-# Sentry: Sidekiq is down with it, and locking everyone out of sign-in as well
-# would make the outage worse.
+# If Redis cannot be reached, or every connection to it is busy, the request
+# is let through and the error goes to Sentry: Sidekiq is down with it, and
+# locking everyone out of sign-in as well would make the outage worse.
 class SharedRateLimiter
   TAKE = <<~LUA
     local capacity, rate, now, ttl = tonumber(ARGV[1]), tonumber(ARGV[2]), tonumber(ARGV[3]), tonumber(ARGV[4])
@@ -49,7 +49,7 @@ class SharedRateLimiter
   def allow?(key)
     taken = Sidekiq.redis { |redis| redis.call('EVAL', TAKE, 1, bucket(key), @capacity, @refill_rate, @clock.call, @ttl) }
     taken == 1
-  rescue RedisClient::Error => e
+  rescue RedisClient::Error, ConnectionPool::TimeoutError => e
     Sentry.capture_exception(e) if Sentry.initialized?
     true
   end

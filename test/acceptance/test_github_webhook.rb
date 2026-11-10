@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative '../web_spec_helper'
+require 'timecop'
 require_relative '../dsl/mainline_dsl'
 require_relative '../dsl/ci_monitor_dsl'
 
@@ -197,12 +198,26 @@ describe 'GitHub webhook' do
     BypassRLS.call { assert_equal 1, IntegrationEvent.where(monitored_repo_id: @repo.id, event_type: 'push').count }
   end
 
-  it 'times a push from the commit it pushed' do
-    push_to_main(sha: 'f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5', at: '2026-11-02T09:30:00+11:00')
+  it 'times a push from when it arrived, however old the commit it pushed' do
+    arrived = Time.utc(2026, 11, 5, 3, 0, 0)
+
+    Timecop.freeze(arrived) { push_to_main(sha: 'f6e5d4c3b2a1f6e5d4c3b2a1f6e5d4c3b2a1f6e5', at: '2026-11-02T09:30:00+11:00') }
 
     BypassRLS.call do
-      assert_equal Time.parse('2026-11-02T09:30:00+11:00'), IntegrationEvent.where(monitored_repo_id: @repo.id).get(:occurred_at)
-      assert_equal Time.parse('2026-11-02T09:30:00+11:00'), @repo.refresh.last_push_at
+      assert_equal arrived, IntegrationEvent.where(monitored_repo_id: @repo.id).get(:occurred_at)
+      assert_equal arrived, @repo.refresh.last_push_at
+    end
+  end
+
+  it 'leaves the last push time alone when a push is redelivered later' do
+    first = Time.utc(2026, 11, 5, 3, 0, 0)
+    Timecop.freeze(first) { push_to_main(sha: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2', at: '2026-11-02T09:30:00+11:00') }
+
+    Timecop.freeze(first + 86_400) { push_to_main(sha: 'a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2', at: '2026-11-02T09:30:00+11:00') }
+
+    BypassRLS.call do
+      assert_equal first, IntegrationEvent.where(monitored_repo_id: @repo.id).get(:occurred_at)
+      assert_equal first, @repo.refresh.last_push_at
     end
   end
 

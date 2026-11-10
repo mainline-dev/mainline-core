@@ -80,4 +80,10 @@ describe SharedRateLimiter do
     assert_equal 6, reported.size
     assert_kind_of RedisClient::CannotConnectError, reported.first
   end
+
+  it 'lets requests through when every Redis connection is busy' do
+    busy = ->(*) { raise ConnectionPool::TimeoutError, 'waited 1 sec' }
+
+    Sidekiq.stub(:redis, busy) { assert limiter.allow?('key-a') }
+  end
 end
