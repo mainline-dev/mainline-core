@@ -4177,7 +4177,7 @@ footer.landing a:hover {
     margin: 0 auto;
     padding: 2rem 2rem 4rem;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 2.5rem;
 }
 
