@@ -379,6 +379,26 @@ hr {
     top: 3.5rem;
 }
 
+.verify-banner {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+    align-items: center;
+    margin: 0 0 1rem;
+    padding: 0.75rem 1rem;
+    background: var(--accent-amber-bg);
+    border: 1px solid rgba(255, 187, 51, 0.2);
+    border-left: 3px solid var(--accent-amber);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    color: var(--accent-amber);
+}
+
+.verify-banner form {
+    display: inline;
+    margin: 0;
+}
+
 .flash-warning {
     background: var(--accent-amber-bg);
     border-color: rgba(255, 187, 51, 0.2);

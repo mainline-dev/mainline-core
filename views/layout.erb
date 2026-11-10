@@ -98,6 +98,20 @@
   </div>
 </nav>
 
+<% if email_unverified? %>
+  <% verify_link = SendVerificationEmail.screen_link(@current_person) %>
+  <div class="verify-banner" role="status" data-test-id="verify-email-banner">
+    <span>Verify your email to create a team. An account left unverified is removed after a week.</span>
+    <% if verify_link %>
+      <a href="<%= verify_link %>" data-test-id="verify-banner-link">Verify now</a>
+    <% end %>
+    <form method="post" action="/resend-verification">
+      <%== csrf_tag('/resend-verification') %>
+      <button type="submit" class="btn-link" data-test-id="verify-banner-resend"><%= verify_link ? 'New link' : 'Send the email again' %></button>
+    </form>
+  </div>
+<% end %>
+
 <% if flash['notice'] %>
   <div class="flash" role="alert" data-test-id="flash-notice"><%= flash['notice'] %></div>
 <% end %>

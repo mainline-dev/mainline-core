@@ -1,12 +1,3 @@
-<% if @current_person.email_verified_at.nil? && PersonIdentity.where(person_id: @current_person.id, provider: 'email').any? %>
-  <div class="flash flash-warning" data-test-id="verify-email-banner">
-    Please verify your email to create a team.
-    <form method="post" action="/resend-verification" style="display: inline;">
-      <%== csrf_tag('/resend-verification') %>
-      <button type="submit" class="btn-link">Resend verification email</button>
-    </form>
-  </div>
-<% end %>
 <% if @team_map_counts.values.sum.zero? %>
   <p class="getting-started-hint">New here? Follow the <a href="https://mainline.dev/docs/tutorial">tutorial</a> to build your first map.</p>
 <% end %>
