@@ -6941,8 +6941,8 @@ button.mu-key:focus-visible { outline: 2px solid var(--border-focus); outline-of
 .mu-caret { font-weight: 400; color: var(--text-tertiary); }
 .mu-row.is-open, .mu-case { background: var(--bg-surface); }
 .mu-case { display: grid; grid-template-columns: minmax(0, 760px); padding: 8px 32px 28px 76px; border-bottom: 1px solid var(--border-subtle); }
-.mu-relic { display: grid; gap: 22px; }
-.mu-relic-section { display: grid; gap: 10px; }
+.mu-relic { display: grid; gap: 22px; align-self: start; align-content: start; }
+.mu-relic-section { display: grid; gap: 10px; align-content: start; }
 .mu-relic-section p { margin: 0; }
 .mu-relic-empty { margin: 0; font-size: 14px; color: var(--text-secondary); }
 .mu-raw > summary { list-style: none; }
@@ -7101,9 +7101,8 @@ ol.mu-md-list { padding-left: 20px; }
 .mu-guide { display: grid; gap: 14px; }
 .mu-guide h2 { margin: 0; }
 .mu-guide-steps { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: step; font-size: 14px; line-height: 1.5; color: var(--text-primary); }
-.mu-guide-steps li { display: grid; grid-template-columns: 24px minmax(0, 1fr); counter-increment: step; }
-.mu-guide-steps li::before { content: counter(step); font: 600 13px/1.6 var(--font-mono); color: var(--accent-cyan); }
-.mu-guide-steps li > * { grid-column: 2; }
+.mu-guide-steps li { position: relative; padding-left: 24px; counter-increment: step; }
+.mu-guide-steps li::before { content: counter(step); position: absolute; left: 0; top: 0; font: 600 13px/1.6 var(--font-mono); color: var(--accent-cyan); }
 .mu-guide-steps .mu-code { margin: 8px 0 0; white-space: pre-wrap; }
 .mu-guide-notes { display: grid; gap: 8px; padding: 12px 14px; border: 1px solid var(--border-default); border-radius: 4px; font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
 .mu-guide-notes p { margin: 0; }
