@@ -169,7 +169,25 @@ describe 'Scenarios' do
 
     assert driver.response_includes?('data-test-id="feature-download"')
     assert driver.response_includes?('data-test-id="feature-copy"')
-    assert_equal StepStubs::LANGUAGES.keys, driver.attributes_of('stub-download', 'data-language')
+    assert_equal StepStubs::LANGUAGES.keys, driver.attributes_of('stub-language', 'value')
+    assert driver.response_includes?('data-test-id="stub-download"')
+  end
+
+  it 'downloads step stubs in the language picked from the list' do
+    create_scenario(@story, given_text: 'a product exists', when_text: 'I search for it', then_text: 'I see it in results')
+
+    resp = pick_step_stubs(@story, 'ruby')
+
+    assert_equal 200, resp.status
+    assert_includes resp['Content-Disposition'], 'filename="find_products_steps.rb"'
+  end
+
+  it 'has nothing for a language picked that it does not know' do
+    create_scenario(@story, given_text: 'a product exists', when_text: 'I search for it', then_text: 'I see it in results')
+
+    err = assert_raises(RuntimeError) { pick_step_stubs(@story, 'cobol') }
+
+    assert_match(/404/, err.message)
   end
 
   it 'downloads step stubs in a chosen language, named for it' do

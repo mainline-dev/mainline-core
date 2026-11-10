@@ -269,6 +269,12 @@ class HttpDriver
     last_response
   end
 
+  def pick_step_stubs(map, story, language)
+    get "/maps/#{map.id}/stories/#{story.id}/steps", { 'language' => language }
+    follow_redirect! if last_response.redirect?
+    last_response
+  end
+
   def attributes_of(test_id, attribute)
     Nokogiri::HTML(last_response.body).css(%([data-test-id="#{test_id}"])).map { |node| node[attribute] }
   end
