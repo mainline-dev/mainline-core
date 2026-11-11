@@ -845,7 +845,7 @@ class Mainline < Roda
 
   def og_tags
     t = Rack::Utils.escape_html(@og_title || @page_title ||
-      'Mainline - project tooling without the Agile theatre or pointless genAI features')
+      'Mainline: open-source project management for continuous delivery teams')
     d = Rack::Utils.escape_html(@og_description ||
       'No backlog, no story points, no individual metrics. Built for teams that practise continuous delivery.')
     img = Rack::Utils.escape_html(@og_image || 'https://mainline.dev/og-image.png')
