@@ -28,6 +28,16 @@ describe 'Self-host setup' do
   end
 
   %w[app worker].each do |service|
+    # Self-hosting pulls the image the public repository publishes, so nobody
+    # has to build. Building from the checkout stays possible with --build.
+    it "runs the #{service} from the published image, or from the checkout when asked to build" do
+      workflow = YAML.load_file(File.join(root, '.github/workflows/publish_image.yml'))
+      published = workflow.dig('jobs', 'image', 'steps').filter_map { |step| step.dig('with', 'images') }.first
+
+      assert_equal "#{published}:latest", compose.dig('services', service, 'image')
+      assert_equal '.', compose.dig('services', service, 'build')
+    end
+
     it "gives the #{service} every variable core requires" do
       env = compose.dig('services', service, 'environment').keys
 

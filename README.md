@@ -39,8 +39,10 @@ To start from nothing instead, sign up with an email address. Development sends 
 `docker-compose.selfhost.yml` runs the app, a Sidekiq worker, Postgres and Redis with `RACK_ENV=production`. Every variable is required and has no default. Set them in your shell, or in a `.env` file next to the compose file, then:
 
 ```shell
-docker compose -f docker-compose.selfhost.yml up -d --build
+docker compose -f docker-compose.selfhost.yml up -d
 ```
+
+This pulls the published image, `ghcr.io/mainline-dev/mainline-core`. To run your own checkout instead, add `--build`.
 
 | Variable | Purpose |
 |---|---|
