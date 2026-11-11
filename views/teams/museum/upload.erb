@@ -1,17 +1,40 @@
 <% @page_breadcrumb = 'Ticket Museum / Acquire' %>
-<h1 class="page-title">Acquire from Jira</h1>
+<h1 class="page-title">Acquire</h1>
 <p class="lens-help">Every relic is catalogued before it goes on display, and an acquisition can be returned afterwards.</p>
+
+<% mainline = @source == 'mainline' %>
+<nav class="mu-segments mu-sources" aria-label="Where the file is from">
+  <% { 'jira' => 'A Jira export', 'mainline' => 'A Mainline file' }.each do |source, label| %>
+    <a href="/teams/<%= @team.id %>/museum/import?source=<%= source %>" class="mu-segment<% if @source == source %> is-active<% end %>" data-test-id="museum-source" data-source="<%= source %>"<% if @source == source %> aria-current="true"<% end %>><%= label %></a>
+  <% end %>
+</nav>
 
 <div class="mu-acquire">
   <div class="mu-acquire-main">
+    <% if @refused %>
+      <% count = @refused[:problems].size %>
+      <section class="mu-turned-away mu-refused" data-test-id="museum-file-problems">
+        <div class="mu-turned-head">
+          <span class="mu-label"><%= @refused[:file_name] %> was turned away: <%= count %> <%= count == 1 ? 'problem' : 'problems' %></span>
+          <span class="mu-turned-note">Nothing entered the museum. Correct the file and send it again.</span>
+          <button type="button" class="preview-copy-id" data-copy="<%= @refused[:sentences].join("\n") %>" data-tooltip="Copy the problems for your LLM" data-test-id="museum-file-problems-copy">Copy problems</button>
+        </div>
+        <ol class="mu-refused-list">
+          <% @refused[:problems].zip(@refused[:sentences]).each do |problem, sentence| %>
+            <li data-test-id="museum-file-problem" data-entry="<%= problem['entry'] %>" data-field="<%= problem['field'] %>" data-problem="<%= problem['problem'] %>"><%= sentence %></li>
+          <% end %>
+        </ol>
+      </section>
+    <% end %>
     <form method="post" action="/teams/<%= @team.id %>/museum/import" enctype="multipart/form-data" class="mu-tile" data-drop-upload data-test-id="museum-import-form">
       <%== csrf_tag("/teams/#{@team.id}/museum/import") %>
-      <p class="mu-tile-title">Drop a Jira CSV export</p>
+      <input type="hidden" name="source" value="<%= @source %>">
+      <p class="mu-tile-title"><%= mainline ? 'Drop a Mainline file' : 'Drop a Jira CSV export' %></p>
       <p class="mu-tile-hint">here, or anywhere on this page</p>
       <label for="museum-csv" class="mu-tile-choose">Choose a file</label>
-      <input type="file" id="museum-csv" name="csv" accept=".csv,text/csv" required>
+      <input type="file" id="museum-csv" name="csv" accept="<%= mainline ? '.json,application/json' : '.csv,text/csv' %>" required>
       <noscript><button type="submit" class="btn-ghost btn-sm">Upload</button></noscript>
-      <p class="mu-tile-limit">up to 1,000 issues &middot; 10 MB</p>
+      <p class="mu-tile-limit"><%= mainline ? "up to #{MainlineFile::MAX_ENTRIES} entries" : 'up to 1,000 issues' %> &middot; 10 MB</p>
     </form>
 
     <% unless @imports.empty? %>
@@ -50,19 +73,35 @@
     <% end %>
   </div>
 
-  <section class="mu-guide" data-test-id="museum-import-guide">
-    <h2 class="mu-label">Getting the CSV out of Jira</h2>
-    <ol class="mu-guide-steps">
-      <li>In Jira, open <strong>Filters</strong> and then <strong>View all issues</strong> (Jira Cloud), or <strong>Issues</strong> and then <strong>Search for issues</strong> (Jira Server and Data Center).</li>
-      <li>Switch to JQL and search for the backlog you want to bring:<pre class="mu-code">project = SHOP AND statusCategory != Done ORDER BY created DESC</pre></li>
-      <li>Choose <strong>Export</strong> and then <strong>Export CSV (all fields)</strong>, so descriptions, labels, comments, parents and links come with it.</li>
-      <li>Drop the file here.</li>
-    </ol>
-    <div class="mu-guide-notes">
-      <p>More than 1,000 issues? Narrow the search, for example by adding <code>AND created &lt; "2025-01-01"</code>, and acquire each file. Bringing the same tickets again refreshes them.</p>
-      <p>People are left at the door: no assignees, reporters, comment authors, @mentions or email addresses. Attachments aren't acquired.</p>
-    </div>
-  </section>
+  <% if mainline %>
+    <section class="mu-guide" data-test-id="museum-instructions">
+      <h2 class="mu-label">Stories proposed from a specification</h2>
+      <ol class="mu-guide-steps">
+        <li>Copy the instructions: <button type="button" class="preview-copy-id" data-copy="<%= @instructions %>" data-tooltip="Copy the instructions for your LLM" data-test-id="museum-instructions-copy">Copy instructions</button></li>
+        <li>Give them to your LLM along with the specification, plan or research.</li>
+        <li>Drop the file it writes here.</li>
+      </ol>
+      <div class="mu-guide-notes">
+        <p>Each entry arrives as an exhibit. Nothing is a story, and no draft is a scenario, until you promote it.</p>
+        <p>The instructions name the activities and steps on your maps, so the file can suggest where each story belongs. The file is checked against <a href="/schemas/import-1.json">the published schema</a>, and one with anything wrong is turned away whole, with a list to hand back to the model.</p>
+        <p>When you revise a file, keep its keys: entries are refreshed, and none is added twice.</p>
+      </div>
+    </section>
+  <% else %>
+    <section class="mu-guide" data-test-id="museum-import-guide">
+      <h2 class="mu-label">Getting the CSV out of Jira</h2>
+      <ol class="mu-guide-steps">
+        <li>In Jira, open <strong>Filters</strong> and then <strong>View all issues</strong> (Jira Cloud), or <strong>Issues</strong> and then <strong>Search for issues</strong> (Jira Server and Data Center).</li>
+        <li>Switch to JQL and search for the backlog you want to bring:<pre class="mu-code">project = SHOP AND statusCategory != Done ORDER BY created DESC</pre></li>
+        <li>Choose <strong>Export</strong> and then <strong>Export CSV (all fields)</strong>, so descriptions, labels, comments, parents and links come with it.</li>
+        <li>Drop the file here.</li>
+      </ol>
+      <div class="mu-guide-notes">
+        <p>More than 1,000 issues? Narrow the search, for example by adding <code>AND created &lt; "2025-01-01"</code>, and acquire each file. Bringing the same tickets again refreshes them.</p>
+        <p>People are left at the door: no assignees, reporters, comment authors, @mentions or email addresses. Attachments aren't acquired.</p>
+      </div>
+    </section>
+  <% end %>
 </div>
 
 <p><a href="/teams/<%= @team.id %>/museum" class="cancel-link">Back to the museum</a></p>

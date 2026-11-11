@@ -42,7 +42,7 @@ module LetGoReview
     },
     'covered' => {
       title: 'Already covered by a promoted story',
-      why:   'Jira links them to an exhibit you have already promoted, and they add no behaviour of their own.',
+      why:   'They are linked to an exhibit you have already promoted, and they add no behaviour of their own.',
       rule:  'linked to a promoted exhibit · type is Sub-task or Task'
     }
   }.freeze

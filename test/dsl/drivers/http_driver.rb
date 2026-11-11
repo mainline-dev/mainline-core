@@ -882,8 +882,22 @@ class HttpDriver
     last_response.body.scan('data-test-id="museum-import-row"').size
   end
 
-  def visit_museum_import_page(team)
-    get "/teams/#{team.id}/museum/import"
+  def visit_museum_import_page(team, source: nil)
+    get "/teams/#{team.id}/museum/import", source ? { 'source' => source } : {}
+    last_response
+  end
+
+  def acquire_sources_shown
+    page = Nokogiri::HTML(last_response.body)
+    sources = page.css('[data-test-id="museum-source"]')
+    { offered: sources.map { |source| source['data-source'] },
+      chosen:  sources.find { |source| source['aria-current'] }&.[]('data-source'),
+      sends:   page.at_css('[data-test-id="museum-import-form"] input[name="source"]')&.[]('value') }
+  end
+
+  def drop_file_on_museum(team, content, name)
+    post "/teams/#{team.id}/museum/import", { 'csv' => Rack::Test::UploadedFile.new(StringIO.new(content), original_filename: name) }
+    follow_redirect! if last_response.redirect?
     last_response
   end
 
@@ -892,6 +906,46 @@ class HttpDriver
     post "/teams/#{team.id}/museum/import", params
     follow_redirect! if last_response.redirect?
     last_response
+  end
+
+  def upload_mainline_file(team, json)
+    file = Rack::Test::UploadedFile.new(StringIO.new(json), 'application/json', original_filename: 'stories.json')
+    post "/teams/#{team.id}/museum/import", { 'csv' => file, 'source' => 'mainline' }
+    follow_redirect! if last_response.redirect?
+    last_response
+  end
+
+  def backbone_shown
+    backbone = Nokogiri::HTML(last_response.body).at_css('[data-test-id="museum-backbone"]')
+    activities = backbone.css('[data-test-id="museum-backbone-activity"]').to_h { |activity|
+      steps = activity.css('[data-test-id="museum-backbone-step"]').to_h { |step| [step['data-name'], step['data-state']] }
+      [activity['data-name'], [activity['data-state'], steps]]
+    }
+    { map: backbone.at_css('select[name="map"] option[selected]')['value'], activities: activities,
+      unplaced: backbone['data-unplaced'].to_i }
+  end
+
+  def promote_form_shown
+    form = Nokogiri::HTML(last_response.body).at_css('[data-test-id="museum-promote-form"]')
+    cards = form.css('[data-test-id="museum-scenario"]').map { |card|
+      %w[name given when then].map { |part| card.at_css(%(textarea[name$="[#{part}]"])).text }
+    }
+    { title: form.at_css('input[name="title"]')['value'].to_s, scenarios: cards,
+      task_id: form.at_css('select[name="task_id"] option[selected]')&.[]('value') }
+  end
+
+  def museum_sources_shown
+    Nokogiri::HTML(last_response.body).css('[data-test-id="museum-item"]').to_h { |row| [row['data-key'], row['data-source']] }
+  end
+
+  def museum_keys_marked_proposed
+    Nokogiri::HTML(last_response.body).css('[data-test-id="museum-item"]')
+      .select { |row| row.at_css('[data-test-id="museum-proposed"]') }.map { |row| row['data-key'] }.sort
+  end
+
+  def file_problems_shown
+    Nokogiri::HTML(last_response.body).css('[data-test-id="museum-file-problem"]')
+      .map { |node| [node['data-entry'], node['data-field'], node['data-problem']] }
   end
 
   # The id of the import whose preview is on the page, if one is.
@@ -904,10 +958,25 @@ class HttpDriver
     last_response.body
   end
 
-  def apply_museum_import(team, import_id)
-    post "/teams/#{team.id}/museum/imports/#{import_id}/apply"
+  def apply_museum_import(team, import_id, tick: nil, onto: nil)
+    post "/teams/#{team.id}/museum/imports/#{import_id}/apply", backbone_fields(tick, onto)
     follow_redirect! if last_response.redirect?
     last_response
+  end
+
+  # The backbone part of the acquire form, as a browser would send it: the map
+  # chosen and the boxes ticked on the page, or the ones named instead.
+  def backbone_fields(tick, onto)
+    backbone = Nokogiri::HTML(last_response.body).at_css('[data-test-id="museum-backbone"]')
+    return {} unless backbone
+
+    boxes = lambda { |kind, names|
+      rows = backbone.css(%([data-test-id="museum-backbone-#{kind}"]))
+      inputs = rows.filter_map { |row| row.at_xpath('./label/input') if names.nil? || names.include?(row['data-name']) }
+      inputs.select { |input| names || input['checked'] }.map { |input| input['value'] }
+    }
+    { 'map' => onto || backbone.at_css('select[name="map"] option[selected]')['value'],
+      'activities' => boxes.call('activity', tick&.fetch(:activities)), 'steps' => boxes.call('step', tick&.fetch(:steps)) }
   end
 
   def visit_museum_import(team, import_id)

@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
 require_relative '../model_spec_helper'
-require_relative '../../lib/import_jira_csv'
+require_relative '../../lib/import_to_museum'
 require_relative '../dsl/jira_export'
 
-describe ImportJiraCsv do
-  cover 'ImportJiraCsv*'
+describe ImportToMuseum do
+  cover 'ImportToMuseum*'
 
   before do
     @team = Team.create(name: 'Test')
@@ -22,7 +22,7 @@ describe ImportJiraCsv do
   end
 
   def stage(csv, file_name: 'jira.csv')
-    ImportJiraCsv.stage(team: @team, actor: @person.actor, csv: csv, file_name: file_name)
+    ImportToMuseum.stage(team: @team, actor: @person.actor, csv: csv, file_name: file_name)
   end
 
   # Stages the file and applies it, as someone pressing Import would.
@@ -30,7 +30,7 @@ describe ImportJiraCsv do
     staged = stage(csv)
     return staged unless staged.success?
 
-    ImportJiraCsv.apply(import: staged.import, actor: @person.actor)
+    ImportToMuseum.apply(import: staged.import, actor: @person.actor)
   end
 
   def item(key)
@@ -50,7 +50,7 @@ describe ImportJiraCsv do
 
     staged = stage(jira_csv({ key: 'SHOP-1', summary: 'Renamed' }, { key: 'SHOP-2' }, { key: 'SHOP-3', resolution: 'Done' },
       { key: 'SHOP-4', summary: '' }))
-    preview = ImportJiraCsv.preview(staged.import)
+    preview = ImportToMuseum.preview(staged.import)
 
     assert_equal [1, 1, 1, 1], [preview.added, preview.updated, preview.finished, preview.skipped]
     assert_equal 'Search by postcode', item('SHOP-1').summary
@@ -68,8 +68,8 @@ describe ImportJiraCsv do
   it 'imports a staged file once' do
     staged = stage(jira_csv({}))
 
-    assert_predicate ImportJiraCsv.apply(import: staged.import, actor: @person.actor), :success?
-    refute_predicate ImportJiraCsv.apply(import: staged.import, actor: @person.actor), :success?
+    assert_predicate ImportToMuseum.apply(import: staged.import, actor: @person.actor), :success?
+    refute_predicate ImportToMuseum.apply(import: staged.import, actor: @person.actor), :success?
     assert_equal 1, MuseumItem.count
   end
 
@@ -77,7 +77,7 @@ describe ImportJiraCsv do
     first = stage(jira_csv({ key: 'SHOP-1' })).import
     other = Team.create(name: 'Other')
     theirs = BypassRLS.call {
-      ImportJiraCsv.stage(team: other, actor: @person.actor, csv: jira_csv({ key: 'THEM-1' }), file_name: 'x.csv').import
+      ImportToMuseum.stage(team: other, actor: @person.actor, csv: jira_csv({ key: 'THEM-1' }), file_name: 'x.csv').import
     }
 
     second = stage(jira_csv({ key: 'SHOP-2' })).import
@@ -90,14 +90,14 @@ describe ImportJiraCsv do
   it 'cancels a staged file, leaving the museum as it was' do
     staged = stage(jira_csv({}))
 
-    assert_predicate ImportJiraCsv.cancel(import: staged.import), :success?
-    refute_predicate ImportJiraCsv.apply(import: staged.import, actor: @person.actor), :success?
+    assert_predicate ImportToMuseum.cancel(import: staged.import), :success?
+    refute_predicate ImportToMuseum.apply(import: staged.import, actor: @person.actor), :success?
     assert_equal ['cancelled', 0], [staged.import.refresh.status, MuseumItem.count]
   end
 
   it 'records who imported, when, and what it did' do
     staged = stage(jira_csv({ key: 'SHOP-1' }, { key: 'SHOP-2', resolution: 'Done' }))
-    ImportJiraCsv.apply(import: staged.import, actor: @person.actor)
+    ImportToMuseum.apply(import: staged.import, actor: @person.actor)
     record = staged.import.refresh
     event = Event.where(entity_id: record.id, action: 'imported').first
 
@@ -107,7 +107,7 @@ describe ImportJiraCsv do
   end
 
   def undo(import)
-    ImportJiraCsv.undo(import: import, actor: @person.actor)
+    ImportToMuseum.undo(import: import, actor: @person.actor)
   end
 
   def latest_import
@@ -154,8 +154,8 @@ describe ImportJiraCsv do
     assert_predicate undo(second), :success?
     refute_predicate undo(second), :success?
     refute_predicate undo(first), :success?
-    refute ImportJiraCsv.undoable?(first.refresh)
-    assert_nil ImportJiraCsv.undoable_id(@team.id)
+    refute ImportToMuseum.undoable?(first.refresh)
+    assert_nil ImportToMuseum.undoable_id(@team.id)
     assert_equal ['SHOP-1'], MuseumItem.select_map(:source_key)
   end
 

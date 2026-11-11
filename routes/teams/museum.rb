@@ -5,7 +5,7 @@ class Mainline
     @museum_path = "/teams/#{@team.id}/museum"
 
     r.get true do
-      @filters = %w[search type label epic age status why].to_h { |name| [name.to_sym, typecast_params.nonempty_str(name)] }.compact
+      @filters = %w[search type label epic age status why source].to_h { |name| [name.to_sym, typecast_params.nonempty_str(name)] }.compact
       stale_why = @filters.delete(:why) unless @filters[:status] == 'in-storage'
       @museum = MuseumList.call(team_id: @team.id, **@filters, page: typecast_params.pos_int('page', 1))
       @open_key = typecast_params.nonempty_str('open')
@@ -26,10 +26,8 @@ class Mainline
 
     r.is 'import' do
       r.get do
-        @imports = MuseumImport.where(team_id: @team.id).reverse(:created_at, :imported_at).limit(10).eager(:actor).all
-        @undoable_id = ImportJiraCsv.undoable_id(@team.id)
-        @page_title = 'Acquire from Jira - Mainline'
-        view 'upload'
+        @source = museum_source(typecast_params.nonempty_str('source'))
+        museum_upload_page
       end
 
       r.post do
@@ -40,16 +38,25 @@ class Mainline
 
         upload = r.params['csv']
         unless upload.is_a?(Hash) && upload[:tempfile]
-          flash['error'] = 'Choose a Jira CSV export to acquire'
+          flash['error'] = 'Choose a file to acquire'
           r.redirect "/teams/#{@team.id}/museum/import"
         end
 
-        staged = ImportJiraCsv.stage(team: @team, actor: @current_actor, file_name: upload[:filename],
-          csv: upload[:tempfile].read(JiraCsv::MAX_BYTES + 1).to_s)
+        @source = museum_source(typecast_params.nonempty_str('source'), file_name: upload[:filename])
+        staged = ImportToMuseum.stage(team: @team, actor: @current_actor, file_name: upload[:filename],
+          csv: upload[:tempfile].read(JiraCsv::MAX_BYTES + 1).to_s, source: @source)
         r.redirect "/teams/#{@team.id}/museum/imports/#{staged.import.id}" if staged.success?
 
-        flash['error'] = staged.errors.first
-        r.redirect "/teams/#{@team.id}/museum/import"
+        if staged.problems.empty?
+          flash['error'] = staged.errors.first
+          r.redirect "/teams/#{@team.id}/museum/import"
+        end
+
+        # A file refused for what is in it: every problem goes on the page, to
+        # correct in one go.
+        @refused = { file_name: upload[:filename].to_s, problems: staged.problems, sentences: staged.errors }
+        response.status = 422
+        museum_upload_page
       end
     end
 
@@ -60,7 +67,8 @@ class Mainline
       next unless @import
 
       r.get true do
-        @preview = ImportJiraCsv.preview(@import) if @import.status == 'staged'
+        @preview = ImportToMuseum.preview(@import) if @import.status == 'staged'
+        @plan = LayOutMap.plan(team: @team, import: @import) if @preview && @import.backbone
         @hours_left = museum_hours_left(@import)
         @page_title = "Acquisition #{@import.file_name} - Mainline"
         view 'import'
@@ -74,7 +82,11 @@ class Mainline
       end
 
       r.post 'apply' do
-        result = ImportJiraCsv.apply(import: @import, actor: @current_actor)
+        layout = if @import.backbone
+                   { map: typecast_params.nonempty_str('map'), activities: Array(r.params['activities']).grep(/\A\d+\z/).map(&:to_i),
+                     steps: Array(r.params['steps']).grep(/\A\d+:\d+\z/) }
+                 end
+        result = ImportToMuseum.apply(import: @import, actor: @current_actor, layout: layout)
         if result.success?
           flash['notice'] = import_notice(result)
           # Once the exhibits are committed, or the curator looks at a museum without them.
@@ -87,7 +99,7 @@ class Mainline
       end
 
       r.post 'undo' do
-        result = ImportJiraCsv.undo(import: @import, actor: @current_actor)
+        result = ImportToMuseum.undo(import: @import, actor: @current_actor)
         if result.success?
           flash['notice'] = "#{@import.file_name} returned: #{result.removed} exhibits removed, #{result.restored} put back as they were" \
                             "#{", #{result.kept} promoted or discarded since, kept" if result.kept.positive?}"
@@ -98,7 +110,7 @@ class Mainline
       end
 
       r.post 'cancel' do
-        result = ImportJiraCsv.cancel(import: @import)
+        result = ImportToMuseum.cancel(import: @import)
         if result.success?
           flash['notice'] = "#{@import.file_name} turned down; the museum is as it was"
         else
@@ -286,8 +298,11 @@ class Mainline
         @sub_tasks = MuseumItem.where(team_id: @team.id, parent_key: @item.source_key).order(:source_key).all
 
         r.get do
-          @selected_task_id = remembered_museum_task
-          @remembered_task = !@selected_task_id.nil?
+          suggestion = museum_suggestion(@item)
+          @title = suggestion[:title]
+          @scenarios = suggestion[:scenarios]
+          @selected_task_id = suggestion[:task_id] || remembered_museum_task
+          @remembered_task = suggestion[:task_id].nil? && !@selected_task_id.nil?
           view 'promote'
         end
 

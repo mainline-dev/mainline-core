@@ -46,6 +46,12 @@ module MuseumList
       @labels ||= MuseumList.labels(@scope.all)
     end
 
+    # Where the museum's exhibits came from. Worth offering as a filter only
+    # when there is more than one.
+    def sources
+      @sources ||= @scope.all.distinct.order(:source).select_map(:source)
+    end
+
     def epics
       @epics ||= @scope.all.where(EPIC).order(:summary, :source_key).all
     end
@@ -126,8 +132,9 @@ module MuseumList
     items.exclude(EPIC).where(Sequel.|(Sequel.~(SUB_TASK), Sequel.~(parent_key: in_museum), { parent_key: nil }))
   end
 
-  def self.filter(items, type: nil, label: nil, epic: nil, age: nil, search: nil, why: nil)
+  def self.filter(items, type: nil, label: nil, epic: nil, age: nil, search: nil, why: nil, source: nil)
     items = search(items, search)
+    items = items.where(source: source) if source
     items = items.where(storage_note: why) if why
     items = items.where(issue_type: type) if type
     items = items.where(Sequel.lit('labels @> ?', Sequel.pg_jsonb([label]))) if label

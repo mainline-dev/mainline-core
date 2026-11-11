@@ -4,7 +4,7 @@ Mainline is project tooling for teams that practise continuous integration and c
 
 ![A story map in Mainline: activities across the top, steps beneath them, and stories under each step](docs/images/map.png)
 
-Bring a Jira backlog in from a CSV export. It lands in the Ticket Museum, frozen, and you promote what's worth building onto the map one story at a time, rewritten with its acceptance scenarios.
+Bring a Jira backlog in from a CSV export. It lands in the Ticket Museum, frozen, and you promote what's worth building onto the map one story at a time, rewritten with its acceptance scenarios. A specification or research comes in the same way: a model writes a Mainline file of small proposed stories, checked against [a published schema](public/schemas/import-1.json), and each one waits in the museum for a person to promote it.
 
 ![Importing a Jira CSV into the Ticket Museum and promoting one ticket onto the story map](docs/images/museum-promote.gif)
 

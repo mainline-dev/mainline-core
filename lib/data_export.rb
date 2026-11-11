@@ -86,10 +86,12 @@ module DataExport
     }
   end
 
-  # The Ticket Museum: every exhibit as it came from Jira, and what became of it.
+  # The Ticket Museum: every exhibit as it arrived, where it came from, what it
+  # suggested if it was proposed from a specification, and what became of it.
   def self.museum_items(team_id)
     MuseumItem.where(team_id: team_id).order(:source_key).all.map { |item|
-      { id: item.id, source_key: item.source_key, issue_type: item.issue_type, summary: item.summary,
+      { id: item.id, source: item.source, origin: item.origin, suggested: item.suggested&.to_h,
+        source_key: item.source_key, issue_type: item.issue_type, summary: item.summary,
         description: item.description, labels: item.labels, comments: item.comments, links: item.links,
         parent_key: item.parent_key, source_created_at: item.source_created_at,
         source_updated_at: item.source_updated_at, story_id: item.story_id, promoted_at: item.promoted_at,

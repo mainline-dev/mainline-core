@@ -12,7 +12,7 @@
   <% cells = [
        ['added', @preview.added, 'new exhibits'], ['updated', @preview.updated, 'refreshed from this newer file'],
        ['left', @preview.promoted + @preview.discarded, 'promoted or stored, left as they are'],
-       ['finished', @preview.finished, 'finished in Jira, not museum material'], ['skipped', @preview.skipped, 'rows turned away']
+       ['finished', @preview.finished, 'already finished, not museum material'], ['skipped', @preview.skipped, 'rows turned away']
      ].select { |kind, count, _label| kind == 'added' || count.positive? } %>
   <div class="mu-acq-body">
     <div data-test-id="museum-import-preview" data-added="<%= @preview.added %>" data-updated="<%= @preview.updated %>" data-finished="<%= @preview.finished %>" data-skipped="<%= @preview.skipped %>" data-promoted="<%= @preview.promoted %>" data-discarded="<%= @preview.discarded %>">
@@ -30,7 +30,7 @@
     </div>
 
     <div class="mu-decide">
-      <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/apply">
+      <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/apply" id="mu-apply">
         <%== csrf_tag("/teams/#{@team.id}/museum/imports/#{@import.id}/apply") %>
         <button type="submit" class="btn" data-test-id="museum-import-apply"<% if acquirable.zero? %> disabled<% end %>><% if acquirable.zero? %>Nothing to acquire<% else %>Acquire <%= acquirable %> <%= acquirable == 1 ? 'exhibit' : 'exhibits' %><% end %></button>
       </form>
@@ -51,7 +51,7 @@
       Nothing entered the museum.
     <% end %>
   </p>
-  <% if ImportJiraCsv.undoable?(@import) %>
+  <% if ImportToMuseum.undoable?(@import) %>
     <div class="mu-return">
       <p>Returning removes the <%= @import.added %> it added and puts the <%= @import.updated %> back as they were. Anything promoted or stored since stays.</p>
       <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/undo">
@@ -60,6 +60,37 @@
       </form>
     </div>
   <% end %>
+<% end %>
+
+<% if @plan %>
+  <section class="mu-backbone" data-test-id="museum-backbone" data-unplaced="<%= @plan.unplaced %>">
+    <h2 class="mu-label">Lay out the map</h2>
+    <p class="mu-backbone-note">The file proposes these activities and steps. Only what is ticked is created, as your work. The exhibits arrive either way.</p>
+    <select name="map" form="mu-apply" class="mu-select" aria-label="Map" data-test-id="museum-backbone-map">
+      <option value="new"<% if @plan.target == 'new' %> selected<% end %>>A new map: <%= @import.backbone['map'] %></option>
+      <% @plan.maps.each do |map| %>
+        <option value="<%= map.id %>"<% if @plan.target == map.id %> selected<% end %>>Add to <%= map.name %></option>
+      <% end %>
+    </select>
+    <ul class="mu-backbone-list">
+      <% @plan.activities.each do |activity| %>
+        <li data-test-id="museum-backbone-activity" data-name="<%= activity[:name] %>" data-state="<%= activity[:state] %>">
+          <%== render('teams/museum/_backbone_tick', locals: { piece: activity, field: 'activities[]' }) %>
+          <span class="mu-backbone-for">for <%= activity[:personas].join(', ') %></span>
+          <ul>
+            <% activity[:steps].each do |step| %>
+              <li data-test-id="museum-backbone-step" data-name="<%= step[:name] %>" data-state="<%= step[:state] %>">
+                <%== render('teams/museum/_backbone_tick', locals: { piece: step, field: 'steps[]' }) %>
+              </li>
+            <% end %>
+          </ul>
+        </li>
+      <% end %>
+    </ul>
+    <% if @plan.unplaced.positive? %>
+      <p class="mu-backbone-note"><%= @plan.unplaced %> <%= @plan.unplaced == 1 ? 'entry suggests' : 'entries suggest' %> a step that is neither here nor on the map. You'll pick a step when you promote <%= @plan.unplaced == 1 ? 'it' : 'them' %>.</p>
+    <% end %>
+  </section>
 <% end %>
 
 <% unless @import.problems.empty? %>

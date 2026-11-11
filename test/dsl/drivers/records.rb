@@ -77,6 +77,29 @@ module Records
     note.update(dismissed_at: Time.now, dismissed_by: person.id)
   end
 
+  def map_laid_out(team, name)
+    map = Map.where(team_id: team.id, name: name).first
+    return unless map
+
+    activities = Activity.where(map_id: map.id).order(:position).all.to_h { |activity|
+      [activity.name, Task.where(activity_id: activity.id).order(:position).select_map(:name)]
+    }
+    { personas: Persona.where(map_id: map.id).order(:name).select_map(:name), activities: activities }
+  end
+
+  def step_named(team, map_name, step)
+    Task.where(map_id: Map.where(team_id: team.id, name: map_name).select(:id), name: step).first
+  end
+
+  # A map in some other team.
+  def other_team_map
+    BypassRLS.call { Map.create(team_id: Team.create(name: 'Other team').id, name: 'Theirs', position: 1000) }
+  end
+
+  def activities_on(map)
+    BypassRLS.call { Activity.where(map_id: map.id).count }
+  end
+
   def museum_item(team, key)
     MuseumItem.where(team_id: team.id, source_key: key).first
   end

@@ -98,37 +98,15 @@ class Mainline
         SetTeamContext.call(@current_team.id)
         name = typecast_params.nonempty_str('name')
 
-        map_count = Map.where(team_id: @current_team.id).count
-        cap = ResourceCap.maps_per_team(map_count)
-
-        @errors = []
-        @errors << 'This team has reached its map limit' if cap == :blocked
-        @errors << 'Name is required' unless name
-        @errors << 'Name must be 100 characters or fewer' if name && name.length > 100
-
-        flash['warning'] = "This team has #{map_count} maps. Consider archiving unused ones." if cap == :warning
-
-        unless @errors.empty?
+        result = CreateMap.call(team: @current_team, actor: @current_actor, name: name)
+        unless result.success?
+          @errors = result.errors
           @map_name = name || ''
           next view('new')
         end
 
-        DB.transaction do
-          next_pos = (Map.where(team_id: @current_team.id).max(:position) || 0) + 1000
-          @map = Map.create(
-            team_id:  @current_team.id,
-            name:     name,
-            position: next_pos
-          )
-          RecordEvent.call(
-            actor_id:    @current_actor.id,
-            entity:      @map,
-            action:      'created',
-            map_id:      @map.id,
-            after_state: { name: @map.name, position: @map.position }
-          )
-        end
-
+        @map = result.created
+        flash['warning'] = result.warning if result.warning
         flash['notice'] = "Map '#{@map.name}' created"
         r.redirect "/maps/#{@map.id}"
       end

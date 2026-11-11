@@ -1,9 +1,20 @@
 <%# locals: (item:, sub_tasks:) %>
 <div class="mu-relic">
-  <% if item.description.strip.empty? && sub_tasks.empty? && item.links.empty? && item.comments.empty? %>
-    <p class="mu-relic-empty" data-test-id="museum-relic-empty">Nothing on this one but its summary. No description, links or comments came across from Jira.</p>
+  <% if item.origin %>
+    <section class="mu-relic-section" data-test-id="museum-origin">
+      <span class="mu-label">Proposed from</span>
+      <p><%= item.origin %></p>
+    </section>
   <% end %>
-  <% unless item.description.strip.empty? %>
+  <% if item.origin.nil? && item.description.strip.empty? && sub_tasks.empty? && item.links.empty? && item.comments.empty? %>
+    <p class="mu-relic-empty" data-test-id="museum-relic-empty">Nothing on this one but its summary. No description, links or comments came across with it.</p>
+  <% end %>
+  <% if item.proposed? && !item.description.strip.empty? %>
+    <section class="mu-relic-section" data-test-id="museum-why">
+      <span class="mu-label">Why</span>
+      <p class="mu-why"><%= item.description %></p>
+    </section>
+  <% elsif !item.description.strip.empty? %>
     <section class="mu-relic-section">
       <details class="mu-raw">
         <summary class="mu-relic-head"><span class="mu-label">Description</span><span class="mu-raw-toggle">View raw markup</span></summary>

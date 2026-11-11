@@ -16,8 +16,8 @@
   <div class="mu-empty" data-test-id="museum-empty">
     <span class="mu-label">The galleries are empty</span>
     <p class="mu-empty-title">Every museum starts with one acquisition.</p>
-    <p class="mu-empty-text">Export your backlog from Jira as a CSV and bring it in here. Nothing goes on display until you've checked it.</p>
-    <p><a href="<%= @museum_path %>/import" class="btn" data-test-id="museum-import-link">Acquire from Jira</a></p>
+    <p class="mu-empty-text">Bring in a backlog exported from Jira, or stories proposed from a specification. Nothing goes on display until you've checked it.</p>
+    <p><a href="<%= @museum_path %>/import" class="btn" data-test-id="museum-import-link">Acquire</a></p>
     <p class="mu-drop-caption" data-test-id="museum-drop-caption">or drop a CSV anywhere on this page</p>
   </div>
 <% else %>
@@ -34,7 +34,7 @@
       </div>
     </div>
     <div class="mu-acquire-link">
-      <a href="<%= @museum_path %>/import" class="btn" data-test-id="museum-import-link">Acquire from Jira</a>
+      <a href="<%= @museum_path %>/import" class="btn" data-test-id="museum-import-link">Acquire</a>
       <p class="mu-drop-caption" data-test-id="museum-drop-caption">or drop a CSV anywhere on this page</p>
     </div>
   </div>
@@ -68,6 +68,14 @@
         <option value="<%= epic.source_key %>"<% if @filters[:epic] == epic.source_key %> selected<% end %>>Epic: <%= epic.source_key %> <%= epic.summary %></option>
       <% end %>
     </select>
+    <% if @museum.sources.size > 1 %>
+      <select name="source" class="mu-select" aria-label="From" data-test-id="museum-filter-source">
+        <option value="">From</option>
+        <% @museum.sources.each do |source| %>
+          <option value="<%= source %>"<% if @filters[:source] == source %> selected<% end %>>From: <%= ImportToMuseum::SOURCE_NAMES.fetch(source, source) %></option>
+        <% end %>
+      </select>
+    <% end %>
     <select name="age" class="mu-select" aria-label="Created" data-test-id="museum-filter-age">
       <option value="">Age</option>
       <% [['under-3-months', 'under 3 months'], ['3-to-12-months', '3 to 12 months'], ['over-a-year', 'over a year']].each do |value, text| %>

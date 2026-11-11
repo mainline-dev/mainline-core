@@ -29,7 +29,7 @@
     </div>
     <% @museum.items.each do |item| %>
       <% state = if item.story then 'promoted' elsif item.discarded_at then 'stored' end %>
-      <div class="mu-grid mu-row<% if state %> is-<%= state %><% end %><% if @open_key == item.source_key %> is-open<% end %>" data-test-id="museum-item" data-key="<%= item.source_key %>"<% if item.in_progress %> data-in-progress<% end %> data-case="<%= @museum_path %>/<%= item.id %>/case">
+      <div class="mu-grid mu-row<% if state %> is-<%= state %><% end %><% if @open_key == item.source_key %> is-open<% end %>" data-test-id="museum-item" data-key="<%= item.source_key %>"<% if item.in_progress %> data-in-progress<% end %> data-source="<%= item.source %>" data-case="<%= @museum_path %>/<%= item.id %>/case">
         <% if state == 'promoted' %>
           <span class="mu-mark"><span class="mu-mark-promoted">&#9679;</span></span>
         <% elsif state == 'stored' %>
@@ -41,6 +41,7 @@
         <span class="mu-summary">
           <span class="mu-summary-text"><%= item.summary %></span>
           <% if item.in_progress %><span class="mu-flag">in progress</span><% end %>
+          <% if item.proposed? %><span class="mu-flag mu-flag-proposed" data-test-id="museum-proposed">proposed</span><% end %>
           <% if item.kept_at && @filters[:status] == 'kept' %><span class="mu-storage-note" data-test-id="museum-kept-note" data-why="<%= item.let_go_group %>">kept, though it looked <%= LetGoReview.title(item.let_go_group).downcase %></span><% end %>
           <% if state == 'stored' && item.storage_note %><span class="mu-storage-note" data-test-id="museum-storage-note" data-why="<%= item.storage_note %>"><%= LetGoReview.title(item.storage_note) %></span><% end %>
           <% if item.story %><span class="mu-arrow">&rarr;</span><a href="/maps/<%= item.story.map_id %>/stories/<%= item.story.id %>/edit" class="mu-story-link" data-test-id="museum-story-link"><%= item.story.title %></a><% end %>

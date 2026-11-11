@@ -5,7 +5,7 @@
   <p class="mu-hit-none" data-test-id="museum-no-stories">No stories match that.</p>
 <% end %>
 <% if suggestion && chosen == suggestion.story_id && groups.any? { |_map, hits| hits.any? { |hit| hit.id == chosen } } %>
-  <p class="mu-hit-why" data-test-id="museum-story-suggestion">Jira linked this to <%= suggestion.key %>, which you promoted as <em><%= suggestion.title %></em>. It's selected for you.</p>
+  <p class="mu-hit-why" data-test-id="museum-story-suggestion">This is linked to <%= suggestion.key %>, which you promoted as <em><%= suggestion.title %></em>. It's selected for you.</p>
 <% end %>
 <% groups.each do |map_name, hits| %>
   <p class="mu-label mu-hit-map"><%= map_name %></p>

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 require 'uri'
-require_relative 'import_jira_csv'
+require_relative 'import_instructions'
+require_relative 'import_to_museum'
+require_relative 'lay_out_map'
 require_relative 'promote_museum_item'
 
 # What the Ticket Museum routes share: toasts, the open case, where to go
@@ -63,7 +65,7 @@ class Mainline
 
   # Hours until an upload left waiting is turned down.
   def museum_hours_left(import)
-    [((import.created_at + ImportJiraCsv::STALE_AFTER - Time.now) / 3600).ceil, 1].max
+    [((import.created_at + ImportToMuseum::STALE_AFTER - Time.now) / 3600).ceil, 1].max
   end
 
   # Refuses a form sent in place: the error shows and the form stays as it is.
@@ -94,12 +96,43 @@ class Mainline
   end
 
   # The task this person last promoted under in this team, while it is still one to promote under.
+  # What a proposed exhibit's promote form starts with: its title, its draft
+  # scenarios, and the step it suggests if that step is on a map. They are
+  # suggestions for a person to edit, remove or accept. Anything else has none.
+  def museum_suggestion(item)
+    return { title: nil, scenarios: [], task_id: nil } unless item.proposed?
+
+    suggested = item.suggested.to_h
+    place = [suggested['activity'], suggested['step']].map { |name| name.to_s.downcase }
+    task = @tasks_by_map.values.flatten.find { |step| place == [step[:activity_name].downcase, step[:name].downcase] }
+    { title: item.summary, task_id: task && task[:id],
+      scenarios: suggested['scenarios'].to_a.map { |scenario| scenario.transform_keys(&:to_sym) } }
+  end
+
   def remembered_museum_task
     id = session["museum_task:#{@team.id}"]
     id if @tasks_by_map.values.flatten.any? { |task| task[:id] == id }
   end
 
   MAX_MUSEUM_SCENARIOS = 20
+
+  # The source a file is from: the one said, if Mainline reads it. A file
+  # dropped with none said is a Mainline file if it is named .json, and a
+  # Jira export otherwise.
+  def museum_source(said, file_name: nil)
+    return said if ImportToMuseum::READERS.key?(said)
+
+    file_name.to_s.downcase.end_with?('.json') ? 'mainline' : 'jira'
+  end
+
+  def museum_upload_page
+    @imports = MuseumImport.where(team_id: @team.id).reverse(:created_at, :imported_at).limit(10).eager(:actor).all
+    @undoable_id = ImportToMuseum.undoable_id(@team.id)
+    @source ||= 'jira'
+    @instructions = ImportInstructions.for(team_id: @team.id) if @source == 'mainline'
+    @page_title = 'Acquire - Mainline'
+    view 'upload'
+  end
 
   # Scenario cards as posted (scenarios[0][given] and so on), in order.
   def museum_scenarios(posted)

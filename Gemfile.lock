@@ -319,6 +319,7 @@ DEPENDENCIES
   erubi (>= 1.5)
   faraday-retry
   holidays
+  json_schemer
   lockbox
   logger
   mcp

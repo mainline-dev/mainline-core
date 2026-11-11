@@ -660,8 +660,25 @@ module MainlineDSL
     driver.museum_import_rows_shown
   end
 
-  def visit_museum_import_page
-    driver.visit_museum_import_page(@team)
+  def visit_museum_import_page(source: nil)
+    driver.visit_museum_import_page(@team, source: source)
+  end
+
+  # The sources the acquire page offers, the one chosen, and the one its
+  # upload form will send.
+  def acquire_sources_shown
+    driver.acquire_sources_shown
+  end
+
+  # The instructions the acquire page offers to copy for a model.
+  def instructions_to_copy
+    driver.attributes_of('museum-instructions-copy', 'data-copy').first
+  end
+
+  # Drops a file on the museum, as the drop-anywhere form sends it: with no
+  # source said.
+  def drop_file_on_museum(content, named:)
+    driver.drop_file_on_museum(@team, content, named)
   end
 
   # Uploads a Jira CSV export to the Ticket Museum and, when it can be read,
@@ -669,6 +686,45 @@ module MainlineDSL
   def import_jira_csv(csv)
     upload_jira_csv(csv)
     apply_museum_import if driver.museum_import_shown
+  end
+
+  # Uploads a Mainline import file (stories proposed from a specification) and,
+  # when it fits the schema, acquires it from the preview.
+  def import_mainline_file(json)
+    upload_mainline_file(json)
+    apply_museum_import if driver.museum_import_shown
+  end
+
+  # Uploads a Mainline import file and stops at the preview, or at its problems.
+  def upload_mainline_file(json)
+    driver.upload_mainline_file(@team, json)
+  end
+
+  # The backbone a staged file proposes, as the preview shows it: the map it
+  # would go on ('new' or a map's id), each activity and step as ticked,
+  # unticked or there already, and how many entries have nowhere to go.
+  def backbone_shown
+    driver.backbone_shown
+  end
+
+  # The promote form on the page: its title, the step chosen and each
+  # scenario card as [name, given, when, then].
+  def promote_form_shown
+    driver.promote_form_shown
+  end
+
+  # Where each exhibit on the page came from, by key.
+  def museum_sources_shown
+    driver.museum_sources_shown
+  end
+
+  def museum_keys_marked_proposed
+    driver.museum_keys_marked_proposed
+  end
+
+  # Why a file was refused: [entry, field, problem] for each thing wrong.
+  def file_problems_shown
+    driver.file_problems_shown
   end
 
   # Uploads a Jira CSV export and stops at the preview.
@@ -681,8 +737,29 @@ module MainlineDSL
     driver.download_museum_import_problems(@team, import_id)
   end
 
-  def apply_museum_import
-    driver.apply_museum_import(@team, driver.museum_import_shown)
+  # Acquires the file whose preview is on the page. A proposed backbone goes
+  # as the preview shows it, unless tick: names the activities and steps to
+  # tick instead, or onto: the map to lay it out on.
+  def apply_museum_import(tick: nil, onto: nil)
+    driver.apply_museum_import(@team, driver.museum_import_shown, tick: tick, onto: onto)
+  end
+
+  # A map's personas, and its activities with the steps under each, in order;
+  # nil when the team has no map of that name.
+  def map_laid_out(name)
+    driver.map_laid_out(@team, name)
+  end
+
+  def step_named(map_name, step)
+    driver.step_named(@team, map_name, step)
+  end
+
+  def other_team_map
+    driver.other_team_map
+  end
+
+  def activities_on(map)
+    driver.activities_on(map)
   end
 
   def undo_last_museum_import
