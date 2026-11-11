@@ -135,45 +135,6 @@ describe 'Account holder separation' do
     end
   end
 
-  describe 'data export' do
-    it 'account holder can download team data as JSON' do
-      holder = Person.create(name: 'Buyer', email: 'buyer@corp.co')
-      TeamMembership.create(team_id: @team.id, person_id: holder.id, working: false)
-      @team.update(creator_id: holder.id)
-      login_as(holder)
-
-      resp = driver.download_export(@team)
-
-      assert_equal 200, resp.status
-      assert_equal 'application/json', resp['Content-Type']
-      data = JSON.parse(resp.body)
-
-      assert_equal @team.name, data['team']['name']
-    end
-
-    it 'sanitizes team name in Content-Disposition header' do
-      holder = Person.create(name: 'Buyer', email: 'buyer@corp.co')
-      TeamMembership.create(team_id: @team.id, person_id: holder.id, working: false)
-      @team.update(creator_id: holder.id, name: "bad\r\nname\"here")
-      login_as(holder)
-
-      resp = driver.download_export(@team)
-
-      refute_includes resp['Content-Disposition'], "\r"
-      refute_includes resp['Content-Disposition'], "\n"
-      refute_includes resp['Content-Disposition'], '"here'
-    end
-
-    it 'non-creator cannot download export' do
-      alice = add_person(name: 'Alice')
-      login_as(alice)
-
-      resp = driver.download_export(@team)
-
-      assert_equal 403, resp.status
-    end
-  end
-
   describe 'opt-in' do
     it 'account holder can join team as working member' do
       holder = Person.create(name: 'Buyer', email: 'buyer@corp.co')

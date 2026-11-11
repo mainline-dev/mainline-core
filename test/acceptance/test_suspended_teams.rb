@@ -63,10 +63,18 @@ describe 'Suspended teams' do
     suspend_team
     login_as(@holder)
 
-    resp = driver.get "/teams/#{@team.id}/account/export"
+    resp = driver.download_export(@team)
 
     assert_equal 200, resp.status
-    assert_includes resp.content_type, 'application/json'
+    assert_equal 'application/zip', resp.content_type
+  end
+
+  it 'keeps the export to the account holder while the team is suspended' do
+    suspend_team
+
+    resp = driver.download_export(@team)
+
+    assert_equal '/teams', URI.parse(resp['Location']).path
   end
 
   it 'lets the account holder reach the page that deletes the team' do

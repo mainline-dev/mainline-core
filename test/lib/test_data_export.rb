@@ -32,11 +32,15 @@ describe DataExport do
     assert_equal 'Product', result[:maps].first[:name]
   end
 
-  it 'includes activities, tasks, and stories' do
+  it 'says which version of the format it is' do
+    assert_equal 1, DataExport.call(team_id: @team.id)[:format_version]
+  end
+
+  it 'includes activities, steps, and stories' do
     result = DataExport.call(team_id: @team.id)
 
     assert_equal 1, result[:activities].length
-    assert_equal 1, result[:tasks].length
+    assert_equal 1, result[:steps].length
     assert_equal 1, result[:stories].length
     assert_equal 'Register', result[:stories].first[:title]
   end
@@ -92,9 +96,9 @@ describe DataExport do
     assert_nil a[:archived_at]
   end
 
-  it 'exports task fields' do
+  it 'exports step fields' do
     result = DataExport.call(team_id: @team.id)
-    t = result[:tasks].first
+    t = result[:steps].first
 
     assert_equal @task.id, t[:id]
     assert_equal @map.id, t[:map_id]
@@ -112,7 +116,7 @@ describe DataExport do
 
     assert_equal @story.id, s[:id]
     assert_equal @map.id, s[:map_id]
-    assert_equal @task.id, s[:task_id]
+    assert_equal @task.id, s[:step_id]
     assert_equal 'Register', s[:title]
     assert_equal 'planned', s[:status]
     assert_equal 1000, s[:position]
@@ -236,6 +240,16 @@ describe DataExport do
     assert_empty DataExport.call(team_id: @team.id)[:museum_items]
   end
 
+  it 'calls a step a step in the event log too' do
+    RecordEvent.call(actor_id: @person.actor_id, entity: @task, action: 'created', after_state: { name: 'Sign up' })
+
+    assert_equal(['step'], DataExport.call(team_id: @team.id)[:events].map { |event| event[:entity_type] })
+  end
+
+  it 'says which actor each member is, so the event log can be read' do
+    assert_equal([@person.actor_id], DataExport.call(team_id: @team.id)[:members].map { |member| member[:actor_id] })
+  end
+
   it 'returns empty arrays for team with no maps' do
     empty_team = Team.create(name: 'Empty')
     SetTeamContext.call(empty_team.id)
@@ -244,10 +258,17 @@ describe DataExport do
 
     assert_empty result[:maps]
     assert_empty result[:activities]
-    assert_empty result[:tasks]
+    assert_empty result[:steps]
     assert_empty result[:stories]
     assert_empty result[:personas]
     assert_empty result[:release_slices]
+  end
+
+  it 'writes times the way other programs read them, as ISO 8601 in UTC' do
+    exported = JSON.parse(DataExport.to_json(team_id: @team.id))
+
+    assert_match(/\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z\z/, exported['team']['created_at'])
+    assert_match(/\A\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d+)?Z\z/, exported['stories'].first['created_at'])
   end
 
   it 'returns valid JSON' do

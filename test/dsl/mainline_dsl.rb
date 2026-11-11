@@ -758,6 +758,71 @@ module MainlineDSL
     driver.other_team_map
   end
 
+  # Someone who belongs to a different team and not to this one.
+  def other_team_member
+    driver.other_team_member
+  end
+
+  def visit_export_page
+    driver.visit_export_page(@team)
+  end
+
+  # Downloads a team's export (this one's unless another is named) as the
+  # person signed in.
+  def download_export(team = @team)
+    @_export = driver.download_export(team)
+  end
+
+  # Who made the exports the export page lists, in the order it lists them.
+  def recent_exports_shown
+    driver.attributes_of('export-recent', 'data-by')
+  end
+
+  # The files in the export zip, by name, downloading it if that has not
+  # been done yet.
+  def exported_files
+    download_export unless @_export
+    driver.unzipped(@_export)
+  end
+
+  # Leaves this team for a new one the person signed in belongs to. What was
+  # exported from the first team stays in hand.
+  def move_to_a_new_team
+    @team = driver.join_new_team(@_login_person, 'Next Crew')
+    login_as(@_login_person)
+  end
+
+  # What this team's museum holds: { summary => description }.
+  def museum_summaries_and_descriptions
+    driver.museum_summaries_and_descriptions(@team)
+  end
+
+  # A CSV file in the export, as one hash per row. A header that appears more
+  # than once gives a list of its values, leaving out the empty ones.
+  def exported_csv(name)
+    driver.csv_rows(exported_files.fetch(name))
+  end
+
+  def exported_csv_headers(name)
+    CSV.parse_line(exported_files.fetch(name))
+  end
+
+  # The stories stories.md lists, in its order, under each release slice
+  # heading: { heading => [titles] }.
+  def stories_listed
+    driver.stories_listed(exported_files.fetch('stories.md'))
+  end
+
+  # The line stories.md gives a story.
+  def story_line(title)
+    exported_files.fetch('stories.md').lines.find { |line| line.include?(title) }.to_s
+  end
+
+  # Where the address of the export before it became a zip sends someone.
+  def old_export_address_leads_to
+    driver.old_export_address_leads_to(@team)
+  end
+
   def activities_on(map)
     driver.activities_on(map)
   end

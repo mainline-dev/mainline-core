@@ -1,11 +1,19 @@
 # frozen_string_literal: true
 
 require 'json'
+require 'time'
 
+# The full record of a team, as export.json carries it. The format is
+# versioned: public/schemas/export-1.json describes version 1, and a change
+# that would break a reader of it needs a new version. People appear by
+# display name only: no email addresses, tokens or sign-in identifiers.
+# What the app calls a task inside is a step to the people using it, and
+# that is the word the export uses.
 module DataExport
+  FORMAT_VERSION = 1
   ENTITY_TYPE_NAMES = {
     'storie' => 'story', 'activitie' => 'activity', 'persona' => 'persona',
-    'task' => 'task', 'map' => 'map', 'release_slice' => 'release_slice'
+    'task' => 'step', 'map' => 'map', 'release_slice' => 'release_slice'
   }.freeze
 
   def self.call(team_id:)
@@ -23,11 +31,12 @@ module DataExport
     map_ids = maps.map(&:id)
 
     {
+      format_version: FORMAT_VERSION,
       team:           { id: team.id, name: team.name, created_at: team.created_at },
       members:        team_members(team_id),
       maps:           maps.map { |m| { id: m.id, name: m.name, position: m.position, archived_at: m.archived_at } },
       activities:     activities(map_ids),
-      tasks:          tasks(map_ids),
+      steps:          steps(map_ids),
       stories:        stories(map_ids),
       personas:       personas(map_ids),
       release_slices: release_slices(map_ids),
@@ -37,13 +46,26 @@ module DataExport
   end
 
   def self.to_json(team_id:)
-    JSON.pretty_generate(call(team_id: team_id))
+    JSON.pretty_generate(portable(call(team_id: team_id)))
+  end
+
+  # The record as other programs read it: times as ISO 8601 in UTC.
+  def self.portable(value)
+    case value
+    when Time then value.utc.iso8601
+    when String, Numeric, nil, true, false then value
+    else
+      if value.respond_to?(:to_hash) then value.to_hash.transform_values { |inner| portable(inner) }
+      elsif value.respond_to?(:to_ary) then value.to_ary.map { |inner| portable(inner) }
+      else value
+      end
+    end
   end
 
   def self.team_members(team_id)
     TeamMembership.where(team_id: team_id).all.map { |m|
       person = Person[m.person_id]
-      { person_id: m.person_id, name: person.name, working: m.working, left_at: m.left_at }
+      { person_id: m.person_id, actor_id: person.actor_id, name: person.name, working: m.working, left_at: m.left_at }
     }
   end
 
@@ -55,7 +77,7 @@ module DataExport
     }
   end
 
-  def self.tasks(map_ids)
+  def self.steps(map_ids)
     return [] if map_ids.empty?
 
     Task.where(map_id: map_ids).all.map { |t|
@@ -70,7 +92,7 @@ module DataExport
       assignments = StoryAssignment.where(story_id: s.id).all.map { |sa|
         { person_id: sa.person_id, assigned_at: sa.assigned_at }
       }
-      { id: s.id, map_id: s.map_id, task_id: s.task_id, title: s.title, description: s.description, status: s.status,
+      { id: s.id, map_id: s.map_id, step_id: s.task_id, title: s.title, description: s.description, status: s.status,
         position: s.position, archived_at: s.archived_at, release_slice_id: s.release_slice_id,
         split_from_id: s.split_from_id, created_at: s.created_at,
         deploy_count: s.deploy_count, first_deployed_at: s.first_deployed_at, last_deployed_at: s.last_deployed_at,
@@ -124,6 +146,6 @@ module DataExport
     }
   end
 
-  private_class_method :team_members, :activities, :tasks, :stories, :scenarios, :personas, :release_slices,
+  private_class_method :portable, :team_members, :activities, :steps, :stories, :scenarios, :personas, :release_slices,
     :museum_items, :events
 end

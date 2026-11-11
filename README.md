@@ -8,6 +8,8 @@ Mainline is project tooling for teams that practise continuous integration and c
 
 Bring a Jira backlog in from a CSV export. It lands in the Ticket Museum, frozen, and you promote what's worth building onto the map one story at a time, rewritten with its acceptance scenarios. A specification or research comes in the same way: a model writes a Mainline file of small proposed stories, checked against [a published schema](public/schemas/import-1.json), and each one waits in the museum for a person to promote it.
 
+Everything a team has can be downloaded again as one zip, by any member: the stories in map order with a Gherkin feature file each, a CSV that Jira's importer reads, the museum, and the full record as JSON described by [a published schema](public/schemas/export-1.json).
+
 ![Importing a Jira CSV into the Ticket Museum and promoting one ticket onto the story map](docs/images/museum-promote.gif)
 
 Documentation and practice guides: https://mainline.dev/docs

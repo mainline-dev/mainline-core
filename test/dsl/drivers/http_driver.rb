@@ -4,6 +4,7 @@
 require 'cgi/escape'
 require 'rack/test'
 require 'timecop'
+require 'zip'
 require_relative 'records'
 
 class HttpDriver
@@ -1093,9 +1094,45 @@ class HttpDriver
     last_response
   end
 
-  def download_export(team)
-    get "/teams/#{team.id}/account/export"
+  def visit_export_page(team)
+    get "/teams/#{team.id}/export"
     last_response
+  end
+
+  def download_export(team)
+    get "/teams/#{team.id}/export/download"
+    last_response
+  end
+
+  # The files in a downloaded zip: name => content.
+  def unzipped(response)
+    Zip::File.open_buffer(StringIO.new(response.body)).to_h do |entry|
+      [entry.name, entry.get_input_stream.read.force_encoding(Encoding::UTF_8)]
+    end
+  end
+
+  def csv_rows(text)
+    CSV.parse(text, headers: true).map do |row|
+      row.headers.uniq.to_h do |header|
+        values = row.fields.each_index.select { |at| row.headers[at] == header }.map { |at| row.fields[at].to_s }
+        [header, values.size > 1 ? values.reject(&:empty?) : values.first]
+      end
+    end
+  end
+
+  # stories.md as { heading => [story titles] }: a "### " line starts a release
+  # slice and each "- " line under it is a story, its title in bold.
+  def stories_listed(markdown)
+    markdown.lines.each_with_object({}) do |line, listed|
+      if line.start_with?('### ') then listed[line.delete_prefix('### ').strip] = []
+      elsif line.start_with?('- ') then listed.values.last << line[/\*\*(.+?)\*\*/, 1]
+      end
+    end
+  end
+
+  def old_export_address_leads_to(team)
+    get "/teams/#{team.id}/account/export"
+    URI(last_response.headers['location'].to_s).path
   end
 
   def submit_split_story(map, story, scenario_ids:, title: nil, template: nil, fields: {}, scenario_edits: {})

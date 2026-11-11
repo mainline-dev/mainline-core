@@ -117,16 +117,9 @@ class Mainline
           r.redirect "/teams/#{@team.id}"
         end
 
+        # Where the export was before it became a zip any member can download.
         r.get 'export' do
-          unless @is_creator
-            response.status = 403
-            next view(content: '<p>Only the account holder can export team data.</p><p><a href="/teams">Go to your teams</a></p>')
-          end
-
-          response['Content-Type'] = 'application/json'
-          safe_name = @team.name.gsub(/[^a-zA-Z0-9 _-]/, '')
-          response['Content-Disposition'] = "attachment; filename=\"#{safe_name}-export.json\""
-          DataExport.to_json(team_id: @team.id)
+          r.redirect "/teams/#{@team.id}/export"
         end
 
         r.on 'delete' do
@@ -151,6 +144,32 @@ class Mainline
             session.clear
             r.redirect '/'
           end
+        end
+      end
+
+      # Before the suspension check: a suspended team's account holder can
+      # still take the team's data away.
+      r.on 'export' do
+        leave_suspended_team(r, @team) if @team.suspended? && !@is_creator
+        SetTeamContext.call(@team.id)
+
+        r.is do
+          r.get do
+            @exports = TeamExport.recent(@team)
+            view 'export'
+          end
+        end
+
+        r.get 'download' do
+          unless TEAM_EXPORT_RATE_LIMITER.allow?(@team.id)
+            flash['error'] = 'This team has exported a lot in the last hour. Try again later.'
+            r.redirect "/teams/#{@team.id}/export"
+          end
+
+          download = TeamExport.call(team: @team, actor: @current_actor)
+          response['Content-Type'] = 'application/zip'
+          response['Content-Disposition'] = %(attachment; filename="#{download.file_name}")
+          download.body
         end
       end
 

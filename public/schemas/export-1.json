@@ -1,0 +1,587 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mainline.dev/schemas/export-1.json",
+  "title": "Mainline team export, version 1",
+  "description": "The export.json file in a Mainline team export: the full record of one team. People appear by display name only. Times are ISO 8601 in UTC.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format_version",
+    "team",
+    "members",
+    "maps",
+    "activities",
+    "steps",
+    "stories",
+    "personas",
+    "release_slices",
+    "museum_items",
+    "events"
+  ],
+  "properties": {
+    "format_version": {
+      "const": 1
+    },
+    "team": {
+      "type": "object",
+      "description": "The team exported.",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "created_at"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "created_at": {
+          "$ref": "#/$defs/time"
+        }
+      }
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "Someone who is or was on the team. actor_id is how the event log names them.",
+        "additionalProperties": false,
+        "required": [
+          "person_id",
+          "actor_id",
+          "name",
+          "working",
+          "left_at"
+        ],
+        "properties": {
+          "person_id": {
+            "$ref": "#/$defs/id"
+          },
+          "actor_id": {
+            "$ref": "#/$defs/optional_id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "working": {
+            "type": "boolean"
+          },
+          "left_at": {
+            "$ref": "#/$defs/optional_time"
+          }
+        }
+      }
+    },
+    "maps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A story map.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "position",
+          "archived_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived_at": {
+            "$ref": "#/$defs/optional_time"
+          }
+        }
+      }
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "An activity across the top of a map.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "map_id",
+          "name",
+          "position",
+          "archived_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "map_id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived_at": {
+            "$ref": "#/$defs/optional_time"
+          }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A step under an activity.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "map_id",
+          "activity_id",
+          "name",
+          "position",
+          "archived_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "map_id": {
+            "$ref": "#/$defs/id"
+          },
+          "activity_id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived_at": {
+            "$ref": "#/$defs/optional_time"
+          }
+        }
+      }
+    },
+    "stories": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A story under a step, with its scenarios and who is on it.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "map_id",
+          "step_id",
+          "title",
+          "description",
+          "status",
+          "position",
+          "archived_at",
+          "release_slice_id",
+          "split_from_id",
+          "created_at",
+          "deploy_count",
+          "first_deployed_at",
+          "last_deployed_at",
+          "released_at",
+          "decoupling_strategy",
+          "decoupling_label",
+          "agent_assisted",
+          "scenarios",
+          "assignments"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "map_id": {
+            "$ref": "#/$defs/id"
+          },
+          "step_id": {
+            "$ref": "#/$defs/id"
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "release_slice_id": {
+            "$ref": "#/$defs/optional_id"
+          },
+          "split_from_id": {
+            "$ref": "#/$defs/optional_id"
+          },
+          "created_at": {
+            "$ref": "#/$defs/time"
+          },
+          "deploy_count": {
+            "type": "number"
+          },
+          "first_deployed_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "last_deployed_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "released_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "decoupling_strategy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decoupling_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agent_assisted": {
+            "type": "boolean"
+          },
+          "scenarios": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "An acceptance scenario.",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "name",
+                "given",
+                "when",
+                "then",
+                "position",
+                "done_at"
+              ],
+              "properties": {
+                "id": {
+                  "$ref": "#/$defs/id"
+                },
+                "name": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "given": {
+                  "type": "string"
+                },
+                "when": {
+                  "type": "string"
+                },
+                "then": {
+                  "type": "string"
+                },
+                "position": {
+                  "type": "number"
+                },
+                "done_at": {
+                  "$ref": "#/$defs/optional_time"
+                }
+              }
+            }
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "description": "Someone working on the story.",
+              "additionalProperties": false,
+              "required": [
+                "person_id",
+                "assigned_at"
+              ],
+              "properties": {
+                "person_id": {
+                  "$ref": "#/$defs/id"
+                },
+                "assigned_at": {
+                  "$ref": "#/$defs/time"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "personas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A persona a map's activities are for.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "map_id",
+          "name",
+          "position",
+          "archived_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "map_id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived_at": {
+            "$ref": "#/$defs/optional_time"
+          }
+        }
+      }
+    },
+    "release_slices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A release slice across a map.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "map_id",
+          "name",
+          "position",
+          "archived_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "map_id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "number"
+          },
+          "archived_at": {
+            "$ref": "#/$defs/optional_time"
+          }
+        }
+      }
+    },
+    "museum_items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "A Ticket Museum exhibit as it arrived, and what became of it.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "source",
+          "origin",
+          "suggested",
+          "source_key",
+          "issue_type",
+          "summary",
+          "description",
+          "labels",
+          "comments",
+          "links",
+          "parent_key",
+          "source_created_at",
+          "source_updated_at",
+          "story_id",
+          "promoted_at",
+          "discarded_at",
+          "storage_note",
+          "kept_at"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "source": {
+            "type": "string"
+          },
+          "origin": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "suggested": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "source_key": {
+            "type": "string"
+          },
+          "issue_type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summary": {
+            "type": "string"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "comments": {
+            "type": "array"
+          },
+          "links": {
+            "type": "array"
+          },
+          "parent_key": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "source_created_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "source_updated_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "story_id": {
+            "$ref": "#/$defs/optional_id"
+          },
+          "promoted_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "discarded_at": {
+            "$ref": "#/$defs/optional_time"
+          },
+          "storage_note": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kept_at": {
+            "$ref": "#/$defs/optional_time"
+          }
+        }
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "description": "One entry in the event log, oldest first. The states are as they were recorded.",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "map_id",
+          "actor_id",
+          "occurred_at",
+          "entity_type",
+          "entity_id",
+          "action",
+          "before_state",
+          "after_state"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "map_id": {
+            "$ref": "#/$defs/optional_id"
+          },
+          "actor_id": {
+            "$ref": "#/$defs/optional_id"
+          },
+          "occurred_at": {
+            "$ref": "#/$defs/time"
+          },
+          "entity_type": {
+            "type": "string"
+          },
+          "entity_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "action": {
+            "type": "string"
+          },
+          "before_state": {
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "after_state": {
+            "type": [
+              "object",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "optional_id": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    },
+    "time": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "optional_time": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  }
+}

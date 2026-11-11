@@ -92,6 +92,31 @@ module Records
   end
 
   # A map in some other team.
+  def other_team_member
+    BypassRLS.call do
+      person = Person.create(name: 'Outsider', email: 'outsider@elsewhere.test')
+      TeamMembership.create(team_id: Team.create(name: 'Other team').id, person_id: person.id, working: true)
+      person
+    end
+  end
+
+  def join_new_team(person, name)
+    BypassRLS.call do
+      team = Team.create(name: name)
+      TeamMembership.create(team_id: team.id, person_id: person.id, working: true)
+      team
+    end
+  end
+
+  def museum_summaries_and_descriptions(team)
+    BypassRLS.call { MuseumItem.where(team_id: team.id).select_hash(:summary, :description) }
+  end
+
+  # A team the person belongs to.
+  def team_of(person)
+    BypassRLS.call { Team[TeamMembership.where(person_id: person.id, left_at: nil).get(:team_id)] }
+  end
+
   def other_team_map
     BypassRLS.call { Map.create(team_id: Team.create(name: 'Other team').id, name: 'Theirs', position: 1000) }
   end
