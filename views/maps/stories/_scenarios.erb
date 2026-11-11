@@ -30,13 +30,14 @@
 
   <% (@scenarios || []).each do |sc| %>
     <div class="scenario-row card-deletable<%= ' scenario-done' if sc.done_at %>">
-      <div class="scenario-name" data-test-id="scenario-name"><%= sc.display_name %></div>
       <% if released %>
+        <div class="scenario-name" data-test-id="scenario-name"><%= sc.display_name %></div>
         <div><span class="scenario-kw">Given</span> <%= sc.given_text %></div>
         <div><span class="scenario-kw">When</span> <%= sc.when_text %></div>
         <div><span class="scenario-kw">Then</span> <%= sc.then_text %></div>
       <% else %>
-        <div class="card-topbar">
+        <div class="card-topbar scenario-topbar">
+          <div class="scenario-name" data-test-id="scenario-name"><%= sc.display_name %></div>
           <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>/<%= sc.done_at ? 'undone' : 'done' %>"
                 hx-target="#scenarios-container" hx-swap="outerHTML" class="scenario-done-form">
             <button type="submit" class="scenario-done-btn<%= ' is-done' if sc.done_at %>"
