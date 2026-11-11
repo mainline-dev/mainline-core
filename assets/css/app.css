@@ -7032,6 +7032,22 @@ ol.mu-md-list { padding-left: 20px; }
 .mu-rewrite-foot .mu-note { margin: 0 0 0 auto; text-align: right; }
 .mu-rewrite-foot .mu-quiet { margin-left: auto; }
 .mu-cancel { font-size: 14px; color: var(--text-secondary); text-decoration: none; }
+.mu-flag-proposed { color: var(--accent-violet); background: var(--accent-violet-bg); }
+.mu-why { white-space: pre-line; }
+.mu-backbone { margin-top: 28px; padding: 20px; border: 1px solid var(--border-default); border-radius: 6px; display: grid; gap: 12px; justify-items: start; }
+.mu-backbone-note { margin: 0; font-size: 14px; color: var(--text-secondary); }
+.mu-backbone-list, .mu-backbone-list ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.mu-backbone-list > li { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.mu-backbone-list > li > ul { flex-basis: 100%; padding-left: 26px; }
+.mu-backbone select { width: auto; }
+.mu-backbone-tick { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; color: var(--text-primary); text-transform: none; letter-spacing: 0; }
+.mu-backbone-tick input { margin: 0; }
+.mu-backbone-there { font-size: 14px; color: var(--text-secondary); }
+.mu-backbone-for { font-size: 13px; color: var(--text-tertiary); }
+.mu-sources { max-width: 360px; margin-bottom: 20px; }
+.mu-sources .mu-segment { text-align: center; text-decoration: none; }
+.mu-refused { margin-bottom: 20px; }
+.mu-refused-list { margin: 0; padding: 12px 18px 12px 36px; font-size: 14px; line-height: 1.6; color: var(--text-primary); }
 .mu-toast { position: fixed; top: 0.75rem; left: 50%; transform: translateX(-50%); z-index: 1000; display: flex; align-items: baseline; gap: 10px; width: max-content; max-width: min(480px, calc(100vw - 32px)); padding: 12px 16px; background: var(--bg-overlay); border: 1px solid var(--border-strong); border-radius: 6px; box-shadow: var(--shadow-lg); font: 400 14px/1.45 var(--font-body); color: var(--text-primary); }
 .mu-toast form { margin: 0; }
 .mu-toast a { color: var(--accent-cyan); text-decoration: none; }

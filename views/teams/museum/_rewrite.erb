@@ -14,11 +14,14 @@
   <input type="text" id="mu-title-<%= item.id %>" class="mu-title" name="title" value="<%= title %>" placeholder="<%= item.summary %>" maxlength="200" required data-title>
   <div class="mu-hint" data-hint data-test-id="museum-hint" hidden></div>
   <div class="mu-title-row">
-    <button type="button" class="mu-fill" data-fill-title="<%= item.summary %>" data-test-id="museum-fill-title">Start from the Jira summary</button>
+    <% if item.proposed? %><span></span><% else %><button type="button" class="mu-fill" data-fill-title="<%= item.summary %>" data-test-id="museum-fill-title">Start from the ticket's summary</button><% end %>
     <span class="mu-counter" data-counter data-length="<%= title.to_s.length %>"><%= title.to_s.length %>/200</span>
   </div>
 
   <div class="mu-scenarios">
+    <% if item.proposed? && !scenarios.empty? %>
+      <p class="mu-note" data-test-id="museum-drafted-note">Drafted in the file it came from. Edit or remove them: nothing is a scenario until you promote.</p>
+    <% end %>
     <p class="mu-scenarios-head"><span class="mu-label">Acceptance criteria</span> <span class="mu-count" data-scenario-count><%= cards.size %> <%= cards.size == 1 ? 'scenario' : 'scenarios' %></span></p>
     <div class="mu-scenario-list" data-scenario-list>
       <% cards.each_with_index do |card, index| %>

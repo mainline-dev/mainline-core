@@ -188,6 +188,27 @@ describe 'MCP server' do
     assert_includes texts[1], "Given('a query', function () {"
   end
 
+  it "get_import_format returns the instructions and schema for writing an import file, naming the team's steps" do
+    generate_mcp_token
+    mcp_initialize
+
+    resp = mcp_call_tool('get_import_format')
+    text = JSON.parse(resp.body).dig('result', 'content').first['text']
+
+    assert_includes text, 'https://mainline.dev/schemas/import-1.json'
+    assert_includes text, 'Browse: Search'
+  end
+
+  it 'get_import_format changes nothing: no story is marked as read by an agent' do
+    generate_mcp_token
+    mcp_initialize
+
+    mcp_call_tool('get_import_format')
+
+    assert_equal(0, BypassRLS.call { Event.where(team_id: @team.id, action: 'agent_read').count })
+    refute @story.refresh.agent_assisted
+  end
+
   it 'get_feature_file refuses a language it does not know' do
     generate_mcp_token
     mcp_initialize

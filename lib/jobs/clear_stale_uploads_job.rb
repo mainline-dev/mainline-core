@@ -3,7 +3,7 @@
 require 'sidekiq'
 require 'sidekiq/api'
 require_relative '../bypass_rls'
-require_relative '../import_jira_csv'
+require_relative '../import_to_museum'
 
 # Every hour, cancel Ticket Museum uploads left at the preview for over a day,
 # so their staged items do not sit in the database.
@@ -15,7 +15,7 @@ class ClearStaleUploadsJob
   sidekiq_options retry: 3, queue: 'default'
 
   def perform
-    BypassRLS.call { ImportJiraCsv.clear_stale(before: Time.now - ImportJiraCsv::STALE_AFTER) }
+    BypassRLS.call { ImportToMuseum.clear_stale(before: Time.now - ImportToMuseum::STALE_AFTER) }
     self.class.perform_in(INTERVAL)
   end
 

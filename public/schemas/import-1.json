@@ -1,0 +1,175 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mainline.dev/schemas/import-1.json",
+  "title": "Mainline import file, version 1",
+  "description": "Stories proposed from a specification or research. Each entry arrives in the Ticket Museum as an exhibit; nothing is a story until a person promotes it.",
+  "type": "object",
+  "required": [
+    "mainline",
+    "entries"
+  ],
+  "dependentRequired": {
+    "activities": [
+      "map"
+    ],
+    "personas": [
+      "map"
+    ]
+  },
+  "additionalProperties": false,
+  "properties": {
+    "mainline": {
+      "const": 1,
+      "description": "The version of this format."
+    },
+    "map": {
+      "$ref": "#/$defs/name",
+      "description": "The name of the story map these stories are for. Needed when the file proposes personas or activities."
+    },
+    "personas": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "$ref": "#/$defs/name"
+      },
+      "description": "The kinds of people the product is for."
+    },
+    "activities": {
+      "type": "array",
+      "maxItems": 30,
+      "items": {
+        "$ref": "#/$defs/activity"
+      },
+      "description": "The proposed backbone: what people do, left to right, and the steps within each."
+    },
+    "entries": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 200,
+      "items": {
+        "$ref": "#/$defs/entry"
+      }
+    }
+  },
+  "$defs": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "activity": {
+      "type": "object",
+      "required": [
+        "name",
+        "personas"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/name"
+        },
+        "personas": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/name"
+          },
+          "description": "Who does this activity. Each must be listed in personas."
+        },
+        "steps": {
+          "type": "array",
+          "maxItems": 30,
+          "items": {
+            "$ref": "#/$defs/name"
+          }
+        }
+      }
+    },
+    "entry": {
+      "type": "object",
+      "required": [
+        "key",
+        "title",
+        "source"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "key": {
+          "type": "string",
+          "pattern": "^[A-Z][A-Z0-9_]*(-[A-Z0-9_]+)+$",
+          "maxLength": 50,
+          "description": "Yours to choose, like RB-SAVE-01. Keep it the same when you revise the file, so the entry is refreshed and not added twice."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 200,
+          "description": "The story, said as what someone can do or see."
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Where this came from, for example the document and section."
+        },
+        "why": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Why it is worth building."
+        },
+        "suggested": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "activity": {
+              "$ref": "#/$defs/name"
+            },
+            "step": {
+              "$ref": "#/$defs/name"
+            }
+          }
+        },
+        "draft_scenarios": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "$ref": "#/$defs/scenario"
+          },
+          "description": "Aim for one to three. A story that needs more than five is two stories."
+        }
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "required": [
+        "name",
+        "given",
+        "when",
+        "then"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "given": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "when": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "then": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 100
+        }
+      }
+    }
+  }
+}

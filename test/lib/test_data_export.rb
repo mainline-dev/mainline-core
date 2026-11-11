@@ -215,6 +215,19 @@ describe DataExport do
     assert_empty %i[labels comments links parent_key source_created_at source_updated_at kept_at] - items[0].keys
   end
 
+  it 'exports where a proposed exhibit came from and what it suggested' do
+    MuseumItem.create(team_id: @team.id, source_key: 'RB-1', issue_type: 'Proposal', summary: 'Racing saves',
+      source: 'mainline', origin: 'Research report, section 3',
+      suggested: Sequel.pg_jsonb({ 'activity' => 'Track work', 'step' => 'Change an item', 'scenarios' => [] }))
+    MuseumItem.create(team_id: @team.id, source_key: 'SHOP-1', issue_type: 'Story', summary: 'A ticket')
+
+    proposed, ticket = DataExport.call(team_id: @team.id)[:museum_items]
+
+    assert_equal ['mainline', 'Research report, section 3', { 'activity' => 'Track work', 'step' => 'Change an item', 'scenarios' => [] }],
+      proposed.values_at(:source, :origin, :suggested)
+    assert_equal ['jira', nil, nil], ticket.values_at(:source, :origin, :suggested)
+  end
+
   it "leaves another team's exhibits out" do
     other = Team.create(name: 'Other')
     SetTeamContext.call(other.id)

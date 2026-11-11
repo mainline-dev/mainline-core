@@ -2,10 +2,11 @@
 <div class="mu-case<% if item.promotable? %> has-rewrite<% end %>" data-test-id="museum-case" data-key="<%= item.source_key %>">
   <%== render('teams/museum/_relic', locals: { item: item, sub_tasks: sub_tasks }) %>
   <% if item.promotable? %>
-    <% task_id = remembered_museum_task %>
+    <% suggestion = museum_suggestion(item) %>
+    <% task_id = suggestion[:task_id] || remembered_museum_task %>
     <%== render('teams/museum/_promote_slot', locals: {
-          items: [item], title: nil, scenarios: [], tasks_by_map: @tasks_by_map, selected_task_id: task_id,
-          remembered_task: !task_id.nil?, return_to: return_to, inline: true
+          items: [item], title: suggestion[:title], scenarios: suggestion[:scenarios], tasks_by_map: @tasks_by_map,
+          selected_task_id: task_id, remembered_task: suggestion[:task_id].nil? && !task_id.nil?, return_to: return_to, inline: true
         }) %>
   <% end %>
 </div>

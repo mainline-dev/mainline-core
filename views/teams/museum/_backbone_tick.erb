@@ -1,0 +1,6 @@
+<%# locals: (piece:, field:) %>
+<% if piece[:state] == 'there' %>
+  <span class="mu-backbone-there"><%= piece[:name] %> <span class="mu-flag">already on the map</span></span>
+<% else %>
+  <label class="mu-backbone-tick"><input type="checkbox" name="<%= field %>" value="<%= piece[:index] %>" form="mu-apply"<% if piece[:state] == 'ticked' %> checked<% end %>> <%= piece[:name] %></label>
+<% end %>

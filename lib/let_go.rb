@@ -8,7 +8,8 @@ require_relative 'museum_list'
 # it fits; every other exhibit is cleared. Duplicates come in pairs, each
 # marked with its twin, and an exhibit is in one pair at most. Run after each
 # acquisition and nightly. Returns the number of suggestions in each group,
-# counting a pair as one.
+# counting a pair as one. The rules are about old tickets, so of them only the
+# duplicates rule ever fits an entry proposed from a specification.
 module LetGo
   GROUPS = %w[stale dupes repro vague covered].freeze
   SIMILAR = 0.8
@@ -82,9 +83,10 @@ module LetGo
     item.issue_type.casecmp?('bug') && item.comments.to_a.last.to_h['text'].to_s.match?(NOT_REPRODUCED)
   end
 
-  # Three words or fewer, and nothing more to go on.
+  # Three words or fewer, and nothing more to go on. An entry proposed from a
+  # specification is not judged this way: a short title is how they arrive.
   def self.vague?(item)
-    item.summary.split.size <= 3 && item.description.strip.empty?
+    !item.proposed? && item.summary.split.size <= 3 && item.description.strip.empty?
   end
 
   # A task whose parent, or an issue it blocks or relates to, is promoted.

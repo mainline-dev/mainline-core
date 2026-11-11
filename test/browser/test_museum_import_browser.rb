@@ -3,6 +3,7 @@
 require_relative '../web_spec_helper'
 require_relative '../dsl/mainline_dsl'
 require_relative '../dsl/jira_export'
+require_relative '../dsl/mainline_file'
 
 describe 'Ticket Museum import (browser)' do
   include MainlineDSL
@@ -84,6 +85,26 @@ describe 'Ticket Museum import (browser)' do
     let_the_curator_look
 
     assert_selector '[data-test-id="let-go-prompt"]', wait: 10
+  ensure
+    FileUtils.rm_f(path) if path
+  end
+
+  it 'takes a chosen Mainline file to the preview of its proposed backbone, and acquires what is ticked' do
+    use_browser!
+    visit "/teams/#{@team.id}/museum/import"
+    find('[data-test-id="museum-source"][data-source="mainline"]').click
+    path = File.join(Dir.tmpdir, "stories-#{SecureRandom.hex(4)}.json")
+    File.write(path, MainlineFileFixture.json({ key: 'RB-1' }, map: 'RepoBoard', personas: ['Team member'],
+      activities: [{ name: 'Track work', personas: ['Team member'], steps: ['Find an item', 'Change an item'] }]))
+
+    attach_file('museum-csv', path, make_visible: true)
+
+    assert_selector '[data-test-id="museum-import-preview"][data-added="1"]'
+    find('[data-test-id="museum-backbone-step"][data-name="Change an item"] input').uncheck
+    find('[data-test-id="museum-import-apply"]').click
+
+    assert_selector '[data-test-id="museum-item"][data-key="RB-1"][data-source="mainline"]'
+    assert_equal({ personas: ['Team member'], activities: { 'Track work' => ['Find an item'] } }, map_laid_out('RepoBoard'))
   ensure
     FileUtils.rm_f(path) if path
   end

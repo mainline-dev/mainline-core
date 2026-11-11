@@ -3,6 +3,7 @@
 require 'mcp'
 require_relative 'core_events'
 require_relative 'feature_file'
+require_relative 'import_instructions'
 require_relative 'step_stubs'
 
 module MainlineMCP
@@ -12,6 +13,8 @@ module MainlineMCP
                    'Use list_maps to see available maps, get_map for the full hierarchy, ' \
                    'get_story for details including scenarios (acceptance criteria), ' \
                    'and get_feature_file for those scenarios as a Gherkin feature file. ' \
+                   'Use get_import_format to learn how to write a file that proposes stories from a ' \
+                   'specification; you cannot upload it, so give it to the person to bring in. ' \
                    'Work on one story at a time. Finish the current story before starting another. ' \
                    'Do not start work on a story that has zero scenarios. ' \
                    'Scenarios are the acceptance criteria. Without them you are guessing what done means. ' \
@@ -23,6 +26,7 @@ module MainlineMCP
     define_get_map(server)
     define_get_story(server)
     define_get_feature_file(server)
+    define_get_import_format(server)
     CoreEvents.publish(:mcp_server_built, server: server)
     server
   end
@@ -74,6 +78,16 @@ module MainlineMCP
         required:   ['story_id']
       }
     ) { |story_id:, language: nil| MainlineMCP.call_get_feature_file(story_id, language) }
+  end
+
+  def self.define_get_import_format(server)
+    server.define_tool(
+      name:         'get_import_format',
+      description:  'Get the instructions and JSON Schema for a Mainline import file: stories proposed from a ' \
+                    "specification, for a person to upload and review. Lists the team's activities and steps. " \
+                    'Reads only; nothing is marked or changed.',
+      input_schema: { type: 'object', properties: {} }
+    ) { MCP::Tool::Response.new([{ type: 'text', text: ImportInstructions.for(team_id: MainlineMCP.current_team_id) }]) }
   end
 
   def self.current_team_id

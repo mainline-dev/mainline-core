@@ -13,6 +13,11 @@ class MuseumItem < Sequel::Model
     issue_type.match?(/\Asub-?task\z/i)
   end
 
+  # Proposed from a specification or research, never a ticket someone filed.
+  def proposed?
+    source == 'mainline'
+  end
+
   # On display and a ticket in its own right.
   def promotable?
     !promoted_at && !discarded_at && !epic? && !sub_task?

@@ -102,6 +102,27 @@ describe LetGo do
     assert_equal ['repro', nil, nil], groups('B-1', 'B-2', 'B-3')
   end
 
+  describe 'entries proposed from a specification' do
+    def propose(key, summary)
+      add(key, type: 'Proposal', summary: summary, description: '', created: nil, source: 'mainline',
+        origin: 'Research report, section 3')
+    end
+
+    it 'are never called too vague: a short title with no more detail is how they arrive' do
+      propose('RB-1', 'Racing saves')
+
+      assert_empty LetGo.detect(team_id: @team.id)
+      assert_nil MuseumItem.where(source_key: 'RB-1').get(:let_go_group)
+    end
+
+    it 'are paired when two say almost the same thing' do
+      propose('RB-1', 'Two people change the same item at once')
+      propose('RB-2', 'Two people change the same item at once!')
+
+      assert_equal({ 'dupes' => 1 }, LetGo.detect(team_id: @team.id))
+    end
+  end
+
   it 'suggests exhibits too vague to act on' do
     add('V-1', summary: 'Fix search', description: '')
     add('V-2', summary: 'Speed up search', description: 'Typing a space at the end returns nothing')
