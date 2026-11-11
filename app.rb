@@ -58,6 +58,7 @@ require_relative 'lib/invite_token'
 require_relative 'lib/send_verification_email'
 require_relative 'lib/assign_person'
 require_relative 'lib/data_export'
+require_relative 'lib/team_export'
 require_relative 'lib/delete_team'
 require_relative 'lib/delete_person'
 require_relative 'lib/resource_cap'
@@ -106,6 +107,8 @@ AUTH_RATE_LIMITER = SharedRateLimiter.new(name: 'auth', capacity: 10, refill_rat
 
 # Museum uploads per team: a person acquires a few files in a sitting, not hundreds.
 MUSEUM_UPLOAD_RATE_LIMITER = RateLimiter.new(capacity: 20, refill_rate: 20.0 / 3600)
+# Exports per team: building the zip reads everything the team has.
+TEAM_EXPORT_RATE_LIMITER = RateLimiter.new(capacity: 10, refill_rate: 10.0 / 3600)
 LOGIN_GLOBAL_LIMITER = SharedRateLimiter.new(name: 'login_global', capacity: 60, refill_rate: 1.0)
 LOGIN_EMAIL_LIMITER = SharedRateLimiter.new(name: 'login_email', capacity: 5, refill_rate: 5.0 / 900)
 MCP_RATE_LIMITER = SharedRateLimiter.new(name: 'mcp', capacity: 10, refill_rate: 10.0 / 3600)

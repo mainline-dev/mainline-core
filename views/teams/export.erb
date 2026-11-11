@@ -1,0 +1,19 @@
+<h1 class="page-title">Export</h1>
+
+<section class="section">
+  <p>One zip holds everything this team has in Mainline: its maps, stories and scenarios, the Ticket Museum and the full event log. Any member of the team can download it, and each download is recorded below. <a href="https://mainline.dev/docs/export">What is in the zip</a></p>
+  <form method="get" action="/teams/<%= @team.id %>/export/download">
+    <button type="submit" class="btn" data-test-id="export-download">Download everything</button>
+  </form>
+</section>
+
+<% unless @exports.empty? %>
+  <section class="section">
+    <h2 class="section-title">Recent exports</h2>
+    <ul class="export-recent">
+      <% @exports.each do |export| %>
+        <li data-test-id="export-recent" data-by="<%= export.by %>"><%= export.by %>, <time datetime="<%= export.at.utc.iso8601 %>"><%= export.at.utc.strftime('%-d %B %Y at %H:%M UTC') %></time></li>
+      <% end %>
+    </ul>
+  </section>
+<% end %>

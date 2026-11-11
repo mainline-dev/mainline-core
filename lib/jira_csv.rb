@@ -17,6 +17,10 @@ module JiraCsv
   MAX_ISSUES_PER_FILE = 1000
   DELIMITERS = [',', ';', "\t"].freeze
   REQUIRED_HEADERS = ['Issue key', 'Summary', 'Issue Type'].freeze
+  # The stories.csv in a Mainline export has no issue key column, so that
+  # Jira cannot overwrite an issue with it. Its rows are known by Mainline ID.
+  MAINLINE_ID_HEADER = 'Mainline ID'
+  MAINLINE_ID = /\A\h{8}-\h{4}-\h{4}-\h{4}-\h{12}\z/
   LINK_HEADER = /\A(Inward|Outward) issue link \((.+)\)\z/
   ISSUE_KEY = /\A[A-Z][A-Z0-9_]*-\d+\z/
   BYTE_ORDER_MARK = "\uFEFF"
@@ -53,6 +57,7 @@ module JiraCsv
 
     header, *body = rows
     missing = REQUIRED_HEADERS - header.to_a
+    missing.delete('Issue key') if header.to_a.include?(MAINLINE_ID_HEADER)
     return missing_columns(missing) unless missing.empty?
 
     numbered = body.each_with_index.map { |row, index| [row, index + 2] }.reject { |row, _number| row.compact.empty? }
@@ -113,6 +118,10 @@ module JiraCsv
     # rows are [cells, row number in the file] pairs.
     def initialize(header, rows)
       @columns = header.each_index.group_by { |index| header[index] }
+      @by_mainline_id = !@columns.key?('Issue key')
+      # A Jira export says how far an issue has got in Status Category. A
+      # Mainline export has only Status, in the same three words.
+      @progress = @columns.key?('Status Category') ? 'Status Category' : 'Status'
       @links = header.each_index.filter_map { |index|
         match = LINK_HEADER.match(header[index])
         [index, match[1].downcase, match[2]] if match
@@ -144,13 +153,17 @@ module JiraCsv
       }.values
     end
 
+    def key(row)
+      @by_mainline_id ? first(row, MAINLINE_ID_HEADER)&.downcase : first(row, 'Issue key')&.upcase
+    end
+
     def item(row)
       {
-        source_key:        first(row, 'Issue key')&.upcase,
+        source_key:        key(row),
         issue_type:        first(row, 'Issue Type'),
         summary:           without_people(first(row, 'Summary').to_s).gsub(/\s+/, ' '),
         description:       without_people(first(row, 'Description').to_s),
-        in_progress:       first(row, 'Status Category') == 'In Progress',
+        in_progress:       first(row, @progress) == 'In Progress',
         parent_key:        parent_key(PARENT_COLUMNS.lazy.filter_map { |column| first(row, column) }.first),
         labels:            cells(row, 'Labels').uniq,
         comments:          cells(row, 'Comment').map { |comment| comment(comment) },
@@ -164,7 +177,7 @@ module JiraCsv
     def problem(item)
       key = item[:source_key]
       return 'no_key' unless key
-      return 'not_a_key' unless key.match?(ISSUE_KEY)
+      return 'not_a_key' unless key.match?(@by_mainline_id ? MAINLINE_ID : ISSUE_KEY)
       return 'key_too_long' if key.length > 50
 
       type_or_summary_problem(item[:issue_type], item[:summary])
@@ -179,7 +192,7 @@ module JiraCsv
     end
 
     def finished?(row)
-      first(row, 'Resolution') || first(row, 'Status Category') == 'Done'
+      first(row, 'Resolution') || first(row, @progress) == 'Done'
     end
 
     def parent_key(parent)
