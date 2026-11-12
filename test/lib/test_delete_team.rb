@@ -157,6 +157,15 @@ describe DeleteTeam do
     assert_nil Actor[webhook_actor.id]
   end
 
+  it 'deletes the MCP actor' do
+    mcp_actor = Actor.create(name: 'mcp', kind: 'system')
+    @team.update(mcp_actor_id: mcp_actor.id)
+
+    DeleteTeam.call(team: @team.refresh)
+
+    assert_nil Actor[mcp_actor.id]
+  end
+
   it 'does not delete webhook actor when absent' do
     actor_count = Actor.count
 

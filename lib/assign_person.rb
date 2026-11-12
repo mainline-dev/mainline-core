@@ -20,7 +20,7 @@ module AssignPerson
   def self.people_at_limit(team)
     active_assignments(team)
       .group_and_count(Sequel[:story_assignments][:person_id])
-      .having { count.function.* >= AssignPerson.wip_limit(team) }
+      .having { count(Sequel.lit('*')) >= AssignPerson.wip_limit(team) }
       .select_map(Sequel[:story_assignments][:person_id])
       .to_set
   end
@@ -98,7 +98,7 @@ module AssignPerson
   def self.maybe_activate(story, team, actor_id, count)
     return unless story.status == 'planned'
 
-    working_count = TeamMembership.where(team_id: team.id, working: true).count
+    working_count = TeamMembership.where(team_id: team.id, left_at: nil, working: true).count
     solo_allowed = working_count == 1 ||
                    TeamConstraint.for_team(team.id, 'allow_solo_activation', default: 0) == 1
     return unless count >= 2 || (solo_allowed && count >= 1)

@@ -400,6 +400,8 @@ The email version finds-or-creates your person and adds them to every team, so O
 | `rake mutant` | Run mutation testing on all lib and model code |
 | `rake mutant_one[Subject]` | Run mutation testing on a single class |
 | `rake mutant_rls` | Run mutation testing on RLS code |
+| `rake mutant_changed` | Mutation-test the classes changed since `origin/master`; shows what survives in the changed code and fails if a class kills a share of its mutations more than 2 points below its baseline. `scripts/test.sh` runs it last |
+| `rake mutant_baseline` | Run mutation testing class by class and write the scores to `.mutant-baseline.yml`. `scripts/mutation.sh AssignPerson` measures one class again |
 | `rake annotate` | Add schema comments to model files |
 
 ## File map

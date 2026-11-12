@@ -19,7 +19,7 @@ describe BypassRLS do
 
     result = BypassRLS.call { Map.where(team_id: @team.id).all }
 
-    refute_empty result
+    assert_equal [@map.id], result.map(&:id)
   end
 
   it 'isolates invitations by team' do
