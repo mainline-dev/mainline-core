@@ -216,6 +216,40 @@ describe AssignPerson do
     assert_equal 'solo', event.after_state['reason']
   end
 
+  describe 'who counts towards working alone' do
+    def assign_alice
+      AssignPerson.call(story: @story, person_id: @person.id, team: @team, actor_id: @person.actor_id)
+      @story.reload.status
+    end
+
+    it 'takes no notice of how many people other teams have' do
+      TeamMembership.where(person_id: @bob.id).delete
+      other = Team.create(name: 'Other')
+      %w[Carol Dan].each do |name|
+        TeamMembership.create(team_id: other.id, working: true,
+          person_id: Person.create(name: name, email: "#{name.downcase}@other.co").id)
+      end
+
+      assert_equal 'active', assign_alice
+    end
+
+    it 'does not count an account holder who is not working on the team' do
+      TeamMembership.where(person_id: @bob.id).update(working: false)
+
+      assert_equal 'active', assign_alice
+    end
+
+    it 'does not count someone who has left the team' do
+      TeamMembership.where(person_id: @bob.id).update(left_at: Time.now)
+
+      assert_equal 'active', assign_alice
+    end
+
+    it 'still needs a pair when two people are working on the team' do
+      assert_equal 'planned', assign_alice
+    end
+  end
+
   it 'records collaboration_changed from solo to paired on activation' do
     StoryAssignment.create(story_id: @story.id, person_id: @person.id, team_id: @team.id)
 

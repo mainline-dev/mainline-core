@@ -1,0 +1,51 @@
+# Mutation testing, class by class. Written by "rake mutant_baseline"
+# (scripts/mutation.sh runs it in the test stack). A floor, not a target:
+# "rake mutant_changed" stops a push only when a changed class kills a
+# share of its mutations more than 2 points below its share here. To
+# accept a new number for a class, measure it again:
+# scripts/mutation.sh AssignPerson
+measured_on: '2026-11-12'
+classes:
+  AssignPerson: { mutations: 959, killed: 727, alive: 232 }
+  BusinessDays: { mutations: 66, killed: 66, alive: 0 }
+  BypassRLS: { mutations: 51, killed: 37, alive: 14 }
+  CumulativeFlow: { mutations: 494, killed: 446, alive: 48 }
+  DataExport: { mutations: 984, killed: 808, alive: 176 }
+  DeleteTeam: { mutations: 243, killed: 205, alive: 38 }
+  EncryptedEmail: { mutations: 122, killed: 98, alive: 24 }
+  EnsembleTimeline: { mutations: 259, killed: 226, alive: 33 }
+  EventPresenter: { mutations: 1292, killed: 1146, alive: 146 }
+  FlashAdapter: { mutations: 172, killed: 160, alive: 12 }
+  Inventory: { mutations: 285, killed: 245, alive: 40 }
+  LeadTime: { mutations: 540, killed: 414, alive: 126 }
+  MapGrid: { mutations: 396, killed: 338, alive: 58 }
+  PairingMatrix: { mutations: 891, killed: 798, alive: 93 }
+  RateLimiter: { mutations: 344, killed: 284, alive: 60 }
+  RecordEvent: { mutations: 117, killed: 101, alive: 16 }
+  ReorderActivities: { mutations: 74, killed: 72, alive: 2 }
+  ReorderStories: { mutations: 564, killed: 501, alive: 63 }
+  ReorderTasks: { mutations: 235, killed: 217, alive: 18 }
+  ResourceCap: { mutations: 77, killed: 77, alive: 0 }
+  RevokeOauthToken: { mutations: 138, killed: 117, alive: 21 }
+  SetTeamContext: { mutations: 21, killed: 18, alive: 3 }
+  SoloLog: { mutations: 351, killed: 300, alive: 51 }
+  SplitCandidate: { mutations: 507, killed: 442, alive: 65 }
+  ThroughputScatter: { mutations: 180, killed: 168, alive: 12 }
+  PinConnection: { mutations: 0, killed: 0, alive: 0 }
+  ActivityPersona: { mutations: 0, killed: 0, alive: 0 }
+  Activity: { mutations: 0, killed: 0, alive: 0 }
+  Actor: { mutations: 0, killed: 0, alive: 0 }
+  Event: { mutations: 0, killed: 0, alive: 0 }
+  Invitation: { mutations: 0, killed: 0, alive: 0 }
+  Map: { mutations: 0, killed: 0, alive: 0 }
+  PersonIdentity: { mutations: 0, killed: 0, alive: 0 }
+  Person: { mutations: 0, killed: 0, alive: 0 }
+  Persona: { mutations: 0, killed: 0, alive: 0 }
+  ReleaseSlice: { mutations: 0, killed: 0, alive: 0 }
+  Scenario: { mutations: 0, killed: 0, alive: 0 }
+  StoryAssignment: { mutations: 0, killed: 0, alive: 0 }
+  Story: { mutations: 26, killed: 1, alive: 25 }
+  Task: { mutations: 0, killed: 0, alive: 0 }
+  TeamConstraint: { mutations: 0, killed: 0, alive: 0 }
+  TeamMembership: { mutations: 0, killed: 0, alive: 0 }
+  Team: { mutations: 0, killed: 0, alive: 0 }

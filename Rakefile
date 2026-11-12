@@ -163,7 +163,10 @@ mutant_lib = %w[
   ReorderTasks ResourceCap RevokeOauthToken SetTeamContext SoloLog
   SplitCandidate ThroughputScatter
 ]
-MUTANT_LIB = mutant_lib.freeze
+mutant_hosted = []
+MUTANT_HOSTED = mutant_hosted.freeze
+MUTANT_LIB = (mutant_lib + MUTANT_HOSTED).freeze
+MUTANT_RLS = %w[BypassRLS SetTeamContext PinConnection].freeze
 
 MUTANT_MODELS = %w[
   ActivityPersona Activity Actor Event Invitation Map PersonIdentity Person
@@ -185,7 +188,50 @@ end
 
 desc 'Run mutant on RLS code (BypassRLS, SetTeamContext, PinConnection)'
 task :mutant_rls do
-  sh "bundle exec mutant run 'BypassRLS*' 'SetTeamContext*' 'PinConnection*'"
+  sh "bundle exec mutant run #{MUTANT_RLS.map { |s| "'#{s}*'" }.join(' ')}"
+end
+
+MUTANT_ALL = (MUTANT_LIB + MUTANT_RLS + MUTANT_MODELS).uniq.freeze
+
+desc 'Mutation-test the classes changed since origin/master: show what survives in the changed code, fail if a class got worse'
+task :mutant_changed, [:since] do |_t, args|
+  require_relative 'lib/mutation_baseline'
+  since = args[:since] || 'origin/master'
+  listing = `bundle exec mutant environment subject list --since #{since} #{MUTANT_ALL.map { |s| "'#{s}*'" }.join(' ')} 2>&1`
+  classes = MutationBaseline.changed_classes(listing, MUTANT_ALL)
+  next puts("No measured class has changed since #{since}.") if classes.empty?
+
+  changed = MutationBaseline.changed_subjects(listing)
+  scores = MutationBaseline.measure(classes) { |score, report|
+    puts "#{score.subject}: #{score.problem || "#{score.killed} of #{score.mutations} killed, #{score.alive} alive"}"
+    MutationBaseline.survivors(report, changed).each { |subject, change, more|
+      puts "  survives in #{subject}:", change.gsub(/^/, '    ')
+      puts "    and #{more} more: bundle exec mutant session subject #{subject}" if more.positive?
+    }
+  }
+  worse = MutationBaseline.worse(scores, File.read(MutationBaseline::PATH))
+  next if worse.empty?
+
+  worse.each { |w| puts "#{w[:subject]} kills #{w[:now]}% of its mutations, and its baseline is #{w[:was]}%." }
+  abort "Test what the change let survive, or accept the new number: scripts/mutation.sh #{worse.map { |w| w[:subject] }.join(' ')}"
+end
+
+desc 'Run mutant class by class and write the scores to .mutant-baseline.yml (all classes, or: rake "mutant_baseline[A B]")'
+task :mutant_baseline, [:classes] do |_t, args|
+  require_relative 'lib/mutation_baseline'
+  chosen = args[:classes].to_s.split
+  scores = MutationBaseline.measure(chosen.empty? ? MUTANT_ALL : chosen) { |score, _report|
+    puts format('%-26<subject>s %<result>s', subject: score.subject,
+      result: score.problem || "#{score.killed} of #{score.mutations} killed, #{score.alive} alive")
+  }
+  written = if chosen.empty?
+              MutationBaseline.render(scores, on: Date.today, hosted: MUTANT_HOSTED)
+            else
+              MutationBaseline.merge(File.read(MutationBaseline::PATH), scores, on: Date.today, hosted: MUTANT_HOSTED)
+            end
+  File.write(MutationBaseline::PATH, written)
+  total = MutationBaseline.total(scores)
+  puts "Measured: #{total[:killed]} of #{total[:mutations]} killed, #{total[:alive]} alive. Written to #{MutationBaseline::PATH}"
 end
 
 # Lint
