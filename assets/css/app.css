@@ -4814,11 +4814,89 @@ footer.landing a:hover {
     margin-bottom: 0.375rem;
 }
 
-.scenario-topbar .scenario-name {
+.scenario-heading {
     flex: 1;
     min-width: 0;
+}
+
+/* The tick and the cross stay on the name's first line however much is
+   written under it, so Keep lands where the cross was. */
+.scenario-topbar {
+    align-items: flex-start;
+}
+
+.scenario-topbar > form {
+    margin-top: 0.25rem;
+}
+
+.scenario-topbar > button {
+    margin-top: 0.5rem;
+}
+
+.scenario-topbar .scenario-name {
     margin: 0;
     padding: 0.25rem 0;
+}
+
+/* Asking before a scenario is deleted. Keep takes the cross's place at the
+   end of the line; the tick makes room for Delete. */
+.scenario-delete-ask,
+.scenario-delete-yes,
+.scenario-keep {
+    display: none;
+}
+
+.scenario-delete-ask {
+    margin: 0 0 0.25rem;
+    font-size: 0.75rem;
+    color: var(--accent-red);
+}
+
+.scenario-delete-yes,
+.scenario-keep {
+    border: 1px solid var(--accent-red);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    line-height: 1.4;
+    cursor: pointer;
+}
+
+.scenario-delete-yes {
+    background: var(--accent-red-bg);
+    color: var(--accent-red);
+}
+
+.scenario-delete-yes:hover {
+    background: var(--accent-red);
+    color: var(--bg-base);
+}
+
+.scenario-keep {
+    border-color: var(--border-subtle);
+    background: none;
+    color: var(--text-secondary);
+}
+
+.scenario-keep:hover {
+    color: var(--text-primary);
+}
+
+.scenario-topbar.is-deleting .scenario-delete-ask {
+    display: block;
+}
+
+.scenario-topbar.is-deleting .scenario-delete-yes,
+.scenario-topbar.is-deleting .scenario-keep {
+    display: inline-block;
+}
+
+.scenario-topbar.is-deleting .scenario-done-form,
+.scenario-topbar.is-deleting .delete-btn {
+    display: none;
 }
 
 .scenario-topbar .delete-btn {

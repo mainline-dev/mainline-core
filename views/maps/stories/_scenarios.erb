@@ -36,8 +36,13 @@
         <div><span class="scenario-kw">When</span> <%= sc.when_text %></div>
         <div><span class="scenario-kw">Then</span> <%= sc.then_text %></div>
       <% else %>
-        <div class="card-topbar scenario-topbar">
-          <div class="scenario-name" data-test-id="scenario-name"><%= sc.display_name %></div>
+        <%# The cross asks before it deletes. Keep takes the cross's place, so a
+            second click on the same spot keeps the scenario. %>
+        <div class="card-topbar scenario-topbar" data-scenario-delete>
+          <div class="scenario-heading">
+            <div class="scenario-name" data-test-id="scenario-name"><%= sc.display_name %></div>
+            <p class="scenario-delete-ask" data-test-id="scenario-delete-ask">Delete this scenario and its Given, When, Then?</p>
+          </div>
           <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>/<%= sc.done_at ? 'undone' : 'done' %>"
                 hx-target="#scenarios-container" hx-swap="outerHTML" class="scenario-done-form">
             <button type="submit" class="scenario-done-btn<%= ' is-done' if sc.done_at %>"
@@ -45,10 +50,12 @@
                     data-tippy-content="<%= sc.done_at ? 'Verified. Click to unmark.' : 'Mark verified' %>"
                     aria-label="<%= sc.done_at ? 'Mark scenario not done' : 'Mark scenario done' %>">&#10003;</button>
           </form>
-          <button type="button" class="delete-btn delete-confirm"
-                  data-delete-url="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>/delete"
-                  data-delete-target="#scenarios-container"
+          <button type="button" class="scenario-delete-yes" data-test-id="scenario-delete-yes"
+                  hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>/delete"
+                  hx-target="#scenarios-container" hx-swap="outerHTML">Delete</button>
+          <button type="button" class="delete-btn" data-scenario-delete-ask data-test-id="scenario-delete"
                   aria-label="Delete scenario">&times;</button>
+          <button type="button" class="scenario-keep" data-scenario-keep data-test-id="scenario-keep">Keep</button>
         </div>
         <form hx-post="/maps/<%= @map.id %>/stories/<%= @story.id %>/scenarios/<%= sc.id %>"
               hx-target="#scenarios-container" hx-swap="outerHTML"

@@ -171,6 +171,18 @@ document.addEventListener('click', function(e) {
   }, 3000);
 });
 
+// A scenario's cross asks before deleting. Keep is shown in the cross's place,
+// so a second click on the same spot keeps the scenario. Delete is its own
+// button and posts on its own.
+document.addEventListener('click', function(e) {
+  var ask = e.target.closest('[data-scenario-delete-ask]');
+  var keep = e.target.closest('[data-scenario-keep]');
+  if (!ask && !keep) return;
+  var bar = (ask || keep).closest('[data-scenario-delete]');
+  bar.classList.toggle('is-deleting', !!ask);
+  bar.querySelector(ask ? '[data-scenario-keep]' : '[data-scenario-delete-ask]').focus();
+});
+
 document.addEventListener('showFlash', function(e) {
   var detail = e.detail;
   var el = document.createElement('div');
