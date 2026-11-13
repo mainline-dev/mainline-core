@@ -6958,6 +6958,10 @@ button.mu-key:focus-visible { outline: 2px solid var(--border-focus); outline-of
 .mu-row[data-case] { cursor: pointer; }
 .mu-caret { font-weight: 400; color: var(--text-tertiary); }
 .mu-row.is-open, .mu-case { background: var(--bg-surface); }
+.mu-row[aria-busy="true"] { position: relative; }
+.mu-row[aria-busy="true"]::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: var(--accent-cyan); animation: mu-opening 1.1s ease-in-out .12s infinite backwards; }
+@keyframes mu-opening { 0%, 100% { opacity: 0; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .mu-row[aria-busy="true"]::after { animation: none; opacity: .6; } }
 .mu-case { display: grid; grid-template-columns: minmax(0, 760px); padding: 8px 32px 28px 76px; border-bottom: 1px solid var(--border-subtle); }
 .mu-relic { display: grid; gap: 22px; align-self: start; align-content: start; }
 .mu-relic-section { display: grid; gap: 10px; align-content: start; }
@@ -7003,6 +7007,8 @@ ol.mu-md-list { padding-left: 20px; }
 .mu-rewrite input.mu-title, .mu-rewrite select.mu-task { width: 100%; height: 40px; margin: -10px 0 0; padding: 0 12px; background-color: var(--bg-base); border: 1px solid var(--border-strong); border-radius: 4px; font: 400 16px var(--font-body); color: var(--text-primary); }
 .mu-rewrite input.mu-title::placeholder { color: var(--text-tertiary); }
 .mu-rewrite input.mu-title:focus, .mu-rewrite select.mu-task:focus, .mu-scenario textarea:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 3px var(--accent-cyan-bg); }
+.mu-template-fields { display: grid; gap: 16px; }
+.mu-template-fields[hidden] { display: none; }
 .mu-title-row { display: flex; justify-content: space-between; align-items: center; margin-top: -8px; }
 .mu-fill { border: 0; background: none; padding: 0; font: 400 12px var(--font-body); color: var(--accent-cyan); cursor: pointer; }
 .mu-counter { font: 400 12px/1 var(--font-mono); color: var(--text-tertiary); }
@@ -7185,8 +7191,9 @@ ol.mu-md-list { padding-left: 20px; }
 .mu-more-problems summary { padding: 10px 0 0; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
 .mu-sample { margin-top: 28px; }
 .mu-sample h2 { margin: 0 0 12px; }
+.mu-sample-more { padding-top: 12px; border-top: 1px solid var(--border-subtle); }
 .mu-sample-row { display: grid; grid-template-columns: 130px 90px minmax(0, 1fr) 200px 110px; gap: 12px; align-items: center; min-height: 44px; border-top: 1px solid var(--border-subtle); font-size: 14px; color: var(--text-primary); }
-.mu-selbar .btn { background: var(--accent-cyan); color: var(--bg-base); font-size: 14px; font-weight: 600; padding: 7px 12px; border-radius: 4px; }
+.mu-selbar .btn { background: var(--accent-cyan); color: var(--bg-base); font-size: 14px; font-weight: 600; padding: 7px 12px; border-radius: 4px; margin-top: 0; }
 .mu-together-cards { display: grid; gap: 12px; }
 .mu-together-card { border: 1px solid var(--border-default); border-radius: 6px; overflow: hidden; }
 .mu-together-card[open] { border-color: var(--border-strong); }

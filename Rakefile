@@ -155,24 +155,13 @@ task _test_cov: [:test_models_cov, :test_acceptance_cov]
 
 # Mutation testing
 
-mutant_lib = %w[
-  AssignPerson BusinessDays BypassRLS
-  CumulativeFlow DataExport DeleteTeam EncryptedEmail EnsembleTimeline
-  EventPresenter FlashAdapter Inventory LeadTime MapGrid PairingMatrix
-  RateLimiter RecordEvent ReorderActivities ReorderStories
-  ReorderTasks ResourceCap RevokeOauthToken SetTeamContext SoloLog
-  SplitCandidate ThroughputScatter
-]
-mutant_hosted = []
-MUTANT_HOSTED = mutant_hosted.freeze
-MUTANT_LIB = (mutant_lib + MUTANT_HOSTED).freeze
-MUTANT_RLS = %w[BypassRLS SetTeamContext PinConnection].freeze
+require_relative 'lib/mutation_baseline'
 
-MUTANT_MODELS = %w[
-  ActivityPersona Activity Actor Event Invitation Map PersonIdentity Person
-  Persona ReleaseSlice Scenario StoryAssignment Story Task TeamConstraint
-  TeamMembership Team
-].freeze
+# The measured classes are listed in MutationBaseline, where a test checks them.
+MUTANT_HOSTED = MutationBaseline::HOSTED_CLASSES
+MUTANT_LIB = (MutationBaseline::LIB + MUTANT_HOSTED).freeze
+MUTANT_RLS = MutationBaseline::RLS
+MUTANT_MODELS = MutationBaseline::MODELS
 
 desc 'Run mutant on all lib and model code'
 task :mutant do
@@ -191,7 +180,7 @@ task :mutant_rls do
   sh "bundle exec mutant run #{MUTANT_RLS.map { |s| "'#{s}*'" }.join(' ')}"
 end
 
-MUTANT_ALL = (MUTANT_LIB + MUTANT_RLS + MUTANT_MODELS).uniq.freeze
+MUTANT_ALL = MutationBaseline::MEASURED
 
 desc 'Mutation-test the classes changed since origin/master: show what survives in the changed code, fail if a class got worse'
 task :mutant_changed, [:since] do |_t, args|

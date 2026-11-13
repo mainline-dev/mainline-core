@@ -895,3 +895,4 @@ class Mainline < Roda
 end
 
 require_relative 'lib/museum_routes'
+require_relative 'lib/story_templates'

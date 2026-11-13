@@ -164,4 +164,34 @@ describe MutationBaseline do
       assert merged[/^  Brand new:.*$/].end_with?('# hosted')
     end
   end
+
+  # A class nobody listed is never mutation-tested, however good its tests.
+  describe 'what is measured' do
+    def root
+      File.expand_path('../..', __dir__)
+    end
+
+    def classes_with_tests_mutant_can_use
+      Dir[File.join(root, 'test/**/test_*.rb')].flat_map { |file| File.read(file).scan(/^\s*cover '([^'*]+)\*?'/) }.flatten.uniq.sort
+    end
+
+    it 'takes in every class whose tests say what they cover' do
+      assert_empty classes_with_tests_mutant_can_use - MutationBaseline::MEASURED
+    end
+
+    # Mutant only mutates what its configuration loads. A class it never
+    # loaded is measured as nothing to mutate, which reads like a clean pass.
+    it 'finds something to mutate in every lib class it measures' do
+      baseline = YAML.safe_load_file(File.join(root, MutationBaseline::PATH)).fetch('classes')
+      nothing = (MutationBaseline::LIB + MutationBaseline::HOSTED_CLASSES).select { |name| baseline.dig(name, 'mutations').to_i.zero? }
+
+      assert_empty nothing
+    end
+
+    it 'has a baseline for every class it measures' do
+      baseline = YAML.safe_load_file(File.join(root, MutationBaseline::PATH)).fetch('classes').keys
+
+      assert_empty MutationBaseline::MEASURED - baseline
+    end
+  end
 end

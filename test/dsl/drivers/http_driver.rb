@@ -667,9 +667,9 @@ class HttpDriver
     last_response
   end
 
-  def promote_museum_item(team, item, title:, task_id:, scenarios: [], return_to: nil)
+  def promote_museum_item(team, item, title:, task_id:, scenarios: [], return_to: nil, template: nil, fields: {})
     cards = scenario_cards(scenarios)
-    params = { 'title' => title, 'task_id' => task_id, 'scenarios' => cards }
+    params = { 'title' => title, 'task_id' => task_id, 'scenarios' => cards }.merge(template_params(template, fields))
     params['return_to'] = return_to if return_to
     post "/teams/#{team.id}/museum/#{item.id}/promote", params
     follow_redirect! if last_response.redirect?
@@ -761,9 +761,9 @@ class HttpDriver
     last_response.body[%r{data-test-id="museum-leaving".*?</div>}m].to_s.scan(/data-leaving="[^"]+">([^<]+)</).flatten
   end
 
-  def promote_together(team, ids, title:, task_id:, scenarios: [], return_to: nil)
+  def promote_together(team, ids, title:, task_id:, scenarios: [], return_to: nil, template: nil, fields: {})
     cards = scenario_cards(scenarios)
-    params = { 'ids' => ids, 'title' => title, 'task_id' => task_id, 'scenarios' => cards }
+    params = { 'ids' => ids, 'title' => title, 'task_id' => task_id, 'scenarios' => cards }.merge(template_params(template, fields))
     params['return_to'] = return_to if return_to
     post "/teams/#{team.id}/museum/together/promote", params
     follow_redirect! if last_response.redirect?
@@ -924,6 +924,21 @@ class HttpDriver
     }
     { map: backbone.at_css('select[name="map"] option[selected]')['value'], activities: activities,
       unplaced: backbone['data-unplaced'].to_i }
+  end
+
+  # What a form posts for a story template: its name and its fields.
+  def template_params(template, fields)
+    return {} unless template
+
+    { 'template' => template }.merge(fields.transform_keys(&:to_s))
+  end
+
+  def promote_title_shown
+    form = Nokogiri::HTML(last_response.body).at_css('[data-test-id="museum-promote-form"]')
+    picker = form.at_css('select[name="template"]')
+    chosen = picker.at_css('option[selected]')['value']
+    typed = form.css(%([data-template-fields="#{chosen}"] input)).to_h { |input| [input['name'].to_sym, input['value'].to_s] }
+    { offered: picker.css('option').map { |option| option['value'] }, template: chosen, fields: typed }
   end
 
   def promote_form_shown

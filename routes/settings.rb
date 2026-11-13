@@ -187,8 +187,6 @@ class Mainline
     req.redirect '/settings'
   end
 
-  STORY_TEMPLATES = %w[connextra card behaviour].freeze
-
   def save_default_story_template(req)
     name = typecast_params.str('default_story_template')
     idx = STORY_TEMPLATES.index(name)

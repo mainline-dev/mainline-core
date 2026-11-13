@@ -49,6 +49,13 @@ describe 'Ticket Museum - a Mainline file' do
     assert_equal [['', 'file', 'not_json']], file_problems_shown
   end
 
+  it 'refuses a file saved with its code fence, and says that is what is wrong' do
+    upload_mainline_file("```json\n#{MainlineFileFixture.json({ key: 'RB-1' })}\n```")
+
+    refute_shown('museum-import-preview')
+    assert_equal [['', 'file', 'fenced']], file_problems_shown
+  end
+
   it 'refuses a file from a version it does not know' do
     upload_mainline_file(JSON.generate(mainline: 2, entries: [MainlineFileFixture::ENTRY]))
 
@@ -176,6 +183,15 @@ describe 'Ticket Museum - a Mainline file' do
                     ['Same field', 'two people have an item open', 'each changes a different field',
                      'the later change wins']], form[:scenarios]
       assert_shown('museum-drafted-note')
+    end
+
+    it 'starts on the title written out, so the title the file suggests is kept' do
+      import_mainline_file(proposed)
+
+      visit_museum_promote('RB-1')
+
+      assert_equal 'written', promote_title_shown[:template]
+      assert_equal 'Two people change the same item', promote_form_shown[:title]
     end
 
     it 'fills the form in the same way when the exhibit is opened in place' do
@@ -374,6 +390,15 @@ describe 'Ticket Museum - a Mainline file' do
       assert_shown('museum-instructions')
       assert_includes instructions_to_copy, 'Track work: Change an item'
       refute_shown('museum-import-guide')
+    end
+
+    it 'links to the guide beside the Mainline file source, and not beside a Jira export' do
+      visit_museum_import_page(source: 'mainline')
+
+      assert_page_includes('data-test-id="museum-how-it-works" href="https://mainline.dev/docs/spec-to-map"')
+      visit_museum_import_page
+
+      refute_shown('museum-how-it-works')
     end
 
     it 'takes a .json file dropped anywhere as a Mainline file without being told' do

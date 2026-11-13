@@ -19,6 +19,32 @@ module MutationBaseline
   SLACK = 2.0
   Score = Struct.new(:subject, :mutations, :killed, :alive, :problem, keyword_init: true)
 
+  # The classes that are measured. A class belongs here once its tests say
+  # what they cover (cover 'Name*'), since those are the tests mutant uses.
+  LIB = %w[
+    AddScenario AddToStory ArchivePersona ArchiveStory AssignPerson
+    BusinessDays BypassRLS CIMonitor::BranchAge CIMonitor::Status
+    CreateActivity CreatePersona CreateStory CreateTask CumulativeFlow
+    DataExport DeleteTeam DiscardMuseumItem EditActivity EditPersona EditTask
+    EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FlashAdapter
+    ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup LeadTime
+    LetGo LetGoPrompt LetGoReview MainlineFile MapGrid MuseumList
+    PairingMatrix PromoteMuseumItem RateLimiter RecordEvent
+    RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
+    ResourceCap RevokeOauthToken SetTeamContext SignedState SignupTimer
+    SoloLog SplitCandidate StepStubs StoryPicker ThroughputScatter
+    UnpromoteMuseumItem
+  ].freeze
+  hosted_classes = []
+  HOSTED_CLASSES = hosted_classes.freeze
+  RLS = %w[BypassRLS SetTeamContext PinConnection].freeze
+  MODELS = %w[
+    ActivityPersona Activity Actor Event Invitation Map PersonIdentity Person
+    Persona ReleaseSlice Scenario StoryAssignment Story Task TeamConstraint
+    TeamMembership Team
+  ].freeze
+  MEASURED = (LIB + HOSTED_CLASSES + RLS + MODELS).uniq.freeze
+
   # Runs mutant on each class in turn, yielding each score and mutant's
   # report as they come.
   def self.measure(subjects)

@@ -10,12 +10,30 @@
   <% ids.each do |id| %><input type="hidden" name="ids[]" value="<%= id %>"><% end %>
   <% if inline %><p class="mu-label">Rewrite as a story</p><% end %>
 
-  <label class="mu-field-label" for="mu-title-<%= item.id %>">What does someone want?</label>
-  <input type="text" id="mu-title-<%= item.id %>" class="mu-title" name="title" value="<%= title %>" placeholder="<%= item.summary %>" maxlength="200" required data-title>
-  <div class="mu-hint" data-hint data-test-id="museum-hint" hidden></div>
-  <div class="mu-title-row">
-    <% if item.proposed? %><span></span><% else %><button type="button" class="mu-fill" data-fill-title="<%= item.summary %>" data-test-id="museum-fill-title">Start from the ticket's summary</button><% end %>
-    <span class="mu-counter" data-counter data-length="<%= title.to_s.length %>"><%= title.to_s.length %>/200</span>
+  <% template = @template || museum_start_template(ids.empty? ? item : nil) %>
+  <% typed = @template_fields || {} %>
+  <label class="mu-field-label" for="mu-template-<%= item.id %>">Template</label>
+  <select id="mu-template-<%= item.id %>" class="mu-task mu-template" name="template" data-template data-test-id="museum-template">
+    <% MUSEUM_TITLE_CHOICES.each do |value, label| %>
+      <option value="<%= value %>"<% if template == value %> selected<% end %>><%= label %></option>
+    <% end %>
+  </select>
+  <% MUSEUM_TEMPLATE_FIELDS.each do |name, fields| %>
+    <div class="mu-template-fields" data-template-fields="<%= name %>"<% unless template == name %> hidden<% end %>>
+      <% fields.each do |field, label, example, limit| %>
+        <label class="mu-field-label" for="mu-<%= field %>-<%= item.id %>"><%= label %></label>
+        <input type="text" id="mu-<%= field %>-<%= item.id %>" class="mu-title" name="<%= field %>" value="<%= typed[field] %>" placeholder="e.g. <%= example %>" maxlength="<%= limit %>" required<% unless template == name %> disabled<% end %>>
+      <% end %>
+    </div>
+  <% end %>
+  <div class="mu-template-fields" data-template-fields="<%= WRITTEN_OUT %>"<% unless template == WRITTEN_OUT %> hidden<% end %>>
+    <label class="mu-field-label" for="mu-title-<%= item.id %>">What does someone want?</label>
+    <input type="text" id="mu-title-<%= item.id %>" class="mu-title" name="title" value="<%= title %>" placeholder="<%= item.summary %>" maxlength="200" required data-title<% unless template == WRITTEN_OUT %> disabled<% end %>>
+    <div class="mu-hint" data-hint data-test-id="museum-hint" hidden></div>
+    <div class="mu-title-row">
+      <% if item.proposed? %><span></span><% else %><button type="button" class="mu-fill" data-fill-title="<%= item.summary %>" data-test-id="museum-fill-title">Start from the ticket's summary</button><% end %>
+      <span class="mu-counter" data-counter data-length="<%= title.to_s.length %>"><%= title.to_s.length %>/200</span>
+    </div>
   </div>
 
   <div class="mu-scenarios">

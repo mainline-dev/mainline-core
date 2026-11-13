@@ -890,6 +890,20 @@ describe 'Ticket Museum' do
       assert_page_includes('data-test-id="museum-import-expires" data-hours="19"')
     end
 
+    it 'says the exhibits shown are a sample of the file, and how many more it holds' do
+      upload_jira_csv(JiraExport.csv(*(1..12).map { |n| { key: "SHOP-#{n}", id: n.to_s } }))
+
+      assert_page_includes('data-test-id="museum-import-sample" data-shown="10" data-total="12"')
+      assert_page_includes('data-test-id="museum-import-sample-more" data-count="2"')
+    end
+
+    it 'says nothing of more when the sample is the whole file' do
+      upload_jira_csv(JiraExport.csv({ key: 'SHOP-1', id: '1' }, { key: 'SHOP-2', id: '2' }))
+
+      assert_page_includes('data-test-id="museum-import-sample" data-shown="2" data-total="2"')
+      refute_shown('museum-import-sample-more')
+    end
+
     it 'shows five rows turned away and keeps the others a click away' do
       upload_jira_csv(JiraExport.csv(*(1..7).map { |n| { key: "SHOP-#{n}", id: n.to_s, summary: '' } }))
 
@@ -925,6 +939,86 @@ describe 'Ticket Museum' do
 
       assert_page_includes('data-status="cancelled"')
       refute_page_includes('data-test-id="museum-import-apply"')
+    end
+  end
+
+  # The promote form gives a title the way the new-story form does: through
+  # one of the team's story templates, or written out.
+  describe 'promoting with a story template' do
+    before do
+      create_map(name: 'Shop')
+      @task = create_task('Pay', under_activity: create_activity('Checkout', for_personas: [create_persona('Shopper')]))
+      import_jira_csv(JiraExport.csv({ key: 'SHOP-1', id: '1', summary: 'Guest checkout' },
+        { key: 'SHOP-2', id: '2', summary: 'Guest token on orders' }))
+    end
+
+    def guest_checkout
+      { role: 'shopper', goal: 'check out as a guest', benefit: 'I need no account' }
+    end
+
+    def story_titles(*keys)
+      keys.map { |key| museum_item(key).story.title }
+    end
+
+    it 'offers the three templates and a title written out, starting on the first template' do
+      visit_museum_promote('SHOP-1')
+
+      assert_equal({ offered: %w[connextra card behaviour written], template: 'connextra',
+                     fields: { role: '', goal: '', benefit: '' } }, promote_title_shown)
+    end
+
+    it "starts on the team's default template" do
+      update_settings(default_story_template: 'card')
+
+      visit_museum_promote('SHOP-1')
+
+      assert_equal 'card', promote_title_shown[:template]
+    end
+
+    it 'starts the form for promoting several together the same way' do
+      update_settings(default_story_template: 'behaviour')
+
+      visit_together('SHOP-1', 'SHOP-2')
+
+      assert_equal 'behaviour', promote_title_shown[:template]
+    end
+
+    it 'gives the story the title its template builds' do
+      promote_museum_item('SHOP-1', template: 'connextra', fields: guest_checkout, task: @task)
+
+      assert_equal ['As a shopper, I want to check out as a guest, so that I need no account'], story_titles('SHOP-1')
+    end
+
+    it 'builds the title from each of the other templates too' do
+      promote_museum_item('SHOP-1', template: 'card', task: @task,
+        fields: { card_persona: 'Shopper', card_action: 'checks out as a guest' })
+      promote_museum_item('SHOP-2', template: 'behaviour', task: @task,
+        fields: { beh_context: 'paying', beh_persona: 'a shopper', beh_action: 'keep the guest token' })
+
+      assert_equal ['Shopper checks out as a guest', 'When paying, a shopper can keep the guest token'],
+        story_titles('SHOP-1', 'SHOP-2')
+    end
+
+    it 'takes a title written out when that is what was chosen' do
+      promote_museum_item('SHOP-1', template: 'written', title: 'Guests can check out', task: @task)
+
+      assert_equal ['Guests can check out'], story_titles('SHOP-1')
+    end
+
+    it 'promotes nothing when a part of the template is missing, and keeps what was typed' do
+      promote_museum_item('SHOP-1', template: 'connextra', fields: guest_checkout.except(:benefit), task: @task)
+
+      assert_nil museum_item('SHOP-1').story
+      assert_shown('form-errors')
+      assert_equal({ offered: %w[connextra card behaviour written], template: 'connextra',
+                     fields: { role: 'shopper', goal: 'check out as a guest', benefit: '' } }, promote_title_shown)
+    end
+
+    it 'gives several promoted together one story with the title their template builds' do
+      promote_together('SHOP-1', 'SHOP-2', template: 'connextra', fields: guest_checkout, task: @task)
+
+      assert_equal ['As a shopper, I want to check out as a guest, so that I need no account'] * 2,
+        story_titles('SHOP-1', 'SHOP-2')
     end
   end
 

@@ -116,6 +116,41 @@ class Mainline
 
   MAX_MUSEUM_SCENARIOS = 20
 
+  # How a promote form gives its title: through one of the story templates
+  # the new-story form has, or written out.
+  WRITTEN_OUT = 'written'
+  MUSEUM_TITLE_CHOICES = {
+    'connextra' => 'As a... I want to... so that...', 'card' => 'Persona does thing',
+    'behaviour' => 'When... persona can...', WRITTEN_OUT => 'Write it out'
+  }.freeze
+  # Each template's fields, as the new-story form has them: the name it is
+  # posted under, what it is called, an example and how long it may be.
+  MUSEUM_TEMPLATE_FIELDS = {
+    'connextra' => [['role', 'As a', 'Returning Customer', 80], ['goal', 'I want to', 'reorder with one click', 80],
+                    ['benefit', 'So that', 'I save time', 80]],
+    'card'      => [['card_persona', 'Persona', 'Returning Customer', 80], ['card_action', 'Does', 'reorders previous purchase', 120]],
+    'behaviour' => [['beh_context', 'When', 'viewing order history', 80], ['beh_persona', 'Persona', 'Returning Customer', 80],
+                    ['beh_action', 'Can', 'reorder with one click', 80]]
+  }.freeze
+
+  # The template a promote form starts on: the team's default, or the title
+  # written out for an exhibit that arrives with a title already suggested.
+  def museum_start_template(item)
+    return WRITTEN_OUT if item&.proposed?
+
+    STORY_TEMPLATES[TeamConstraint.for_team(@team.id, 'default_story_template', default: 0)] || STORY_TEMPLATES.first
+  end
+
+  # The title a promote form posts, built by its template the way the
+  # new-story form builds one. What was chosen and typed is kept, for showing
+  # the form again when the promotion is refused.
+  def museum_posted_title
+    template, title = template_title
+    @template = MUSEUM_TEMPLATE_FIELDS.key?(template) ? template : WRITTEN_OUT
+    @template_fields = MUSEUM_TEMPLATE_FIELDS.fetch(@template, []).to_h { |name, *| [name, typecast_params.str(name).to_s] }
+    title
+  end
+
   # The source a file is from: the one said, if Mainline reads it. A file
   # dropped with none said is a Mainline file if it is named .json, and a
   # Jira export otherwise.

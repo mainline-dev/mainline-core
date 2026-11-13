@@ -52,6 +52,15 @@ describe 'Maps' do
     assert_page_includes('/docs/tutorial')
   end
 
+  it 'calls a map with nothing on it empty, and does not blame a filter' do
+    create_map
+
+    visit_map
+
+    assert_shown('map-empty')
+    refute_shown('map-no-match')
+  end
+
   it 'map with activities but no stories shows tutorial hint' do
     create_map
     persona = create_persona('User')

@@ -44,6 +44,62 @@ describe 'Ticket Museum cases (browser)' do
     refute_match(/open=/, current_url)
   end
 
+  # Every request the page makes takes this much longer, or never arrives.
+  def with_a_connection(latency: 0, offline: false)
+    page.driver.browser.network.emulate_network_conditions(latency: latency, offline: offline)
+    yield
+  ensure
+    page.driver.browser.network.emulate_network_conditions(latency: 0, offline: false)
+  end
+
+  def key_of(key)
+    %([data-test-id="museum-open-case"][data-key="#{key}"])
+  end
+
+  it 'shows a row as open and busy from the click until its case arrives' do
+    use_browser!
+    visit "/teams/#{@team.id}/museum"
+
+    with_a_connection(latency: 1200) do
+      find(row('SHOP-10')).click
+
+      assert_selector %(#{row('SHOP-10')}[aria-busy="true"] #{key_of('SHOP-10')}[aria-expanded="true"])
+      assert_selector case_of('SHOP-10')
+      assert_no_selector %(#{row('SHOP-10')}[aria-busy="true"])
+    end
+  end
+
+  it 'shuts the row again when its case cannot be fetched' do
+    use_browser!
+    visit "/teams/#{@team.id}/museum"
+
+    with_a_connection(offline: true) do
+      find(row('SHOP-10')).click
+
+      assert_selector %(#{key_of('SHOP-10')}[aria-expanded="false"])
+      assert_no_selector %(#{row('SHOP-10')}[aria-busy="true"])
+      assert_no_selector case_of('SHOP-10')
+    end
+  end
+
+  it 'stays shut when a row is clicked again before its case arrives' do
+    use_browser!
+    visit "/teams/#{@team.id}/museum"
+
+    with_a_connection(latency: 1200) do
+      find(row('SHOP-10')).click
+
+      assert_selector %(#{row('SHOP-10')}[aria-busy="true"])
+      find(row('SHOP-10')).click
+
+      assert_selector %(#{key_of('SHOP-10')}[aria-expanded="false"])
+      assert_no_selector %(#{row('SHOP-10')}[aria-busy="true"])
+      sleep 2
+
+      assert_no_selector case_of('SHOP-10')
+    end
+  end
+
   def press_enter_on(selector)
     execute_script(%(document.querySelector('#{selector}').focus()))
     page.driver.browser.keyboard.type(:Enter)

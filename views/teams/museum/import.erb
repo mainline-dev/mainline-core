@@ -6,7 +6,7 @@
 </div>
 
 <% if @preview %>
-  <p class="lens-help" data-test-id="museum-import-expires" data-hours="<%= @hours_left %>">Nothing has entered the museum yet. If you leave it, it's turned down automatically in <%= @hours_left %> <%= @hours_left == 1 ? 'hour' : 'hours' %>.</p>
+  <p class="lens-help" data-test-id="museum-import-expires" data-hours="<%= @hours_left %>">This is a preview. Nothing has entered the museum yet. If you leave it, it's turned down automatically in <%= @hours_left %> <%= @hours_left == 1 ? 'hour' : 'hours' %>.</p>
 
   <% acquirable = @preview.added + @preview.updated %>
   <% cells = [
@@ -34,10 +34,10 @@
         <%== csrf_tag("/teams/#{@team.id}/museum/imports/#{@import.id}/apply") %>
         <button type="submit" class="btn" data-test-id="museum-import-apply"<% if acquirable.zero? %> disabled<% end %>><% if acquirable.zero? %>Nothing to acquire<% else %>Acquire <%= acquirable %> <%= acquirable == 1 ? 'exhibit' : 'exhibits' %><% end %></button>
       </form>
-      <% unless acquirable.zero? %><p class="mu-decide-note"><%= @preview.added %> new, <%= @preview.updated %> refreshed. You can return it afterwards.</p><% end %>
+      <% unless acquirable.zero? %><p class="mu-decide-note"><%= @preview.added %> new, <%= @preview.updated %> refreshed. They go into the museum, and nothing reaches your map until you promote it. You can return it afterwards.</p><% end %>
       <form method="post" action="/teams/<%= @team.id %>/museum/imports/<%= @import.id %>/cancel">
         <%== csrf_tag("/teams/#{@team.id}/museum/imports/#{@import.id}/cancel") %>
-        <button type="submit" class="btn-ghost" data-test-id="museum-import-cancel">Turn it down</button>
+        <button type="submit" class="mu-danger-outline" data-test-id="museum-import-cancel">Turn it down</button>
       </form>
     </div>
   </div>
@@ -119,9 +119,10 @@
 
 <% if @preview %>
   <% sample = @import.items.first(10) %>
+  <% total = @import.items.size %>
   <% unless sample.empty? %>
-    <section class="mu-sample" data-test-id="museum-import-sample">
-      <h2 class="mu-label">The first <%= sample.size %> exhibits, as they'll be displayed</h2>
+    <section class="mu-sample" data-test-id="museum-import-sample" data-shown="<%= sample.size %>" data-total="<%= total %>">
+      <h2 class="mu-label">A sample: the first <%= sample.size %> of <%= total %>, as they'll be displayed</h2>
       <% sample.each do |item| %>
         <div class="mu-sample-row">
           <span class="mu-key"><%= item['source_key'] %></span>
@@ -130,6 +131,10 @@
           <span><% item['labels'].each do |label| %><span class="mu-chip"><%= label %></span> <% end %></span>
           <span class="mu-date"><%= item['source_created_at']&.slice(0, 10) %></span>
         </div>
+      <% end %>
+      <% if total > sample.size %>
+        <%# Everything in the file is acquired when nothing is left as it is; otherwise only the new and refreshed. %>
+        <p class="mu-backbone-note mu-sample-more" data-test-id="museum-import-sample-more" data-count="<%= total - sample.size %>"><%= total - sample.size %> more <%= total - sample.size == 1 ? 'is' : 'are' %> in the file.<% if acquirable == total %> All <%= total %> are acquired together.<% elsif acquirable.positive? %> The <%= acquirable %> new or refreshed are acquired together.<% end %></p>
       <% end %>
     </section>
   <% end %>

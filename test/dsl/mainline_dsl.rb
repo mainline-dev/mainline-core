@@ -505,9 +505,11 @@ module MainlineDSL
     driver.leaving_keys_shown
   end
 
-  def promote_together(*keys, title:, task:, scenarios: [], return_to: nil)
+  # template and fields are a story template and what was typed into it, as
+  # on the new-story form. Without one, the title is written out.
+  def promote_together(*keys, task:, title: nil, scenarios: [], return_to: nil, template: nil, fields: {})
     driver.promote_together(@team, keys.map { |key| museum_item(key).id }, title: title, task_id: task.id, scenarios: scenarios,
-      return_to: return_to)
+      return_to: return_to, template: template, fields: fields)
   end
 
   def story_exhibits(title)
@@ -545,9 +547,9 @@ module MainlineDSL
   end
 
   # Scenarios as [given, when, then] triples.
-  def promote_museum_item(key, title:, task:, scenarios: [], return_to: nil)
+  def promote_museum_item(key, task:, title: nil, scenarios: [], return_to: nil, template: nil, fields: {})
     driver.promote_museum_item(@team, museum_item(key), title: title, task_id: task.id, scenarios: scenarios,
-      return_to: return_to)
+      return_to: return_to, template: template, fields: fields)
   end
 
   def story_scenarios(title)
@@ -711,6 +713,12 @@ module MainlineDSL
   # scenario card as [name, given, when, then].
   def promote_form_shown
     driver.promote_form_shown
+  end
+
+  # How the promote form's title is to be given: the template chosen
+  # ('written' for a title written out) and what its fields hold.
+  def promote_title_shown
+    driver.promote_title_shown
   end
 
   # Where each exhibit on the page came from, by key.
