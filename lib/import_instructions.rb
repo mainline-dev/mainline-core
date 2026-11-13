@@ -43,6 +43,8 @@ module ImportInstructions
 
     You are turning a specification, a plan or research into a Mainline import file. Mainline is a project tool built around a user story map. The file proposes stories. A person will read each one in Mainline and decide what to keep, reword or drop, so write for that reader.
 
+    If you have not been given a specification, a plan or research to work from, ask for it and write nothing. Never invent entries.
+
     ## What to produce
 
     One JSON file and nothing else. It must pass the JSON Schema at the end of these instructions. A file that fails is refused whole, with a list of what to correct.
@@ -56,13 +58,17 @@ module ImportInstructions
     - Put the entries in the order they would be built, with the thinnest working version of the product first.
     - Give every entry a `source` saying where in the document it came from, and a `why`.
     - Give every entry a `key` of your own, such as SHOP-GUEST-01. When you revise a file you wrote before, keep every entry's key as it was. Mainline then refreshes the entry and does not add it a second time.
-    - A file holds at most #{MainlineFile::MAX_ENTRIES} entries. Fewer is better: propose what would be built first.
+    - A file holds at most #{MainlineFile::MAX_ENTRIES} entries. Cover everything in the document that someone could see or do, in the order it would be built.
   TEXT
 
   BACKBONE = <<~TEXT
     ## The map
 
     A story sits under a step, and a step under an activity. Activities run left to right in the order someone meets them. To propose a map, name the `map`, list its `personas`, and give its `activities`, each with the personas it is for and its `steps`. Give each entry a `suggested` activity and step.
+  TEXT
+
+  EXISTING = <<~TEXT
+    This team's maps already have these activities and steps. Where an entry fits one, suggest it, spelled the same way. Where none fits, propose a new activity or step under `activities`. If the document is about a product that is not on these maps, give it a map of its own, named after the product.
   TEXT
 
   def self.for(team_id:)
@@ -82,8 +88,7 @@ module ImportInstructions
     lines = maps.flat_map { |map| ["Map: #{map.name}", *activity_lines(map)] }
     return if lines.empty?
 
-    "This team's maps already have these activities and steps. Where an entry fits one, suggest it, spelled the same way.\n\n" \
-      "#{lines.join("\n")}\n"
+    "#{EXISTING}\n#{lines.join("\n")}\n"
   end
 
   def self.activity_lines(map)

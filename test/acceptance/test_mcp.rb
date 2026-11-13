@@ -286,6 +286,39 @@ describe 'MCP server' do
     assert_nil @team.mcp_token
   end
 
+  # The account holder may pay for and run a team without working on it. The
+  # token is theirs alone to create, so its page opens for them either way.
+  describe 'an account holder who is not working on the team' do
+    before do
+      @holder = Person.create(name: 'Buyer', email: 'buyer@corp.co')
+      TeamMembership.create(team_id: @team.id, person_id: @holder.id, working: false)
+      @team.update(creator_id: @holder.id)
+      login_as(@holder)
+    end
+
+    it 'opens the MCP page' do
+      assert_equal 200, visit_mcp_token_settings.status
+    end
+
+    it 'creates the token, and an agent connects with it' do
+      generate_mcp_token
+
+      refute_nil @team.mcp_token
+      assert_equal 200, connect_mcp_client(host: ENV.fetch('MAINLINE_HOST'), token: @mcp_token).status
+    end
+  end
+
+  it 'still sends a member who is not working, and is not the account holder, back to the team page' do
+    watcher = Person.create(name: 'Watcher', email: 'watcher@corp.co')
+    TeamMembership.create(team_id: @team.id, person_id: watcher.id, working: false)
+    login_as(watcher)
+
+    visited = visit_mcp_token_settings
+
+    assert_equal 302, visited.status
+    assert_equal "/teams/#{@team.id}", URI(visited.headers['Location']).path
+  end
+
   it 'rotating the MCP token records an event' do
     generate_mcp_token
 

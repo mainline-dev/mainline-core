@@ -374,7 +374,10 @@ class Mainline
         end
       end
 
-      unless @membership.working
+      # The MCP token is the account holder's alone to create, so its page
+      # opens for them whether or not they work on the team.
+      holder_at_mcp_token = @is_creator && r.remaining_path.start_with?('/mcp_token')
+      unless @membership.working || holder_at_mcp_token
         flash['notice'] = 'Join as a working member to access this page'
         next r.redirect("/teams/#{@team.id}")
       end

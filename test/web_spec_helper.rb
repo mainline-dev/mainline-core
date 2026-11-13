@@ -46,7 +46,9 @@ Capybara.register_driver(:cuprite) do |app|
     app,
     browser_options:           { 'no-sandbox': nil },
     headless:                  ENV['HEADED'] != '1',
-    pending_connection_errors: false
+    pending_connection_errors: false,
+    # Chrome can take longer than the default 10 seconds to start on a cold CI runner.
+    process_timeout:           30
   )
 end
 Capybara.javascript_driver = :cuprite

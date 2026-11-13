@@ -50,4 +50,5 @@ group :test do
   gem 'rubocop-sequel', require: false
   gem 'rubocop-minitest', require: false
   gem 'mutant-minitest'
+  gem 'slopbouncer', require: false
 end

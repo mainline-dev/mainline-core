@@ -24,6 +24,8 @@ module MainlineFile
   KEY = /\A[A-Z][A-Z0-9_]*(-[A-Z0-9_]+)+\z/
   CONTROL = /[\x00-\x08\x0B-\x1F\x7F]/
   BYTE_ORDER_MARK = "\uFEFF"
+  # How a chat tool prints a file in its reply. Saved whole, the reply is not JSON.
+  FENCE = /\A\s*```/
   # What a schema check calls a problem, in the words the rest of the app uses.
   PROBLEMS = {
     'required' => 'missing', 'maxLength' => 'too_long', 'minLength' => 'empty', 'pattern' => 'wrong_shape',
@@ -44,6 +46,7 @@ module MainlineFile
     'repeated'    => 'uses a key another entry already uses',
     'taken'       => 'uses a key that an exhibit from somewhere else already has',
     'not_json'    => 'could not be read as JSON',
+    'fenced'      => 'is wrapped in a code fence. Remove its first and last lines, the ones that start with ```',
     'too_big'     => 'is over 10 MB'
   }.freeze
 
@@ -51,7 +54,7 @@ module MainlineFile
     return refused([problem('', 'file', 'too_big')]) if json.bytesize > MAX_BYTES
 
     file = parse(json)
-    return refused([problem('', 'file', 'not_json')]) unless file
+    return refused([problem('', 'file', unreadable(json))]) unless file
 
     problems = schema_problems(file)
     problems = repeated_keys(file) + unlisted_personas(file) if problems.empty?
@@ -90,6 +93,14 @@ module MainlineFile
     file if file.is_a?(Hash)
   rescue JSON::ParserError
     nil
+  end
+
+  # Why a file that is not JSON is not: the commonest reason has its own name,
+  # so the person is told what to take out.
+  def self.unreadable(json)
+    json.dup.force_encoding(Encoding::UTF_8).delete_prefix(BYTE_ORDER_MARK).match?(FENCE) ? 'fenced' : 'not_json'
+  rescue ArgumentError
+    'not_json'
   end
 
   def self.schema
@@ -192,6 +203,6 @@ module MainlineFile
     clean(text).split.join(' ')
   end
 
-  private_class_method :problem, :subject, :refused, :parse, :schema, :schema_problems, :problems_in, :located,
+  private_class_method :problem, :subject, :refused, :parse, :unreadable, :schema, :schema_problems, :problems_in, :located,
     :field, :repeated_keys, :unlisted_personas, :backbone, :names, :item, :suggested, :clean, :line
 end

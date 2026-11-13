@@ -29,8 +29,27 @@ describe 'Ticket Museum promote form (browser)' do
     %w[given when then].map { |part| card.find(%(textarea[name$="[#{part}]"])).value }
   end
 
+  # The box for a title written out. A ticket's form starts on the team's
+  # story template, so this chooses "Write it out" first.
   def title_field
+    write_it_out
     find('[data-test-id="museum-promote-form"] input[name="title"]')
+  end
+
+  def template_picker
+    find('[data-test-id="museum-promote-form"] [data-test-id="museum-template"]')
+  end
+
+  def write_it_out
+    choose_template('written') unless template_picker.value == 'written'
+  end
+
+  def choose_template(name)
+    template_picker.find(%(option[value="#{name}"])).select_option
+  end
+
+  def template_box(name)
+    find(%([data-test-id="museum-promote-form"] input[name="#{name}"]))
   end
 
   def promote_row(key)
@@ -55,7 +74,7 @@ describe 'Ticket Museum promote form (browser)' do
 
     assert_selector '[data-test-id="museum-case"][data-key="SHOP-22"] [data-test-id="museum-promote-form"]'
     assert_current_path(/open=SHOP-22/, url: true)
-    assert_equal 'title', evaluate_script('document.activeElement.name')
+    assert_equal 'role', evaluate_script('document.activeElement.name')
 
     title_field.set('Shoppers can filter results by price')
     find('[data-test-id="museum-promote-submit"]').click
@@ -96,6 +115,7 @@ describe 'Ticket Museum promote form (browser)' do
 
     it 'keeps what the buttons did as well as what was typed' do
       promote_row('SHOP-22')
+      write_it_out
       find('[data-test-id="museum-fill-title"]').click
       find('[data-test-id="museum-add-scenario"]').click
       all('[data-test-id="museum-scenario"] [data-remove-scenario]').first.click
@@ -197,8 +217,25 @@ describe 'Ticket Museum promote form (browser)' do
       assert_no_selector %([data-test-id="museum-item"][data-key="#{@first}"])
       assert_selector %([data-test-id="museum-case"][data-key="#{@second}"] [data-test-id="museum-promote-form"])
       assert_current_path(/open=#{@second}/, url: true)
-      assert_equal 'title', evaluate_script('document.activeElement.name')
+      assert_equal 'role', evaluate_script('document.activeElement.name')
       assert evaluate_script('window.stayed')
+    end
+
+    it 'fetches the next exhibit once, so its form is not replaced under the person typing' do
+      promote_row(@first)
+      execute_script(<<~JS)
+        window.caseAsks = 0;
+        document.addEventListener('htmx:beforeRequest', function(e) {
+          if (e.detail.pathInfo.requestPath.indexOf('/case') > -1) window.caseAsks += 1;
+        });
+      JS
+      title_field.set('Shoppers can filter results by price')
+      find('[data-test-id="museum-promote-submit"]').click
+
+      assert_selector %([data-test-id="museum-case"][data-key="#{@second}"] [data-test-id="museum-promote-form"])
+      sleep 0.5
+
+      assert_equal 1, evaluate_script('window.caseAsks')
     end
 
     it 'shows a refusal and keeps what was written' do
@@ -262,6 +299,7 @@ describe 'Ticket Museum promote form (browser)' do
 
   it 'starts from the Jira summary when asked, counting the title' do
     open_promote_page
+    write_it_out
 
     find('[data-test-id="museum-fill-title"]').click
 
@@ -272,13 +310,65 @@ describe 'Ticket Museum promote form (browser)' do
   it 'warns about ticket-speak and goes quiet once the title says what someone can do' do
     open_promote_page
 
-    title_field.set('As a user I want to filter by price')
+    title_field.set('[BE] Filter by price')
 
     assert_selector '[data-test-id="museum-hint"]'
 
     title_field.set('Shoppers can filter results by price')
 
     assert_no_selector '[data-test-id="museum-hint"]'
+  end
+
+  it "says nothing against a title written the way the app's own template writes one" do
+    open_promote_page
+
+    title_field.set('As a shopper, I want to filter by price, so that I save')
+
+    assert_no_selector '[data-test-id="museum-hint"]'
+  end
+
+  describe 'giving the title through a story template' do
+    it "starts on the template's boxes, and shows only the boxes of the one chosen" do
+      open_promote_page
+
+      assert_selector 'input[name="role"]'
+      assert_no_selector 'input[name="title"]'
+
+      choose_template('card')
+
+      assert_selector 'input[name="card_persona"]'
+      assert_no_selector 'input[name="role"]'
+
+      choose_template('written')
+
+      assert_selector 'input[name="title"]'
+      assert_no_selector 'input[name="card_persona"]'
+    end
+
+    it 'promotes with the title the template builds from what was typed' do
+      open_promote_page
+      template_box('role').set('shopper')
+      template_box('goal').set('filter by price')
+      template_box('benefit').set('I save')
+      find('[data-test-id="museum-promote-submit"]').click
+
+      assert_selector '[data-test-id="flash-notice"]'
+      assert_equal 'As a shopper, I want to filter by price, so that I save', museum_item('SHOP-22').story.title
+    end
+
+    it 'keeps a half-filled template for this tab, with the template that was chosen' do
+      use_browser!
+      visit "/teams/#{@team.id}/museum"
+      promote_row('SHOP-22')
+      choose_template('card')
+      template_box('card_persona').set('Shopper')
+
+      page.refresh
+
+      assert_selector '[data-test-id="museum-case"][data-key="SHOP-22"]'
+      assert_equal 'card', template_picker.value
+      assert_equal 'Shopper', template_box('card_persona').value
+    end
   end
 
   it 'leaves a title alone when a ticket is the thing someone gets' do

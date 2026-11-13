@@ -4,7 +4,7 @@
 # share of its mutations more than 2 points below its share here. To
 # accept a new number for a class, measure it again:
 # scripts/mutation.sh AssignPerson
-measured_on: '2026-11-12'
+measured_on: '2026-11-13'
 classes:
   AssignPerson: { mutations: 959, killed: 727, alive: 232 }
   BusinessDays: { mutations: 66, killed: 66, alive: 0 }
@@ -49,3 +49,34 @@ classes:
   TeamConstraint: { mutations: 0, killed: 0, alive: 0 }
   TeamMembership: { mutations: 0, killed: 0, alive: 0 }
   Team: { mutations: 0, killed: 0, alive: 0 }
+  AddScenario: { mutations: 220, killed: 190, alive: 30 }
+  AddToStory: { mutations: 281, killed: 247, alive: 34 }
+  ArchivePersona: { mutations: 184, killed: 171, alive: 13 }
+  ArchiveStory: { mutations: 123, killed: 105, alive: 18 }
+  CIMonitor::BranchAge: { mutations: 298, killed: 270, alive: 28 }
+  CIMonitor::Status: { mutations: 151, killed: 143, alive: 8 }
+  CreateActivity: { mutations: 331, killed: 313, alive: 18 }
+  CreatePersona: { mutations: 193, killed: 185, alive: 8 }
+  CreateStory: { mutations: 290, killed: 257, alive: 33 }
+  CreateTask: { mutations: 245, killed: 233, alive: 12 }
+  DiscardMuseumItem: { mutations: 326, killed: 294, alive: 32 }
+  EditActivity: { mutations: 309, killed: 291, alive: 18 }
+  EditPersona: { mutations: 330, killed: 307, alive: 23 }
+  EditTask: { mutations: 272, killed: 260, alive: 12 }
+  FeatureFile: { mutations: 169, killed: 151, alive: 18 }
+  ImportInstructions: { mutations: 219, killed: 171, alive: 48 }
+  ImportToMuseum: { mutations: 1831, killed: 1389, alive: 442 }
+  JiraCsv: { mutations: 1548, killed: 1020, alive: 528 }
+  JiraMarkup: { mutations: 506, killed: 461, alive: 45 }
+  LetGo: { mutations: 936, killed: 852, alive: 84 }
+  LetGoPrompt: { mutations: 191, killed: 182, alive: 9 }
+  LetGoReview: { mutations: 1154, killed: 1064, alive: 90 }
+  MainlineFile: { mutations: 1473, killed: 1187, alive: 286 }
+  MuseumList: { mutations: 881, killed: 794, alive: 87 }
+  PromoteMuseumItem: { mutations: 767, killed: 700, alive: 67 }
+  RemoveUnverifiedAccounts: { mutations: 91, killed: 89, alive: 2 }
+  SignedState: { mutations: 285, killed: 243, alive: 42 }
+  SignupTimer: { mutations: 86, killed: 84, alive: 2 }
+  StepStubs: { mutations: 822, killed: 796, alive: 26 }
+  StoryPicker: { mutations: 816, killed: 730, alive: 86 }
+  UnpromoteMuseumItem: { mutations: 232, killed: 187, alive: 45 }

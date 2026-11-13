@@ -78,13 +78,14 @@
       <h2 class="mu-label">Stories proposed from a specification</h2>
       <ol class="mu-guide-steps">
         <li>Copy the instructions: <button type="button" class="preview-copy-id" data-copy="<%= @instructions %>" data-tooltip="Copy the instructions for your LLM" data-test-id="museum-instructions-copy">Copy instructions</button></li>
-        <li>Give them to your LLM along with the specification, plan or research.</li>
+        <li>Give them to your LLM together with your own specification, plan or research. The instructions alone hold nothing about your project.</li>
         <li>Drop the file it writes here.</li>
       </ol>
       <div class="mu-guide-notes">
         <p>Each entry arrives as an exhibit. Nothing is a story, and no draft is a scenario, until you promote it.</p>
         <p>The instructions name the activities and steps on your maps, so the file can suggest where each story belongs. The file is checked against <a href="/schemas/import-1.json">the published schema</a>, and one with anything wrong is turned away whole, with a list to hand back to the model.</p>
         <p>When you revise a file, keep its keys: entries are refreshed, and none is added twice.</p>
+        <p><a data-test-id="museum-how-it-works" href="https://mainline.dev/docs/spec-to-map">How this works</a></p>
       </div>
     </section>
   <% else %>

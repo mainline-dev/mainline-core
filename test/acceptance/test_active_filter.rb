@@ -29,6 +29,39 @@ describe 'Active filter' do
     assert_page_includes('Verify email')
   end
 
+  # A map is empty when there is nothing on it. A filter that leaves nothing
+  # to show is another matter: the page says so and offers everything back.
+  describe 'when nothing on the map is active' do
+    before do
+      create_map(name: 'Quiet')
+      later = create_activity('Later', for_personas: [create_persona('Guest')])
+      create_story('Wait', under_task: create_task('Queue', under_activity: later))
+    end
+
+    it 'does not call the map empty' do
+      visit_map_active
+
+      refute_shown('map-empty')
+      refute_page_includes('getting-started-hint')
+    end
+
+    it 'says nothing matches, with a way to see everything' do
+      visit_map_active
+
+      assert_shown('map-no-match')
+      assert_shown('map-show-all')
+    end
+
+    it 'shows the stories again from that link' do
+      visit_map_active
+
+      follow_museum_link('map-show-all')
+
+      assert_page_includes('Wait')
+      refute_shown('map-no-match')
+    end
+  end
+
   it 'active filter hides planned stories' do
     visit_map_active
 

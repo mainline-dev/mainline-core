@@ -34,6 +34,21 @@ describe 'CI runs every test layer' do
     assert_includes local_script, 'rake mutant_changed'
   end
 
+  # Slopbouncer reads the commits being pushed and lists the tests they made
+  # weaker. It reports and does not stop the push, and it comes before
+  # mutation testing because it takes a second and mutation testing minutes.
+  it 'lists the tests a push made weaker in the local run, before mutation testing' do
+    assert_includes local_script, 'bundle exec slopbouncer origin/master..HEAD'
+    assert_operator local_script.index('bundle exec slopbouncer'), :<, local_script.index('rake mutant_changed')
+  end
+
+  # Slopbouncer runs inside the container, where it cannot see the terminal,
+  # so the script says when a person is watching and asks for the laid-out,
+  # coloured report. A run sent to a file keeps the plain lines.
+  it 'asks for the coloured report only when the run is shown in a terminal' do
+    assert_match(/\[ -t 1 \].*--color/, local_script)
+  end
+
   it 'runs lint, model and acceptance tests in CI' do
     assert_includes ci_commands, './scripts/ci_test.sh'
   end

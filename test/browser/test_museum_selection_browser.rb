@@ -82,6 +82,7 @@ describe 'Ticket Museum selection (browser)' do
     assert_selector '[data-test-id="museum-leaving"] [data-leaving]', count: 3
     assert_selector '[data-test-id="museum-promote-submit"][data-count="2"]'
 
+    find('[data-test-id="museum-promote-form"] [data-test-id="museum-template"] option[value="written"]').select_option
     find('[data-test-id="museum-promote-form"] input[name="title"]').set('Guests can check out without an account')
     find('[data-test-id="museum-promote-submit"]').click
 

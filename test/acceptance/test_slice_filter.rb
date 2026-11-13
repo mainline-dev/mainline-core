@@ -33,6 +33,15 @@ describe 'Slice filter' do
     assert_page_includes('Enter card')
   end
 
+  it 'does not call the map empty when the slice it is filtered to has no stories' do
+    empty = create_release_slice('Someday')
+
+    driver.visit_map_with_params(@map, slice_filter: empty.id)
+
+    refute_shown('map-empty')
+    assert_shown('map-no-match')
+  end
+
   it 'slice filter shows only stories in that slice' do
     driver.visit_map_with_params(@map, slice_filter: @slice.id)
 

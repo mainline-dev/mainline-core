@@ -774,7 +774,7 @@ document.addEventListener('click', function(e) {
     search.focus();
     htmx.trigger(search, 'open-picker');
   } else {
-    var title = slot.querySelector('[data-title]');
+    var title = museumFirstTitleField(slot);
     if (title) title.focus();
   }
 });
@@ -830,26 +830,70 @@ document.addEventListener('click', function(e) {
   }
 });
 
+// The row looks open and says it is busy from the click, so a slow
+// connection never looks like a click that missed.
 function openMuseumCase(row, opened) {
   document.querySelectorAll('.mu-row.is-open').forEach(closeMuseumCase);
   var list = new URL(window.location.href);
   list.searchParams.delete('open');
   var returnTo = encodeURIComponent(list.pathname + list.search);
-  var slot = museumCaseSlot(row);
-  htmx.ajax('GET', row.getAttribute('data-case') + '?return_to=' + returnTo, { target: slot, swap: 'innerHTML' }).then(function() {
-    if (!slot.firstElementChild) return;
-    row.classList.add('is-open');
-    row.querySelector('.mu-caret').textContent = '▾';
-    row.querySelector('[data-open-case]').setAttribute('aria-expanded', 'true');
-    keepOpenMuseumCase(row.getAttribute('data-key'));
-    if (opened) opened();
+  row.classList.add('is-open');
+  row.querySelector('.mu-caret').textContent = '▾';
+  row.querySelector('[data-open-case]').setAttribute('aria-expanded', 'true');
+  row.setAttribute('aria-busy', 'true');
+  row.museumCaseOpened = opened;
+  htmx.ajax('GET', row.getAttribute('data-case') + '?return_to=' + returnTo, { target: museumCaseSlot(row), swap: 'innerHTML' })
+    .catch(function() { /* the request's own end, below, shuts the row */ });
+}
+
+// A case's request has ended, with the case or without it. A request waits
+// its turn behind one already on its way, so this goes by what the row looks
+// like now: shut since it was asked for, and nothing is left underneath it;
+// still waiting, and it settles open, or shut again if no case came.
+document.addEventListener('htmx:afterRequest', function(e) {
+  var slot = e.detail && e.detail.target;
+  if (!slot || !slot.classList || !slot.classList.contains('mu-case-slot')) return;
+  var row = slot.previousElementSibling;
+  while (row && !(row.matches && row.matches('.mu-row[data-case]'))) row = row.previousElementSibling;
+  if (!row) return;
+  if (!row.classList.contains('is-open')) { slot.innerHTML = ''; return; }
+  if (row.getAttribute('aria-busy') !== 'true') return;
+  row.removeAttribute('aria-busy');
+  if (!slot.firstElementChild) { closeMuseumCase(row); return; }
+  keepOpenMuseumCase(row.getAttribute('data-key'));
+  if (row.museumCaseOpened) row.museumCaseOpened();
+  row.museumCaseOpened = null;
+});
+
+function focusMuseumTitle(row) {
+  var first = museumFirstTitleField(museumCaseSlot(row));
+  if (first) first.focus();
+}
+
+// The first box of whichever way of giving the title is showing: a
+// template's first field, or the title written out.
+function museumFirstTitleField(within) {
+  return within.querySelector('[data-template-fields]:not([hidden]) input');
+}
+
+// Ticket Museum rewrite form: the title is given through a story template or
+// written out. Only the chosen one's boxes show and are sent.
+function museumShowTemplate(form, chosen) {
+  form.querySelectorAll('[data-template-fields]').forEach(function(group) {
+    var showing = group.getAttribute('data-template-fields') === chosen;
+    group.hidden = !showing;
+    group.querySelectorAll('input').forEach(function(input) { input.disabled = !showing; });
   });
 }
 
-function focusMuseumTitle(row) {
-  var title = museumCaseSlot(row).querySelector('[data-title]');
-  if (title) title.focus();
-}
+document.addEventListener('change', function(e) {
+  if (!e.target.matches || !e.target.matches('[data-rewrite] [data-template]')) return;
+  var form = e.target.closest('[data-rewrite]');
+  museumShowTemplate(form, e.target.value);
+  if (form.matches('[data-draft]')) museumSaveDraft(form);
+  var first = museumFirstTitleField(form);
+  if (first) first.focus();
+});
 
 function museumCaseSlot(row) {
   var next = row.nextElementSibling;
@@ -859,6 +903,7 @@ function museumCaseSlot(row) {
 
 function closeMuseumCase(row) {
   row.classList.remove('is-open');
+  row.removeAttribute('aria-busy');
   row.querySelector('.mu-caret').textContent = '▸';
   row.querySelector('[data-open-case]').setAttribute('aria-expanded', 'false');
   var slot = museumCaseSlot(row);
@@ -877,12 +922,6 @@ function keepOpenMuseumCase(key) {
 var TICKET_SPEAK = [
   { pattern: /^\s*\[(BE|FE|API|DB|QA|UI)\]/i,
     message: function(match) { return '[' + match[1].toUpperCase() + '] is how Jira splits work. Say what changes for the person.'; } },
-  { pattern: /^\s*as an? .+? i want( to)?\s*/i,
-    message: function() { return '"As a user I want" is ticket-speak. Say what someone can do.'; },
-    suggest: function(title, match) {
-      var rest = title.slice(match[0].length).replace(/\s*,?\s*so that.*$/i, '').trim();
-      return rest ? rest.charAt(0).toUpperCase() + rest.slice(1) : '';
-    } },
   { pattern: /^\s*(refactor|upgrade|migrate|bump|clean ?up|tech debt)\b/i,
     message: function() { return 'Sounds like a tech task. Add it to the story it makes possible, or send it to storage.'; } },
   { pattern: /\b(implement|create endpoint|add column)\b/i,
@@ -944,8 +983,14 @@ function museumSaveDraft(form) {
     return Array.prototype.map.call(card.querySelectorAll('textarea'), function(box) { return box.value; });
   });
   var title = form.querySelector('[data-title]').value;
-  var written = title || scenarios.some(function(parts) { return parts.some(Boolean); });
-  var draft = { title: title, task_id: form.querySelector('[name="task_id"]').value, scenarios: scenarios };
+  var picker = form.querySelector('[data-template]');
+  var fields = {};
+  form.querySelectorAll('[data-template-fields] input:not([data-title])').forEach(function(input) {
+    if (input.value) fields[input.name] = input.value;
+  });
+  var written = title || Object.keys(fields).length || scenarios.some(function(parts) { return parts.some(Boolean); });
+  var draft = { title: title, template: picker && picker.value, fields: fields,
+                task_id: form.querySelector('[name="task_id"]').value, scenarios: scenarios };
   try {
     if (written) sessionStorage.setItem(form.getAttribute('data-draft'), JSON.stringify(draft));
     else sessionStorage.removeItem(form.getAttribute('data-draft'));
@@ -964,6 +1009,15 @@ function museumRestoreDraft(form) {
   var title = form.querySelector('[data-title]');
   title.value = draft.title;
   museumRewriteTitle(title);
+  var picker = form.querySelector('[data-template]');
+  if (picker && draft.template) {
+    picker.value = draft.template;
+    museumShowTemplate(form, picker.value);
+  }
+  Object.keys(draft.fields || {}).forEach(function(name) {
+    var input = form.querySelector('[data-template-fields] input[name="' + name + '"]');
+    if (input) input.value = draft.fields[name];
+  });
   var task = form.querySelector('[name="task_id"]');
   if (task.querySelector('option[value="' + draft.task_id + '"]')) task.value = draft.task_id;
   var list = form.querySelector('[data-scenario-list]');
@@ -1007,6 +1061,10 @@ document.addEventListener('htmx:beforeSwap', function(e) {
 document.addEventListener('htmx:afterSwap', function(e) {
   var form = museumFormInPlace(e);
   if (!form || !form.promoted) return;
+  // One redraw says it has swapped once for each piece it brought. The next
+  // exhibit is opened for the first, or its form would be fetched and drawn
+  // again under a person already typing in it.
+  form.promoted = false;
   var draft = form.getAttribute('data-draft') || form.getAttribute('data-draft-key');
   try { sessionStorage.removeItem(draft); } catch (err) { /* nothing was kept */ }
   keepOpenMuseumCase(null);

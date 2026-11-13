@@ -176,7 +176,7 @@ class Mainline
       end
 
       r.post 'promote' do
-        @title = typecast_params.nonempty_str('title')
+        @title = museum_posted_title
         @selected_task_id = typecast_params.nonempty_str('task_id')
         @scenarios = museum_scenarios(r.params['scenarios'])
         task_id = @selected_task_id if @selected_task_id&.match?(MUSEUM_ID)
@@ -307,7 +307,7 @@ class Mainline
         end
 
         r.post do
-          @title = typecast_params.nonempty_str('title')
+          @title = museum_posted_title
           @selected_task_id = typecast_params.nonempty_str('task_id')
           @scenarios = museum_scenarios(r.params['scenarios'])
           task_id = @selected_task_id if @selected_task_id&.match?(MUSEUM_ID)

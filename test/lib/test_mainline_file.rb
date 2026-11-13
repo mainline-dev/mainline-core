@@ -54,6 +54,24 @@ describe MainlineFile do
     assert_equal ['Both kept', 'c d'], item[:suggested]['scenarios'].first.values_at('name', 'then')
   end
 
+  it 'says a file saved with a code fence round it is fenced, where it would otherwise say it is not JSON' do
+    fenced = MainlineFile.read("```json\n#{MainlineFileFixture.json({ key: 'RB-1' })}\n```\n")
+
+    refute_predicate fenced, :success?
+    assert_equal [{ 'entry' => '', 'field' => 'file', 'problem' => 'fenced' }], fenced.problems
+    assert_equal 1, fenced.errors.size
+  end
+
+  it 'says so too when the fence has no language named or is indented' do
+    fenced = MainlineFile.read("  ```\n#{MainlineFileFixture.json({ key: 'RB-1' })}\n```")
+
+    assert_equal [{ 'entry' => '', 'field' => 'file', 'problem' => 'fenced' }], fenced.problems
+  end
+
+  it 'still says a file that is neither JSON nor fenced is not JSON' do
+    assert_equal [{ 'entry' => '', 'field' => 'file', 'problem' => 'not_json' }], MainlineFile.read('Summary,Issue key').problems
+  end
+
   it 'refuses a file over 10 MB without reading it' do
     read = MainlineFile.read('x' * (MainlineFile::MAX_BYTES + 1))
 

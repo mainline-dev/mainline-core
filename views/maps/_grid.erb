@@ -9,11 +9,17 @@
   end
 %>
 <div class="map-grid-container">
-<% if @grid.grid_activities.empty? %>
-  <p class="empty-state">
+<% if @activities.empty? %>
+  <p class="empty-state" data-test-id="map-empty">
     An empty map. Add a persona -- the kind of person you're building for. Then the activities they do.
   </p>
   <p class="getting-started-hint">New here? Follow the <a href="https://mainline.dev/docs/tutorial">tutorial</a> to build your first map.</p>
+<% elsif @grid.grid_activities.empty? %>
+  <%# The map has activities and the filters leave none of them to show. %>
+  <p class="empty-state" data-test-id="map-no-match">
+    Nothing on this map matches the filters.
+    <a href="/maps/<%= @map.id %>?active=0&amp;slice_filter=" data-test-id="map-show-all">Show everything</a>
+  </p>
 <% else %>
   <div class="map-grid" data-map-id="<%= @map.id %>" data-team-id="<%= @current_team.id %>" style="--cols: <%= @grid.total_cols %>; grid-template-columns: repeat(<%= @grid.total_cols %>, minmax(220px, 280px));">
     <% last_act_idx = @grid.grid_activities.length - 1 %>

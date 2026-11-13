@@ -5,31 +5,62 @@ integration:
 
 requires:
   - ./models
+  - ./lib/add_scenario
+  - ./lib/add_to_story
+  - ./lib/archive_persona
+  - ./lib/archive_story
   - ./lib/assign_person
   - ./lib/business_days
   - ./lib/bypass_rls
-  - ./lib/record_event
+  - ./lib/ci_monitor/branch_age
+  - ./lib/ci_monitor/status
+  - ./lib/create_activity
+  - ./lib/create_persona
+  - ./lib/create_story
+  - ./lib/create_task
   - ./lib/cumulative_flow
   - ./lib/data_export
   - ./lib/delete_team
+  - ./lib/discard_museum_item
+  - ./lib/edit_activity
+  - ./lib/edit_persona
+  - ./lib/edit_task
   - ./lib/encrypted_email
   - ./lib/ensemble_timeline
   - ./lib/event_presenter
+  - ./lib/feature_file
   - ./lib/flash_adapter
+  - ./lib/import_instructions
+  - ./lib/import_to_museum
   - ./lib/inventory
+  - ./lib/jira_csv
+  - ./lib/jira_markup
   - ./lib/lead_time
+  - ./lib/let_go
+  - ./lib/let_go_prompt
+  - ./lib/let_go_review
+  - ./lib/mainline_file
   - ./lib/map_grid
+  - ./lib/museum_list
   - ./lib/pairing_matrix
+  - ./lib/promote_museum_item
   - ./lib/rate_limiter
+  - ./lib/record_event
+  - ./lib/remove_unverified_accounts
   - ./lib/reorder_activities
   - ./lib/reorder_stories
   - ./lib/reorder_tasks
   - ./lib/resource_cap
   - ./lib/revoke_oauth_token
   - ./lib/set_team_context
+  - ./lib/signed_state
+  - ./lib/signup_timer
   - ./lib/solo_log
   - ./lib/split_candidate
+  - ./lib/step_stubs
+  - ./lib/story_picker
   - ./lib/throughput_scatter
+  - ./lib/unpromote_museum_item
 
 environment_variables:
   RACK_ENV: test
