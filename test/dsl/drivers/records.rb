@@ -24,6 +24,10 @@ module Records
     person
   end
 
+  def make_account_holder(team, person)
+    team.update(creator_id: person.id)
+  end
+
   def add_observer(team, name:, email:)
     person = Person.create(name: name, email: email, email_verified_at: Time.now)
     TeamMembership.create(team_id: team.id, person_id: person.id, working: false)

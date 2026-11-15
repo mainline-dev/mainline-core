@@ -614,6 +614,24 @@ module MainlineDSL
   end
 
   # Filters: type, label, epic (its key), age and page.
+  def visit_team_page
+    driver.visit_team(@team)
+  end
+
+  # The first steps the team page shows as done, in the order it lists them.
+  def first_steps_done
+    driver.first_steps_done
+  end
+
+  def make_account_holder(person)
+    driver.make_account_holder(@team, person)
+  end
+
+  # As the account holder does it on the MCP token page.
+  def generate_mcp_token
+    driver.submit_generate_mcp_token(@team)
+  end
+
   # Moves the clock on, for scenarios about time passing.
   def days_pass(days)
     Timecop.travel(Time.now + (days * 86_400))

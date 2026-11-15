@@ -1175,6 +1175,10 @@ class HttpDriver
     last_response
   end
 
+  def first_steps_done
+    last_response.body.scan(/data-test-id="first-run-step" data-step="([a-z]+)" data-done="true"/).flatten
+  end
+
   def never_pulled_percent
     last_response.body[/data-test-id="museum-never-pulled" data-percent="(\d+)"/, 1]&.to_i
   end

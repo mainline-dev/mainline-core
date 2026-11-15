@@ -369,6 +369,7 @@ class Mainline
                          else
                            {}
                          end
+          @first_run = FirstRun.for(@team)
           @page_title = "#{@team.name} - Mainline"
           view 'show'
         end

@@ -1,0 +1,25 @@
+<% team_path = "/teams/#{@team.id}" %>
+<% map_path = @maps.any? ? "/maps/#{@maps.first.id}" : '/maps/new' %>
+<%
+  steps = [
+    [:import, 'Bring your backlog.', 'Upload a Jira CSV. Everything arrives frozen in the Ticket Museum.', 'Import a Jira CSV', "#{team_path}/museum/import"],
+    [:promote, "Pull what's real.", "Promote the work you'd start in the next few weeks onto the map.", 'Open the museum', "#{team_path}/museum"],
+    [:slice, 'Shape it into a map.', 'Arrange the stories under the activities they serve, and slice the first release.', 'Open the map', map_path],
+    [:start, 'One story each.', 'Each person starts one story, and nobody starts a second until the first is released.', 'Open the map', map_path],
+    [:agent, 'Connect your coding agent (optional).', 'It reads one story at a time over MCP.', 'Get an MCP token', "#{team_path}/mcp_token"],
+    [:figure, 'Check back in 90 days.', 'Mainline shows how much of the backlog was never pulled.', nil, nil]
+  ]
+%>
+<section class="section first-run" data-test-id="first-run">
+  <p class="first-run-lead">Most backlogs hold far more than any team will ever finish. Let's find out what's real.</p>
+  <ol class="first-run-steps">
+    <% steps.each_with_index do |(key, title, text, action, path), n| %>
+      <% done = @first_run.fetch(key) %>
+      <li class="first-run-step<%= ' is-done' if done %>" data-test-id="first-run-step" data-step="<%= key %>" data-done="<%= done %>">
+        <span class="first-run-tick"><%= done ? "✓" : n + 1 %></span>
+        <span class="first-run-text"><b><%= title %></b> <%= text %></span>
+        <% if action && !done %><a href="<%= path %>" class="first-run-action"><%= action %></a><% end %>
+      </li>
+    <% end %>
+  </ol>
+</section>

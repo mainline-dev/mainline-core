@@ -27,6 +27,7 @@ requires:
   - ./lib/edit_persona
   - ./lib/edit_task
   - ./lib/encrypted_email
+  - ./lib/first_run
   - ./lib/ensemble_timeline
   - ./lib/event_presenter
   - ./lib/feature_file

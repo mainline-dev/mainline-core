@@ -87,3 +87,4 @@ classes:
   ReleaseNotes: { mutations: 274, killed: 269, alive: 5 }
   CIMonitorSetup: { mutations: 67, killed: 67, alive: 0 }
   NeverPulled: { mutations: 121, killed: 115, alive: 6 }
+  FirstRun: { mutations: 137, killed: 130, alive: 7 }
