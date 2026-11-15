@@ -37,13 +37,13 @@
     <% end %>
   </section>
 <% else %>
-  <p>Generate a token to enable your CI pipeline to report deploys automatically.</p>
-  <p><strong>The token will only be displayed once.</strong> Store it somewhere safe before leaving this page.</p>
+  <p>Your pipeline tells Mainline each time it deploys a story.</p>
+  <p>Ship code any time, and choose when users get it.</p>
 
   <% if @is_creator %>
   <form method="post" action="/teams/<%= @team.id %>/webhook">
     <%== csrf_tag('/teams/' + @team.id + '/webhook') %>
-    <button type="submit" class="btn">Generate Token</button>
+    <button type="submit" class="btn">Generate token</button>
   </form>
   <% else %>
     <p class="muted">Only the account holder can generate or rotate this token.</p>

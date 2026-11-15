@@ -51,13 +51,13 @@
     <% end %>
   </section>
 <% else %>
-  <p>Generate a token to enable coding agents to read your story maps.</p>
-  <p><strong>The token will only be displayed once.</strong> Store it somewhere safe before leaving this page.</p>
+  <p>Coding agents read your map, one story at a time, over MCP.</p>
+  <p>Read-only for agents. Your team approves the scenarios and checks them off.</p>
 
   <% if @is_creator %>
   <form method="post" action="/teams/<%= @team.id %>/mcp_token">
     <%== csrf_tag('/teams/' + @team.id + '/mcp_token') %>
-    <button type="submit" class="btn">Generate Token</button>
+    <button type="submit" class="btn">Generate token</button>
   </form>
   <% else %>
     <p class="muted">Only the account holder can generate or rotate this token.</p>

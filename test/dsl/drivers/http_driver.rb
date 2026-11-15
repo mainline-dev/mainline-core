@@ -1175,6 +1175,10 @@ class HttpDriver
     last_response
   end
 
+  def next_to_connect
+    last_response.body[/data-test-id="ladder" data-next="([a-z]+)"/, 1]
+  end
+
   def first_steps_done
     last_response.body.scan(/data-test-id="first-run-step" data-step="([a-z]+)" data-done="true"/).flatten
   end

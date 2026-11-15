@@ -618,6 +618,16 @@ module MainlineDSL
     driver.visit_team(@team)
   end
 
+  # What the team page names as the next thing to connect.
+  def next_to_connect
+    driver.next_to_connect
+  end
+
+  # A GitHub installation of the CI Monitor, already linked to the team.
+  def connect_github
+    driver.connect_github_installation(@team, 1)
+  end
+
   # The first steps the team page shows as done, in the order it lists them.
   def first_steps_done
     driver.first_steps_done

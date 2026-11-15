@@ -370,6 +370,7 @@ class Mainline
                            {}
                          end
           @first_run = FirstRun.for(@team)
+          @ladder = Activation.for(@team) unless @first_run
           @page_title = "#{@team.name} - Mainline"
           view 'show'
         end

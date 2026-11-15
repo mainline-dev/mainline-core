@@ -88,3 +88,4 @@ classes:
   CIMonitorSetup: { mutations: 67, killed: 67, alive: 0 }
   NeverPulled: { mutations: 121, killed: 115, alive: 6 }
   FirstRun: { mutations: 137, killed: 130, alive: 7 }
+  Activation: { mutations: 90, killed: 86, alive: 4 }

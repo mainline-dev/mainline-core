@@ -5,6 +5,7 @@ integration:
 
 requires:
   - ./models
+  - ./lib/activation
   - ./lib/add_scenario
   - ./lib/add_to_story
   - ./lib/archive_persona
