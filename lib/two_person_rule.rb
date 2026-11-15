@@ -59,12 +59,24 @@ module TwoPersonRule
     "#{waiting} stories are waiting for a walkthrough. Walk one through before starting another."
   end
 
-  # Which of these stories two people have seen, by ID.
-  def self.seen_by_two(stories)
-    Event.where(entity_type: RecordEvent.entity_type_for(Story), entity_id: stories.map(&:id),
-      action: ['collaboration_changed', RecordWalkthrough::ACTION]).all
-      .select { |event| event.action == RecordWalkthrough::ACTION || TOGETHER.include?(event.after_state['mode']) }
+  # Which of these stories had two or more people on them at some point, by ID.
+  def self.together(stories)
+    story_events(stories, 'collaboration_changed').select { |event| TOGETHER.include?(event.after_state['mode']) }
       .to_set(&:entity_id)
   end
-  private_class_method :seen_by_two
+
+  # Which of these stories have been walked through, by ID.
+  def self.walked(stories)
+    story_events(stories, RecordWalkthrough::ACTION).to_set(&:entity_id)
+  end
+
+  # Which of these stories two people have seen, by ID.
+  def self.seen_by_two(stories)
+    together(stories) | walked(stories)
+  end
+
+  def self.story_events(stories, action)
+    Event.where(entity_type: RecordEvent.entity_type_for(Story), entity_id: stories.map(&:id), action: action).all
+  end
+  private_class_method :seen_by_two, :story_events
 end

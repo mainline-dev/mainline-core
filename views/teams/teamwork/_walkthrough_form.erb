@@ -1,0 +1,13 @@
+<%# locals: (story:, could_attend:) %>
+<% record_path = "/teams/#{@team.id}/teamwork/walkthroughs" %>
+<form method="post" action="<%= record_path %>" class="walkthrough-form" data-test-id="walkthrough-form" data-story="<%= story.id %>">
+  <%== csrf_tag(record_path) %>
+  <input type="hidden" name="story_id" value="<%= story.id %>">
+  <% could_attend.each do |person| %>
+    <label class="form-label form-label--checkbox">
+      <input type="checkbox" name="attendee_ids[]" class="form-checkbox" data-test-id="walkthrough-attendee" value="<%= person.id %>">
+      <%= person.name %>
+    </label>
+  <% end %>
+  <button type="submit" class="btn btn-sm" data-test-id="walkthrough-record">Record walkthrough</button>
+</form>

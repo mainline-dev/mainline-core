@@ -183,6 +183,33 @@ describe 'The Walkthroughs page' do
     assert_empty walked_not_released
   end
 
+  it 'says so when no deployed story has had two people on it' do
+    visit_walkthroughs
+
+    assert_shown('seen-by-two-none')
+    assert_empty seen_by_two
+  end
+
+  describe 'with a story two people have deployed' do
+    before do
+      @carol = add_person(name: 'Carol')
+      create_map
+      activity = create_activity('Check out', for_personas: [create_persona('Shopper')])
+      @story = create_story('Pay by card', under_task: create_task('Pay', under_activity: activity))
+      assign_person(@story, person: @alice)
+      assign_person(@story, person: @bob)
+      deploy_story(@story)
+    end
+
+    it 'lists it as seen by two people, with a form offering those who were not on it' do
+      visit_walkthroughs
+
+      assert_equal [@story.id], seen_by_two
+      assert_equal [@carol.id], could_attend(@story)
+      assert_empty walkthroughs_needed
+    end
+  end
+
   describe 'with a story one person has deployed' do
     before do
       create_map

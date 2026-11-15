@@ -107,6 +107,13 @@ describe TwoPersonRule do
       refute TwoPersonRule.blocks_release?(@story, @team)
     end
 
+    it 'lets a story be released that was paired and has also been walked through' do
+      event('collaboration_changed', mode: 'paired')
+      event('walked_through', attendee_ids: [@bob.id])
+
+      refute TwoPersonRule.blocks_release?(@story, @team)
+    end
+
     it 'lets a story be released that has been walked through' do
       event('collaboration_changed', mode: 'solo')
       event('walked_through', attendee_ids: [@bob.id])

@@ -511,6 +511,11 @@ module MainlineDSL
     driver.walked_not_released
   end
 
+  # The stories the Walkthroughs page lists as seen by two people, by ID.
+  def seen_by_two
+    driver.seen_by_two
+  end
+
   # Whether the page flags the walked story as deployed again since.
   def deployed_since_walkthrough?(story)
     driver.deployed_since_walkthrough?(story)

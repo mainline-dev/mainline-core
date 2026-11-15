@@ -216,4 +216,68 @@ describe Walkthroughs do
       assert_equal({ 'Find things' => ['Bob'], 'Pay' => ['Carol'] }, rows)
     end
   end
+
+  describe 'the deployed stories two people have seen' do
+    def together(story, mode = 'paired')
+      RecordEvent.call(actor_id: @alice.actor.id, entity: story, action: 'collaboration_changed', after_state: { mode: mode })
+    end
+
+    def seen
+      Walkthroughs.seen_together(@team)
+    end
+
+    it 'has nothing while no deployed story has had two people on it' do
+      RecordEvent.call(actor_id: @alice.actor.id, entity: deployed('Find things', on_it: [@alice]),
+        action: 'collaboration_changed', after_state: { mode: 'solo' })
+
+      assert_empty seen
+    end
+
+    it 'gives each one with who is on it and who could attend a walkthrough of it' do
+      TeamMembership.create(team_id: @team.id, person_id: @carol.id)
+      together(deployed('Find things', on_it: [@alice, @bob]))
+
+      row = seen.first
+
+      assert_equal 'Find things', row.story.title
+      assert_equal %w[Alice Bob], names(row.on_it)
+      assert_equal ['Carol'], names(row.could_attend)
+    end
+
+    it 'counts a story an ensemble worked on' do
+      together(deployed('Find things', on_it: [@alice]), 'ensemble')
+
+      assert_equal 1, seen.size
+    end
+
+    it 'leaves out a story once it has been walked through' do
+      story = deployed('Find things', on_it: [@alice, @bob])
+      together(story)
+      RecordEvent.call(actor_id: @alice.actor.id, entity: story, action: 'walked_through', after_state: { attendee_ids: [] })
+
+      assert_empty seen
+    end
+
+    it 'leaves out a story not yet deployed, one released and one archived' do
+      together(Story.create(task_id: @task.id, map_id: @map.id, team_id: @team.id, title: 'Not deployed',
+        position: 9000, created_by_id: @alice.id, status: 'active'))
+      released = deployed('Released', on_it: [@alice])
+      released.update(status: 'released', released_at: Time.now)
+      together(released)
+      archived = deployed('Archived', on_it: [@bob])
+      archived.update(archived_at: Time.now)
+      together(archived)
+
+      assert_empty seen
+    end
+
+    it 'lists the stories longest since their last deploy first' do
+      together(deployed('Recent', on_it: [@alice]))
+      older = deployed('Older', on_it: [@bob])
+      older.update(first_deployed_at: Time.now - 3600, last_deployed_at: Time.now - 3600)
+      together(older)
+
+      assert_equal(%w[Older Recent], seen.map { |row| row.story.title })
+    end
+  end
 end

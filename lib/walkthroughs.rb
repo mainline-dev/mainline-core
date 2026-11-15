@@ -14,6 +14,10 @@ module Walkthroughs
   # walkthroughs, each once, and whether it has been deployed again since the
   # latest of them.
   Walked = Struct.new(:story, :attended, :deployed_since, keyword_init: true)
+  # An active, deployed story that had two or more people on it and has not
+  # been walked through: the people on it, and those who could attend a
+  # walkthrough all the same.
+  Together = Struct.new(:story, :on_it, :could_attend, keyword_init: true)
 
   def self.needed(team)
     stories = TwoPersonRule.awaiting(team)
@@ -26,6 +30,28 @@ module Walkthroughs
       Needed.new(story: story, on_it: people.values_at(*ids).compact,
         could_attend: working.reject { |person| ids.include?(person.id) },
         scenario_count: scenarios.fetch(story.id, 0), kickoff: Kickoff.for(story).kind)
+    }
+  end
+
+  def self.seen_together(team)
+    stories = Story.where(team_id: team.id, status: 'active', archived_at: nil).exclude(deploy_count: 0)
+      .order(:last_deployed_at).all
+    together = TwoPersonRule.together(stories) - TwoPersonRule.walked(stories)
+    stories = stories.select { |story| together.include?(story.id) }
+    working = working_members(team)
+    on_story = people_on(stories)
+    stories.map { |story|
+      Together.new(story: story, on_it: on_story[story.id], could_attend: working - on_story[story.id])
+    }
+  end
+
+  # The people on each of these stories, by name.
+  def self.people_on(stories)
+    assignments = StoryAssignment.where(story_id: stories.map(&:id)).all
+    people = Person.where(id: assignments.map(&:person_id)).order(:name).all
+    stories.to_h { |story|
+      ids = assignments.select { |assignment| assignment.story_id == story.id }.map(&:person_id)
+      [story.id, people.select { |person| ids.include?(person.id) }]
     }
   end
 
@@ -56,5 +82,5 @@ module Walkthroughs
     Person.where(id: TeamMembership.where(team_id: team.id, working: true, left_at: nil).select(:person_id))
       .order(:name).all
   end
-  private_class_method :working_members, :attendees, :deployed_since?
+  private_class_method :working_members, :attendees, :deployed_since?, :people_on
 end

@@ -9,7 +9,6 @@
       <p class="lens-help" data-test-id="walkthrough-rule-off">The two-person rule is off for this team. <a href="/settings" data-test-id="walkthrough-rule-settings">Settings</a></p>
     <% end %>
 
-    <% record_path = "/teams/#{@team.id}/teamwork/walkthroughs" %>
     <h3 class="section-title">Needs a walkthrough</h3>
     <% if @rule_on %>
       <p class="lens-help" data-test-id="walkthrough-count" data-waiting="<%= @needed.size %>" data-limit="<%= @limit %>"><%= @needed.size %> of <%= @limit %> <%= @limit == 1 ? 'story' : 'stories' %> waiting</p>
@@ -39,17 +38,7 @@
               <td><%= last_deployed %></td>
               <td><%= row.scenario_count %></td>
               <td>
-                <form method="post" action="<%= record_path %>" class="walkthrough-form" data-test-id="walkthrough-form" data-story="<%= row.story.id %>">
-                  <%== csrf_tag(record_path) %>
-                  <input type="hidden" name="story_id" value="<%= row.story.id %>">
-                  <% row.could_attend.each do |person| %>
-                    <label class="form-label form-label--checkbox">
-                      <input type="checkbox" name="attendee_ids[]" class="form-checkbox" data-test-id="walkthrough-attendee" value="<%= person.id %>">
-                      <%= person.name %>
-                    </label>
-                  <% end %>
-                  <button type="submit" class="btn btn-sm" data-test-id="walkthrough-record">Record walkthrough</button>
-                </form>
+                <%== render('teams/teamwork/_walkthrough_form', locals: { story: row.story, could_attend: row.could_attend }) %>
               </td>
             </tr>
           <% end %>
@@ -84,6 +73,31 @@
       </table>
     <% else %>
       <p class="empty-state" data-test-id="walked-none">No walked stories are waiting to be released.</p>
+    <% end %>
+
+    <h3 class="section-title">Seen by two people</h3>
+    <p class="lens-help">Active, deployed stories that two or more people worked on. For information only.</p>
+    <% if @together.any? %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Story</th>
+            <th>People</th>
+            <th>Who attended</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @together.each do |row| %>
+            <tr data-test-id="seen-by-two" data-story="<%= row.story.id %>">
+              <td><%= row.story.title %></td>
+              <td><%= row.on_it.map(&:name).join(', ') %></td>
+              <td><%== render('teams/teamwork/_walkthrough_form', locals: { story: row.story, could_attend: row.could_attend }) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="empty-state" data-test-id="seen-by-two-none">No deployed stories have had two people on them.</p>
     <% end %>
   </div>
 
