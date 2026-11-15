@@ -85,7 +85,7 @@
               </div>
               <% unless locked || @active_filter %>
                 <div class="grid-header-footer">
-                  <a href="/maps/<%= @map.id %>/tasks/<%= task.id %>/edit" class="footer-action" title="Edit task">&#x270E; Edit</a>
+                  <a href="/maps/<%= @map.id %>/tasks/<%= task.id %>/edit" class="footer-action" title="Edit step">&#x270E; Edit</a>
                   <a href="/maps/<%= @map.id %>/stories/new?task_id=<%= task.id %>" class="footer-action" title="Add story">+ Story</a>
                   <% if task.stories.none? { |s| s.archived_at.nil? } %>
                     <button type="button" class="archive-btn delete-confirm"
