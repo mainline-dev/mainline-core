@@ -29,10 +29,10 @@ module MutationBaseline
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FlashAdapter
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup LeadTime
     LetGo LetGoPrompt LetGoReview MainlineFile MapGrid MuseumList
-    PairingMatrix PromoteMuseumItem RateLimiter RecordEvent
+    PairingMatrix PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
     RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeOauthToken SetTeamContext SignedState SignupTimer
-    SoloLog SplitCandidate StepStubs StoryPicker ThroughputScatter
+    SoloLog SplitCandidate StepStubs StoryPicker ThroughputScatter TwoPersonRule
     UnpromoteMuseumItem
   ].freeze
   hosted_classes = []

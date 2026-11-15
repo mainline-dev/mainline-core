@@ -1,0 +1,121 @@
+# frozen_string_literal: true
+
+require_relative '../model_spec_helper'
+require_relative '../../lib/record_event'
+require_relative '../../lib/two_person_rule'
+
+describe TwoPersonRule do
+  cover 'TwoPersonRule*'
+
+  before do
+    @team = Team.create(name: 'Test')
+    SetTeamContext.call(@team.id)
+    @alice = Person.create(name: 'Alice', email: 'alice@test.mainline')
+    @bob   = Person.create(name: 'Bob', email: 'bob@test.mainline')
+    TeamMembership.create(team_id: @team.id, person_id: @alice.id)
+    @map = Map.create(team_id: @team.id, name: 'Map', position: 1000)
+    persona = Persona.create(map_id: @map.id, team_id: @team.id, name: 'User', position: 1000)
+    activity = Activity.create(map_id: @map.id, team_id: @team.id, name: 'Browse', position: 1000)
+    ActivityPersona.create(activity_id: activity.id, persona_id: persona.id, team_id: @team.id)
+    @task = Task.create(activity_id: activity.id, map_id: @map.id, team_id: @team.id, name: 'Search', position: 1000)
+    @story = create_story('Find things')
+  end
+
+  def create_story(title)
+    position = (Story.where(task_id: @task.id).max(:position) || 0) + 1000
+    Story.create(task_id: @task.id, map_id: @map.id, team_id: @team.id, title: title, position: position,
+      created_by_id: @alice.id)
+  end
+
+  def event(action, story: @story, **after_state)
+    RecordEvent.call(actor_id: @alice.actor.id, entity: story, action: action, after_state: after_state)
+  end
+
+  describe 'which teams it holds to the rule' do
+    it 'leaves a team with one working member alone' do
+      refute TwoPersonRule.applies?(@team)
+    end
+
+    it 'holds a team with two working members to it' do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id)
+
+      assert TwoPersonRule.applies?(@team)
+    end
+
+    it 'does not count a member who is not working on the team' do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id, working: false)
+
+      refute TwoPersonRule.applies?(@team)
+    end
+
+    it 'does not count a member who has left' do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id, left_at: Time.now)
+
+      refute TwoPersonRule.applies?(@team)
+    end
+
+    it 'does not count the members of another team' do
+      other = Team.create(name: 'Other')
+      TeamMembership.create(team_id: other.id, person_id: @alice.id)
+      TeamMembership.create(team_id: other.id, person_id: @bob.id)
+
+      refute TwoPersonRule.applies?(@team)
+    end
+  end
+
+  describe 'on a team of two' do
+    before do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id)
+    end
+
+    it 'blocks the release of a story nobody has worked on with someone else' do
+      assert TwoPersonRule.blocks_release?(@story, @team)
+    end
+
+    it 'blocks the release of a story one person worked on' do
+      event('collaboration_changed', mode: 'solo')
+
+      assert TwoPersonRule.blocks_release?(@story, @team)
+    end
+
+    it 'lets a story be released that was paired at some point' do
+      event('collaboration_changed', mode: 'paired')
+      event('collaboration_changed', mode: 'solo')
+
+      refute TwoPersonRule.blocks_release?(@story, @team)
+    end
+
+    it 'lets a story be released that was an ensemble at some point' do
+      event('collaboration_changed', mode: 'ensemble')
+
+      refute TwoPersonRule.blocks_release?(@story, @team)
+    end
+
+    it 'lets a story be released that has been walked through' do
+      event('collaboration_changed', mode: 'solo')
+      event('walked_through', attendee_ids: [@bob.id])
+
+      refute TwoPersonRule.blocks_release?(@story, @team)
+    end
+
+    it 'takes two people only from the events that say who was on the story' do
+      event('edited', mode: 'paired')
+
+      assert TwoPersonRule.blocks_release?(@story, @team)
+    end
+
+    it 'takes no notice of what happened on another story' do
+      other = create_story('Pay')
+      event('collaboration_changed', story: other, mode: 'paired')
+      event('walked_through', story: other, attendee_ids: [@bob.id])
+
+      assert TwoPersonRule.blocks_release?(@story, @team)
+    end
+  end
+
+  it 'blocks nothing on a team of one' do
+    event('collaboration_changed', mode: 'solo')
+
+    refute TwoPersonRule.blocks_release?(@story, @team)
+  end
+end

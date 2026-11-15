@@ -246,6 +246,10 @@ class Mainline
               reason: 'unverified-scenarios')
             next htmx_grid_or_redirect(r)
           end
+          if TwoPersonRule.blocks_release?(@story, @current_team)
+            flash_msg.error(TwoPersonRule::REFUSAL, reason: TwoPersonRule::REASON)
+            next htmx_grid_or_redirect(r)
+          end
           DB.transaction do
             StoryAssignment.where(story_id: @story.id).each do |sa|
               sa.destroy

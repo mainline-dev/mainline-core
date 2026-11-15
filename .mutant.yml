@@ -46,6 +46,7 @@ requires:
   - ./lib/promote_museum_item
   - ./lib/rate_limiter
   - ./lib/record_event
+  - ./lib/record_walkthrough
   - ./lib/remove_unverified_accounts
   - ./lib/reorder_activities
   - ./lib/reorder_stories
@@ -60,6 +61,7 @@ requires:
   - ./lib/step_stubs
   - ./lib/story_picker
   - ./lib/throughput_scatter
+  - ./lib/two_person_rule
   - ./lib/unpromote_museum_item
 
 environment_variables:

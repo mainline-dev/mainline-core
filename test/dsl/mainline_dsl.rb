@@ -159,6 +159,12 @@ module MainlineDSL
     driver.submit_deploy_story(@map, story)
   end
 
+  # Someone on the team writes down that these people were walked through
+  # what was built on the story.
+  def record_walkthrough(story, attended_by:)
+    driver.submit_walkthrough(@team, story, attendee_ids: attended_by.map(&:id))
+  end
+
   def visit_story_panel(story)
     driver.htmx_get_story_panel(@map, story)
   end
@@ -416,6 +422,10 @@ module MainlineDSL
 
   def visit_solo_log
     driver.visit_solo_log(@team)
+  end
+
+  def visit_walkthroughs
+    driver.visit_walkthroughs(@team)
   end
 
   def visit_edit_person(person)

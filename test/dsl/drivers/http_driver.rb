@@ -351,6 +351,11 @@ class HttpDriver
     last_response
   end
 
+  def submit_walkthrough(team, story, attendee_ids:)
+    post "/teams/#{team.id}/teamwork/walkthroughs", story_id: story.id, attendee_ids: attendee_ids
+    last_response
+  end
+
   def htmx_get_story_panel(map, story)
     get "/maps/#{map.id}/stories/#{story.id}/panel", {}, { 'HTTP_HX_REQUEST' => 'true' }
     last_response
@@ -633,6 +638,11 @@ class HttpDriver
 
   def visit_solo_log(team)
     get "/teams/#{team.id}/teamwork/solo"
+    last_response
+  end
+
+  def visit_walkthroughs(team)
+    get "/teams/#{team.id}/teamwork/walkthroughs"
     last_response
   end
 
