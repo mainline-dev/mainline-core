@@ -45,6 +45,45 @@ describe EventPresenter do
     assert_equal 'read by coding agent', EventPresenter.describe(event, lookup)
   end
 
+  def people(*names)
+    names.each_with_index.to_h { |name, place| ["p#{place}", Struct.new(:name).new(name)] }
+  end
+
+  def walkthrough(*ids)
+    build_event(action: 'walked_through', after_state: { 'attendee_ids' => ids })
+  end
+
+  it 'describes a walkthrough with the two who attended' do
+    assert_equal 'walked through with Bob and Carol',
+      EventPresenter.describe(walkthrough('p0', 'p1'), lookup(people: people('Bob', 'Carol')))
+  end
+
+  it 'describes a walkthrough with three or more who attended' do
+    assert_equal 'walked through with Bob, Carol, and Dan',
+      EventPresenter.describe(walkthrough('p0', 'p1', 'p2'), lookup(people: people('Bob', 'Carol', 'Dan')))
+  end
+
+  it 'describes a walkthrough with one who attended' do
+    assert_equal 'walked through with Bob', EventPresenter.describe(walkthrough('p0'), lookup(people: people('Bob')))
+  end
+
+  it 'describes a walkthrough attended by someone it cannot name' do
+    assert_equal 'walked through with Bob and someone',
+      EventPresenter.describe(walkthrough('p0', 'gone'), lookup(people: people('Bob')))
+  end
+
+  it 'describes a walkthrough that names nobody' do
+    assert_equal 'walked through', EventPresenter.describe(walkthrough, lookup)
+  end
+
+  it 'describes a kickoff' do
+    assert_equal 'kickoff: agreed the scenarios', EventPresenter.describe(build_event(action: 'scenarios_agreed'), lookup)
+  end
+
+  it 'describes a scenario edit' do
+    assert_equal 'scenario edited', EventPresenter.describe(build_event(action: 'scenario_edited'), lookup)
+  end
+
   it 'describes person_assigned with name' do
     event = build_event(action: 'person_assigned', after_state: { 'person_id' => 'p1' })
     people = { 'p1' => Struct.new(:name).new('Alice') }

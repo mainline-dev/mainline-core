@@ -185,27 +185,7 @@ class Mainline
 
       r.get 'history' do
         @subnav_active = 'history'
-        @events = Event
-          .where(entity_id: @story.id, entity_type: RecordEvent.entity_type_for(Story))
-          .order(:event_no)
-          .eager(:actor)
-          .all
-
-        person_ids = @events.flat_map { |e|
-          [e.after_state&.dig('person_id'), e.before_state&.dig('person_id')]
-        }.compact.uniq
-        @people_by_id = person_ids.empty? ? {} : Person.where(id: person_ids).as_hash(:id)
-
-        slice_ids = @events.flat_map { |e|
-          [e.after_state&.dig('release_slice_id'), e.before_state&.dig('release_slice_id')]
-        }.compact.uniq
-        @slices_by_id = slice_ids.empty? ? {} : ReleaseSlice.where(id: slice_ids).as_hash(:id)
-
-        task_ids = @events.flat_map { |e|
-          [e.after_state&.dig('task_id'), e.before_state&.dig('task_id')]
-        }.compact.uniq
-        @tasks_by_id = task_ids.empty? ? {} : Task.where(id: task_ids).as_hash(:id)
-
+        load_story_history
         view 'history'
       end
 
@@ -574,13 +554,16 @@ class Mainline
       .order(:event_no)
       .eager(:actor)
       .all
-    @people_by_id = history_lookup('person_id', Person)
+    @people_by_id = history_lookup(%w[person_id attendee_ids], Person)
     @slices_by_id = history_lookup('release_slice_id', ReleaseSlice)
     @tasks_by_id = history_lookup('task_id', Task)
   end
 
-  def history_lookup(key, model)
-    ids = @events.flat_map { |e| [e.after_state&.dig(key), e.before_state&.dig(key)] }.compact.uniq
+  # The records the events name under these keys, by ID. A key may hold one ID
+  # or a list of them.
+  def history_lookup(keys, model)
+    ids = @events.flat_map { |e| Array(keys).flat_map { |key| [e.after_state&.dig(key), e.before_state&.dig(key)] } }
+      .flatten.compact.uniq
     ids.empty? ? {} : model.where(id: ids).as_hash(:id)
   end
 

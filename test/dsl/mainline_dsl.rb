@@ -511,6 +511,11 @@ module MainlineDSL
     driver.walked_not_released
   end
 
+  # What each entry in the story's history says happened, earliest first.
+  def story_history
+    driver.story_history
+  end
+
   # Who the solo log says a story was walked through with, by ID.
   def walked_through_with(story)
     driver.walked_through_with(story)

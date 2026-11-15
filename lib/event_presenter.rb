@@ -2,10 +2,11 @@
 
 module EventPresenter
   FIXED_DESCRIPTIONS = {
-    'deployed'  => 'marked as deployed',
-    'released'  => 'marked as released',
-    'archived'  => 'archived',
-    'reordered' => 'reordered'
+    'deployed'         => 'marked as deployed',
+    'released'         => 'marked as released',
+    'archived'         => 'archived',
+    'reordered'        => 'reordered',
+    'scenarios_agreed' => 'kickoff: agreed the scenarios'
   }.freeze
 
   DESCRIBERS = {
@@ -20,7 +21,8 @@ module EventPresenter
     'task_changed'          => :describe_task_change,
     'collaboration_changed' => :describe_collaboration_change,
     'agent_read'            => :describe_agent_read,
-    'split_out'             => :describe_split_out
+    'split_out'             => :describe_split_out,
+    'walked_through'        => :describe_walkthrough
   }.freeze
 
   STRATEGY_NAMES = {
@@ -87,6 +89,17 @@ module EventPresenter
     return 'split scenarios out to a new story' unless n
 
     "split #{n} #{n == 1 ? 'scenario' : 'scenarios'} out to a new story"
+  end
+
+  def self.describe_walkthrough(event, lookup, _include_name)
+    names = event.after_state['attendee_ids'].map { |id| resolve(lookup, :people, id) || 'someone' }
+    names.empty? ? 'walked through' : "walked through with #{in_words(names)}"
+  end
+
+  def self.in_words(names)
+    return names.join(' and ') if names.size < 3
+
+    "#{names[0..-2].join(', ')}, and #{names.last}"
   end
 
   def self.describe_slice_change(event, lookup, _include_name)
@@ -185,5 +198,5 @@ module EventPresenter
 
   private_class_method(*DESCRIBERS.values, :slice_name, :edit_task_change, :edit_title_change,
     :edit_name_change, :edit_decoupling_change, :decoupling_strategy_change, :decoupling_label_change,
-    :edit_description_change, :association_changes, :resolve)
+    :edit_description_change, :association_changes, :resolve, :in_words)
 end

@@ -41,6 +41,19 @@ describe 'Story history' do
     assert_page_includes('Bob')
   end
 
+  it 'names who attended a walkthrough of the story' do
+    carol = add_person(name: 'Carol', email: 'carol@acme.co')
+    update_settings(allow_solo_activation: '1')
+    story = create_story('Register account', under_task: @task)
+    assign_person(story, person: @alice)
+    deploy_story(story)
+    record_walkthrough(story, attended_by: [@bob, carol])
+
+    visit_story_history(story)
+
+    assert(story_history.any? { |entry| entry.include?('Bob') && entry.include?('Carol') })
+  end
+
   it 'shows release event' do
     story = create_story('Register account', under_task: @task)
     assign_person(story, person: @alice)
