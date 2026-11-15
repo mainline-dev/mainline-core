@@ -101,3 +101,41 @@ describe 'Deploy story' do
     assert_equal 1, @story.deploy_count
   end
 end
+
+# A deployed story is not yet in users' hands until it is released, and its
+# card says so.
+describe 'A story card after a deploy' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    @bob   = add_person(name: 'Bob')
+    create_map
+    activity = create_activity('Browse', for_personas: [create_persona('User')])
+    @story = create_story('Show results', under_task: create_task('Search', under_activity: activity))
+    assign_person(@story, person: @alice)
+    assign_person(@story, person: @bob)
+  end
+
+  it 'says the story is deployed and not yet released' do
+    deploy_story(@story)
+    visit_story_card(@story)
+
+    assert_shown('story-deployed')
+  end
+
+  it 'says nothing of a deploy before there has been one' do
+    visit_story_card(@story)
+
+    refute_shown('story-deployed')
+  end
+
+  it 'says nothing of a deploy once the story is released' do
+    deploy_story(@story)
+    release_story(@story)
+    visit_story_card(@story)
+
+    refute_shown('story-deployed')
+  end
+end

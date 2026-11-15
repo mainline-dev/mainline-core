@@ -242,6 +242,11 @@ task :screenshot_seed do
   sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/screenshot_seed', '-e', 'ScreenshotSeed.call')
 end
 
+desc 'Seed the team whose map the home page shows (pictures: scripts/record_home_map.rb)'
+task :home_map_seed do
+  sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/home_map_seed', '-e', 'HomeMapSeed.call')
+end
+
 desc 'Remove seed data from development database'
 task :dev_teardown do
   sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/dev_teardown', '-e', 'DevTeardown.call')

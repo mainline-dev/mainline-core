@@ -1201,6 +1201,13 @@ pre code {
     border: 1px solid rgba(0, 230, 138, 0.15);
 }
 
+/* In production and not yet released. */
+.state-deployed {
+    color: var(--accent-cyan);
+    background: var(--accent-cyan-bg);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
 .state-ensemble {
     color: var(--accent-violet);
     background: var(--accent-violet-bg);
