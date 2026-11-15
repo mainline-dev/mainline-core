@@ -505,6 +505,22 @@ module MainlineDSL
     driver.walkthrough_row(story)
   end
 
+  # The stories the Walkthroughs page lists as walked through and not yet
+  # released, by ID, in the order shown.
+  def walked_not_released
+    driver.walked_not_released
+  end
+
+  # Whether the page flags the walked story as deployed again since.
+  def deployed_since_walkthrough?(story)
+    driver.deployed_since_walkthrough?(story)
+  end
+
+  # Who the page says attended the story's walkthrough, by ID.
+  def walked_by(story)
+    driver.walked_by(story)
+  end
+
   # The people the page's form offers as attending a story's walkthrough.
   def could_attend(story)
     driver.could_attend(story)

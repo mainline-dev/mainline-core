@@ -51,6 +51,14 @@ describe RecordWalkthrough do
     assert_equal @team.id, walkthroughs.first.team_id
   end
 
+  it 'records how many times the story had been deployed by then' do
+    @story.update(deploy_count: 3)
+
+    record([@bob])
+
+    assert_equal 3, walkthroughs.first.after_state['deploy_count']
+  end
+
   it 'records each walkthrough of a story walked through more than once' do
     record([@bob])
     record([@carol])

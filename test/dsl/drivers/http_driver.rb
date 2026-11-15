@@ -666,6 +666,20 @@ class HttpDriver
     { waiting: count[/data-waiting="([^"]*)"/, 1], limit: count[/data-limit="([^"]*)"/, 1] }
   end
 
+  def walked_not_released
+    last_response.body.scan(/data-test-id="walked-not-released" data-story="([^"]+)"/).flatten
+  end
+
+  def deployed_since_walkthrough?(story)
+    row = last_response.body[/<tr[^>]*data-test-id="walked-not-released" data-story="#{story.id}"[^>]*>/].to_s
+    row.include?('data-deployed-since="true"')
+  end
+
+  def walked_by(story)
+    row = last_response.body[/<tr[^>]*data-test-id="walked-not-released" data-story="#{story.id}"[^>]*>/].to_s
+    row[/data-attended="([^"]*)"/, 1].to_s.split(',')
+  end
+
   def walkthrough_row(story)
     row = last_response.body[/<tr[^>]*data-test-id="walkthrough-needed" data-story="#{story.id}"[^>]*>/].to_s
     { scenarios: row[/data-scenarios="([^"]*)"/, 1], last_deployed: row[/data-last-deployed="([^"]*)"/, 1],

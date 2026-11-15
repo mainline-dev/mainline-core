@@ -58,6 +58,33 @@
     <% else %>
       <p class="empty-state" data-test-id="walkthrough-none-needed">No stories are waiting for a walkthrough.</p>
     <% end %>
+
+    <h3 class="section-title">Walked, not yet released</h3>
+    <% if @walked.any? %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Story</th>
+            <th>Attended</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @walked.each do |row| %>
+            <tr data-test-id="walked-not-released" data-story="<%= row.story.id %>" data-attended="<%= row.attended.map(&:id).join(',') %>" data-deployed-since="<%= row.deployed_since %>">
+              <td>
+                <%= row.story.title %>
+                <% if row.deployed_since %>
+                  <span class="card-note-chip note-chip-stale" data-test-id="walked-deployed-since">Deployed again since the walkthrough</span>
+                <% end %>
+              </td>
+              <td><%= row.attended.map(&:name).join(', ') %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="empty-state" data-test-id="walked-none">No walked stories are waiting to be released.</p>
+    <% end %>
   </div>
 
   <div class="teamwork-sidebar">

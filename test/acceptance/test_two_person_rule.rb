@@ -176,6 +176,13 @@ describe 'The Walkthroughs page' do
     assert_empty walkthroughs_needed
   end
 
+  it 'says so when no story that was walked through is waiting to be released' do
+    visit_walkthroughs
+
+    assert_shown('walked-none')
+    assert_empty walked_not_released
+  end
+
   describe 'with a story one person has deployed' do
     before do
       create_map
@@ -192,6 +199,34 @@ describe 'The Walkthroughs page' do
       assert_equal [@story.id], walkthroughs_needed
       assert_equal [@bob.id], could_attend(@story)
       refute_shown('walkthrough-none-needed')
+    end
+
+    it 'moves the story, once walked through, to those waiting to be released, with who attended' do
+      record_walkthrough(@story, attended_by: [@bob])
+      visit_walkthroughs
+
+      assert_empty walkthroughs_needed
+      assert_equal [@story.id], walked_not_released
+      assert_equal [@bob.id], walked_by(@story)
+    end
+
+    it 'flags a walked story deployed again since its walkthrough, and still lets it be released' do
+      record_walkthrough(@story, attended_by: [@bob])
+      deploy_story(@story)
+      visit_walkthroughs
+
+      assert deployed_since_walkthrough?(@story)
+      release_story(@story)
+
+      assert_equal 'released', status_of(@story)
+    end
+
+    it 'does not flag a walked story that has not been deployed since' do
+      record_walkthrough(@story, attended_by: [@bob])
+      visit_walkthroughs
+
+      assert_equal [@story.id], walked_not_released
+      refute deployed_since_walkthrough?(@story)
     end
 
     it 'flags the story as having had no kickoff, until someone else agrees its scenarios' do

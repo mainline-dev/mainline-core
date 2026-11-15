@@ -105,4 +105,115 @@ describe Walkthroughs do
       assert_equal ['Alice'], names(rows['Pay'].could_attend)
     end
   end
+
+  describe 'the stories walked through and not yet released' do
+    def walk(story, *people, deploy_count: nil)
+      RecordEvent.call(actor_id: @alice.actor.id, entity: story, action: 'walked_through',
+        after_state: { attendee_ids: people.map(&:id), deploy_count: deploy_count }.compact)
+    end
+
+    def attended_names(row)
+      row.attended.map(&:name)
+    end
+
+    it 'has nothing when no story has been walked through' do
+      deployed('Find things', on_it: [@alice])
+
+      assert_empty Walkthroughs.walked(@team)
+    end
+
+    it 'gives each active story that has been walked through, with who attended' do
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @bob)
+
+      walked = Walkthroughs.walked(@team)
+
+      assert_equal([story.id], walked.map { |row| row.story.id })
+      assert_equal ['Bob'], attended_names(walked.first)
+    end
+
+    it 'gathers who attended every walkthrough of a story, each once and by name' do
+      TeamMembership.create(team_id: @team.id, person_id: @carol.id)
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @carol)
+      walk(story, @bob, @carol)
+
+      assert_equal %w[Bob Carol], attended_names(Walkthroughs.walked(@team).first)
+    end
+
+    it 'says when a story has been deployed again since its latest walkthrough' do
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @bob, deploy_count: 1)
+      story.update(deploy_count: 2)
+
+      assert Walkthroughs.walked(@team).first.deployed_since
+    end
+
+    it 'says nothing of a deploy before its latest walkthrough' do
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @bob, deploy_count: 1)
+      story.update(deploy_count: 2)
+      walk(story, @bob, deploy_count: 2)
+
+      refute Walkthroughs.walked(@team).first.deployed_since
+    end
+
+    it 'says nothing of deploys for a walkthrough that did not record its deploy count' do
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @bob)
+
+      refute Walkthroughs.walked(@team).first.deployed_since
+    end
+
+    it 'leaves out a story that has other events and no walkthrough' do
+      story = deployed('Find things', on_it: [@alice])
+      RecordEvent.call(actor_id: @alice.actor.id, entity: story, action: 'collaboration_changed', after_state: { mode: 'solo' })
+
+      assert_empty Walkthroughs.walked(@team)
+    end
+
+    it 'names who attended in order of name, whatever order they joined the team in' do
+      aaron = Person.create(name: 'Aaron', email: 'aaron@test.mainline')
+      TeamMembership.create(team_id: @team.id, person_id: aaron.id)
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @bob, aaron)
+
+      assert_equal %w[Aaron Bob], attended_names(Walkthroughs.walked(@team).first)
+    end
+
+    it 'lists the stories longest since their last deploy first' do
+      walk(deployed('Recent', on_it: [@alice]), @bob)
+      older = deployed('Older', on_it: [@bob])
+      older.update(first_deployed_at: Time.now - 3600, last_deployed_at: Time.now - 3600)
+      walk(older, @alice)
+
+      assert_equal(%w[Older Recent], Walkthroughs.walked(@team).map { |row| row.story.title })
+    end
+
+    it 'leaves out a story that has been archived' do
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @bob)
+      story.update(archived_at: Time.now)
+
+      assert_empty Walkthroughs.walked(@team)
+    end
+
+    it 'leaves out a story once it is released' do
+      story = deployed('Find things', on_it: [@alice])
+      walk(story, @bob)
+      story.update(status: 'released', released_at: Time.now)
+
+      assert_empty Walkthroughs.walked(@team)
+    end
+
+    it 'keeps each story to its own walkthroughs' do
+      TeamMembership.create(team_id: @team.id, person_id: @carol.id)
+      walk(deployed('Find things', on_it: [@alice]), @bob)
+      walk(deployed('Pay', on_it: [@bob]), @carol)
+
+      rows = Walkthroughs.walked(@team).to_h { |row| [row.story.title, attended_names(row)] }
+
+      assert_equal({ 'Find things' => ['Bob'], 'Pay' => ['Carol'] }, rows)
+    end
+  end
 end
