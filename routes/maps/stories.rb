@@ -96,8 +96,9 @@ class Mainline
         deploy_count = Event.where(entity_id: @story.id, action: 'deployed').count
         pref = DB[:map_view_prefs].where(person_id: @current_person.id, map_id: @map.id).first
         locked = pref ? pref[:locked] : false
+        awaiting = TwoPersonRule.awaiting(@current_team).any? { |waiting| waiting.id == @story.id }
         locals = { story: @story, locked: locked, map_id: @map.id,
-                   story_notes: notes[@story.id] || [], deploy_count: deploy_count }
+                   story_notes: notes[@story.id] || [], deploy_count: deploy_count, awaiting_walkthrough: awaiting }
         render('maps/stories/_card', locals: locals)
       end
 

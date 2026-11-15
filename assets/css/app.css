@@ -1208,6 +1208,13 @@ pre code {
     border: 1px solid rgba(0, 212, 255, 0.15);
 }
 
+/* Worked on by one person, deployed, and waiting for a walkthrough. */
+.state-walk {
+    color: var(--accent-red);
+    background: var(--accent-red-bg);
+    border: 1px solid rgba(255, 68, 102, 0.15);
+}
+
 .state-ensemble {
     color: var(--accent-violet);
     background: var(--accent-violet-bg);
@@ -1575,6 +1582,26 @@ pre code {
     color: var(--accent-emerald);
     border-color: var(--accent-emerald);
     text-shadow: 0 0 8px rgba(0, 230, 138, 0.3);
+}
+
+/* Where Release would be, on a story waiting for a walkthrough. */
+.walk-link {
+    border: 1px solid rgba(255, 68, 102, 0.2);
+    border-radius: 2px;
+    padding: 0 0.2rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--accent-red);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    transition: all 0.15s ease;
+}
+
+.walk-link:hover {
+    border-color: var(--accent-red);
 }
 
 .archive-btn {

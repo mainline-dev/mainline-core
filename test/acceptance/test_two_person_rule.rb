@@ -416,3 +416,72 @@ describe 'The solo log and walkthroughs' do
     assert_equal [@bob.id, @carol.id].sort, walked_through_with(@story).sort
   end
 end
+
+describe 'The card of a story one person has deployed' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    @bob   = add_person(name: 'Bob')
+    update_settings(allow_solo_activation: '1')
+    create_map
+    activity = create_activity('Browse', for_personas: [create_persona('Shopper')])
+    @story = create_story('Find things', under_task: create_task('Search', under_activity: activity))
+    assign_person(@story, person: @alice)
+  end
+
+  it 'says the story needs a walkthrough, on the map and on its own' do
+    deploy_story(@story)
+
+    visit_map
+
+    assert_shown('story-walk')
+    visit_story_card(@story)
+
+    assert_shown('story-walk')
+  end
+
+  it 'leads, where Release would be, to the Walkthroughs page, which lists the story' do
+    deploy_story(@story)
+    visit_story_card(@story)
+
+    refute_shown('release-find-things')
+    follow_museum_link('release-needs-walkthrough')
+
+    assert_equal [@story.id], walkthroughs_needed
+  end
+
+  it 'says nothing of a walkthrough before the story is deployed' do
+    visit_story_card(@story)
+
+    refute_shown('story-walk')
+  end
+
+  it 'offers Release again once the story is walked through' do
+    deploy_story(@story)
+    record_walkthrough(@story, attended_by: [@bob])
+    visit_story_card(@story)
+
+    refute_shown('story-walk')
+    assert_shown('release-find-things')
+  end
+
+  it 'says nothing of a walkthrough on a story two people are on' do
+    assign_person(@story, person: @bob)
+    deploy_story(@story)
+    visit_story_card(@story)
+
+    refute_shown('story-walk')
+    assert_shown('release-find-things')
+  end
+
+  it 'says nothing of a walkthrough once the team has turned the rule off' do
+    update_settings(two_person_rule: '0', two_person_rule_reason: 'Reviewing another way for now')
+    deploy_story(@story)
+    visit_story_card(@story)
+
+    refute_shown('story-walk')
+    assert_shown('release-find-things')
+  end
+end

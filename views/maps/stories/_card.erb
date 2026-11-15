@@ -1,4 +1,4 @@
-<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:) %>
+<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:, awaiting_walkthrough:) %>
 <%
   assign_count = story.story_assignments.length
   pairing_label, pairing_short = if story.status == 'released'
@@ -28,6 +28,9 @@
     <span class="state-label state-<%= pairing_label %>"><%= pairing_short %></span>
     <% if story.status == 'active' && story.deploy_count.positive? %>
       <span class="state-label state-deployed" data-tippy-content="Deployed, not released" data-test-id="story-deployed">DEPLOYED</span>
+    <% end %>
+    <% if awaiting_walkthrough %>
+      <span class="state-label state-walk" data-tippy-content="Needs a walkthrough before release." data-test-id="story-walk">WALK</span>
     <% end %>
     <% if story.agent_assisted %>
       <span class="card-note-chip note-chip-agent"
@@ -108,11 +111,15 @@
                       data-delete-target=".map-grid-container"
                       data-label="Deploy"
                       data-test-id="deploy-<%= story_slug %>">Deploy</button>
-              <button type="button" class="release-btn delete-confirm"
-                      data-delete-url="/maps/<%= map_id %>/stories/<%= story.id %>/release"
-                      data-delete-target=".map-grid-container"
-                      data-label="Release"
-                      data-test-id="release-<%= story_slug %>">Release</button>
+              <% if awaiting_walkthrough %>
+                <a href="/teams/<%= story.team_id %>/teamwork/walkthroughs" class="walk-link" data-test-id="release-needs-walkthrough">Release needs a walkthrough</a>
+              <% else %>
+                <button type="button" class="release-btn delete-confirm"
+                        data-delete-url="/maps/<%= map_id %>/stories/<%= story.id %>/release"
+                        data-delete-target=".map-grid-container"
+                        data-label="Release"
+                        data-test-id="release-<%= story_slug %>">Release</button>
+              <% end %>
               <button type="button" class="kebab-copy-id preview-copy-id" data-story-id="<%= story.id %>" data-test-id="card-copy-id">Copy ID &middot; <%= short_id %></button>
             </div>
           </details>
