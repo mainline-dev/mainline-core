@@ -11,7 +11,8 @@
 
     <h3 class="section-title">Needs a walkthrough</h3>
     <% if @rule_on %>
-      <p class="lens-help" data-test-id="walkthrough-count" data-waiting="<%= @needed.size %>" data-limit="<%= @limit %>"><%= @needed.size %> of <%= @limit %> <%= @limit == 1 ? 'story' : 'stories' %> waiting</p>
+      <% waiting = @needed.size + @walk_afterwards.size %>
+      <p class="lens-help" data-test-id="walkthrough-count" data-waiting="<%= waiting %>" data-limit="<%= @limit %>"><%= waiting %> of <%= @limit %> <%= @limit == 1 ? 'story' : 'stories' %> waiting</p>
     <% end %>
     <% if @needed.any? %>
       <table class="data-table">
@@ -46,6 +47,29 @@
       </table>
     <% else %>
       <p class="empty-state" data-test-id="walkthrough-none-needed">No stories are waiting for a walkthrough.</p>
+    <% end %>
+
+    <% if @walk_afterwards.any? %>
+      <h3 class="section-title">Released, walk afterwards</h3>
+      <p class="lens-help">Urgent stories released before their walkthrough. They count against the limit until walked through.</p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Story</th>
+            <th>Released</th>
+            <th>Who attended</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @walk_afterwards.each do |row| %>
+            <tr data-test-id="walk-afterwards" data-story="<%= row.story.id %>">
+              <td><%= row.story.title %></td>
+              <td><%= row.story.released_at.strftime('%-d %B') %></td>
+              <td><%== render('teams/teamwork/_walkthrough_form', locals: { story: row.story, could_attend: row.could_attend }) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
     <% end %>
 
     <h3 class="section-title">Walked, not yet released</h3>

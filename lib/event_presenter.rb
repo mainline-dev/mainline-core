@@ -3,7 +3,6 @@
 module EventPresenter
   FIXED_DESCRIPTIONS = {
     'deployed'         => 'marked as deployed',
-    'released'         => 'marked as released',
     'archived'         => 'archived',
     'reordered'        => 'reordered',
     'scenarios_agreed' => 'kickoff: agreed the scenarios'
@@ -22,7 +21,8 @@ module EventPresenter
     'collaboration_changed' => :describe_collaboration_change,
     'agent_read'            => :describe_agent_read,
     'split_out'             => :describe_split_out,
-    'walked_through'        => :describe_walkthrough
+    'walked_through'        => :describe_walkthrough,
+    'released'              => :describe_release
   }.freeze
 
   STRATEGY_NAMES = {
@@ -89,6 +89,10 @@ module EventPresenter
     return 'split scenarios out to a new story' unless n
 
     "split #{n} #{n == 1 ? 'scenario' : 'scenarios'} out to a new story"
+  end
+
+  def self.describe_release(event, _lookup, _include_name)
+    event.after_state['before_walkthrough'] ? 'marked as released before its walkthrough' : 'marked as released'
   end
 
   def self.describe_walkthrough(event, lookup, _include_name)

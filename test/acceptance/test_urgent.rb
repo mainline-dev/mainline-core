@@ -122,3 +122,56 @@ describe 'The urgent story' do
     refute_shown('urgent-card')
   end
 end
+
+# An urgent fix is often live as soon as it deploys, so an urgent story one
+# person worked on can be released before its walkthrough, and walked after.
+describe 'An urgent story released before its walkthrough' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    @bob   = add_person(name: 'Bob')
+    create_map
+    task = create_task('Operate', under_activity: create_activity('Run the shop', for_personas: [create_persona('Operator')]))
+    @patch = create_story('Operators can rotate the payment key', under_task: task)
+    start_as_urgent(@patch, reason: 'The payment key leaked')
+    deploy_story(@patch)
+  end
+
+  it 'can be released with one person on it and no walkthrough' do
+    release_story(@patch)
+
+    assert_equal 'released', status_of(@patch)
+  end
+
+  it 'waits on the Walkthroughs page to be walked afterwards' do
+    release_story(@patch)
+
+    visit_walkthroughs
+
+    assert_equal [@patch.id], walk_afterwards
+  end
+
+  it 'counts against the walkthrough limit until it is walked' do
+    release_story(@patch)
+
+    visit_walkthroughs
+
+    assert_equal 'released', status_of(@patch)
+
+    assert_equal '1', walkthroughs_against_limit[:waiting]
+  end
+
+  it 'leaves the page once it is walked through' do
+    release_story(@patch)
+    record_walkthrough(@patch, attended_by: [@bob])
+
+    visit_walkthroughs
+
+    assert_equal 'released', status_of(@patch)
+
+    assert_empty walk_afterwards
+    assert_equal '0', walkthroughs_against_limit[:waiting]
+  end
+end

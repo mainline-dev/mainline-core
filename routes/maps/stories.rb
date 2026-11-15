@@ -239,7 +239,9 @@ class Mainline
               reason: 'unverified-scenarios')
             next htmx_grid_or_redirect(r)
           end
-          if TwoPersonRule.blocks_release?(@story, @current_team)
+          # An urgent story can be released before its walkthrough, and is walked afterwards.
+          before_walkthrough = TwoPersonRule.blocks_release?(@story, @current_team)
+          if before_walkthrough && !UrgentStory.urgent?(@story)
             flash_msg.error(TwoPersonRule::REFUSAL, reason: TwoPersonRule::REASON)
             next htmx_grid_or_redirect(r)
           end
@@ -258,7 +260,7 @@ class Mainline
               actor_id:    @current_actor.id,
               entity:      @story,
               action:      'released',
-              after_state: { status: 'released' }
+              after_state: { status: 'released' }.merge(before_walkthrough ? { TwoPersonRule::BEFORE_WALKTHROUGH => true } : {})
             )
             SplitCandidate.invalidate_threshold!(@current_team.id)
           end

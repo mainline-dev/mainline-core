@@ -178,6 +178,67 @@ describe TwoPersonRule do
     end
   end
 
+  describe 'the stories to walk afterwards, on a team of two' do
+    before do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id)
+    end
+
+    def released(title, before_walkthrough: true)
+      story = create_story(title, status: 'released', released_at: Time.now, deploy_count: 1,
+        first_deployed_at: Time.now, last_deployed_at: Time.now)
+      flag = before_walkthrough ? { before_walkthrough: true } : {}
+      event('released', story: story, status: 'released', **flag)
+      story
+    end
+
+    def walk_afterwards
+      TwoPersonRule.walk_afterwards(@team).map(&:title)
+    end
+
+    it 'are the stories released before their walkthrough' do
+      released('Rotate the key')
+
+      assert_equal ['Rotate the key'], walk_afterwards
+    end
+
+    it 'leave out a story released once two people had seen it' do
+      released('Pay by card', before_walkthrough: false)
+
+      assert_empty walk_afterwards
+    end
+
+    it 'leave out a story walked through after its release' do
+      story = released('Rotate the key')
+      event('walked_through', story: story, attendee_ids: [@bob.id])
+
+      assert_empty walk_afterwards
+    end
+
+    it 'leave out a story archived since' do
+      released('Rotate the key').update(archived_at: Time.now)
+
+      assert_empty walk_afterwards
+    end
+
+    it 'are none while the team has the rule off' do
+      released('Rotate the key')
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'two_person_rule', value: 0,
+        min_value: 0, max_value: 1, default_value: 1)
+
+      assert_empty walk_afterwards
+    end
+
+    it 'count against the limit on stories awaiting a walkthrough' do
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'walkthrough_limit', value: 2,
+        min_value: 1, max_value: 10, default_value: 3)
+      released('Rotate the key')
+      deployed('Pay')
+
+      assert TwoPersonRule.at_limit?(@team)
+      assert_equal 2, TwoPersonRule.waiting(@team)
+    end
+  end
+
   describe 'the team turning it off and on' do
     before do
       TeamMembership.create(team_id: @team.id, person_id: @bob.id)

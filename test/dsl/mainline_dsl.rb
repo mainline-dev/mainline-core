@@ -574,6 +574,11 @@ module MainlineDSL
   end
 
   # The Walkthroughs page's count of stories waiting, against the team's limit.
+  # The released urgent stories the Walkthroughs page lists to walk afterwards, by ID.
+  def walk_afterwards
+    driver.walk_afterwards
+  end
+
   def walkthroughs_against_limit
     driver.walkthroughs_against_limit
   end

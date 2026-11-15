@@ -14,6 +14,8 @@ module Walkthroughs
   # walkthroughs, each once, and whether it has been deployed again since the
   # latest of them.
   Walked = Struct.new(:story, :attended, :deployed_since, keyword_init: true)
+  # An urgent story released before its walkthrough, and who could attend it.
+  Afterwards = Struct.new(:story, :could_attend, keyword_init: true)
   # An active, deployed story that had two or more people on it and has not
   # been walked through: the people on it, and those who could attend a
   # walkthrough all the same.
@@ -53,6 +55,11 @@ module Walkthroughs
       ids = assignments.select { |assignment| assignment.story_id == story.id }.map(&:person_id)
       [story.id, people.select { |person| ids.include?(person.id) }]
     }
+  end
+
+  def self.walk_afterwards(team)
+    working = working_members(team)
+    TwoPersonRule.walk_afterwards(team).map { |story| Afterwards.new(story: story, could_attend: working) }
   end
 
   def self.walked(team)

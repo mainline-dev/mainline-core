@@ -76,6 +76,17 @@ describe EventPresenter do
     assert_equal 'walked through', EventPresenter.describe(walkthrough, lookup)
   end
 
+  it 'describes a release' do
+    assert_equal 'marked as released',
+      EventPresenter.describe(build_event(action: 'released', after_state: { 'status' => 'released' }), lookup)
+  end
+
+  it 'describes a release before its walkthrough' do
+    event = build_event(action: 'released', after_state: { 'status' => 'released', 'before_walkthrough' => true })
+
+    assert_equal 'marked as released before its walkthrough', EventPresenter.describe(event, lookup)
+  end
+
   it 'describes a kickoff' do
     assert_equal 'kickoff: agreed the scenarios', EventPresenter.describe(build_event(action: 'scenarios_agreed'), lookup)
   end

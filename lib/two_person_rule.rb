@@ -17,6 +17,8 @@ module TwoPersonRule
   LIMIT_KEY = 'walkthrough_limit'
   DEFAULT_LIMIT = 3
   LIMIT_RANGE = (1..10)
+  # On the release event of an urgent story released before its walkthrough.
+  BEFORE_WALKTHROUGH = 'before_walkthrough'
 
   # On for every team until it turns it off in its settings.
   def self.on?(team)
@@ -48,12 +50,30 @@ module TwoPersonRule
     TeamConstraint.for_team(team.id, LIMIT_KEY, default: DEFAULT_LIMIT)
   end
 
+  # Urgent stories released before their walkthrough and not walked through
+  # since, the longest released first.
+  def self.walk_afterwards(team)
+    return [] unless applies?(team)
+
+    early = Event.where(team_id: team.id, entity_type: RecordEvent.entity_type_for(Story), action: 'released').all
+      .select { |event| event.after_state[BEFORE_WALKTHROUGH] }.map(&:entity_id)
+    stories = Story.where(id: early, status: 'released', archived_at: nil).order(:released_at).all
+    seen = walked(stories)
+    stories.reject { |story| seen.include?(story.id) }
+  end
+
+  # How many stories wait for a walkthrough: those awaiting one before release,
+  # and urgent ones released before theirs.
+  def self.waiting(team)
+    awaiting(team).size + walk_afterwards(team).size
+  end
+
   def self.at_limit?(team)
-    awaiting(team).size >= limit(team)
+    waiting(team) >= limit(team)
   end
 
   def self.limit_refusal(team)
-    waiting = awaiting(team).size
+    waiting = waiting(team)
     return '1 story is waiting for a walkthrough. Walk it through before starting another.' if waiting == 1
 
     "#{waiting} stories are waiting for a walkthrough. Walk one through before starting another."

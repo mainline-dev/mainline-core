@@ -712,6 +712,10 @@ class HttpDriver
     last_response.body.scan(/data-test-id="walkthrough-needed" data-story="([^"]+)"/).flatten
   end
 
+  def walk_afterwards
+    last_response.body.scan(/data-test-id="walk-afterwards" data-story="([^"]+)"/).flatten
+  end
+
   def walkthroughs_against_limit
     count = last_response.body[/<[^>]*data-test-id="walkthrough-count"[^>]*>/].to_s
     { waiting: count[/data-waiting="([^"]*)"/, 1], limit: count[/data-limit="([^"]*)"/, 1] }

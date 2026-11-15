@@ -280,4 +280,22 @@ describe Walkthroughs do
       assert_equal(%w[Older Recent], seen.map { |row| row.story.title })
     end
   end
+
+  describe 'the urgent stories released before their walkthrough' do
+    it 'lists each with everyone working on the team as able to attend' do
+      story = deployed('Rotate the key', on_it: [])
+      story.update(status: 'released', released_at: Time.now)
+      RecordEvent.call(actor_id: @alice.actor.id, entity: story, action: 'released',
+        after_state: { status: 'released', before_walkthrough: true })
+
+      rows = Walkthroughs.walk_afterwards(@team)
+
+      assert_equal(['Rotate the key'], rows.map { |row| row.story.title })
+      assert_equal %w[Alice Bob], names(rows.first.could_attend)
+    end
+
+    it 'lists none while every released story was seen by two first' do
+      assert_empty Walkthroughs.walk_afterwards(@team)
+    end
+  end
 end
