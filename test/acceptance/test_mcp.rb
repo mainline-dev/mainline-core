@@ -379,6 +379,19 @@ describe 'MCP server' do
     assert_empty %w[get_map get_story list_maps] - names
   end
 
+  it 'gives every tool a title and says it only reads, the same each time, and reaches nothing outside Mainline' do
+    generate_mcp_token
+    mcp_initialize
+
+    read_only = { 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true,
+                  'openWorldHint' => false }
+
+    mcp_list_tools.each do |tool|
+      refute_empty tool['title'].to_s, tool['name']
+      assert_equal read_only, tool['annotations'], tool['name']
+    end
+  end
+
   it 'records an agent_read event for every get_story fetch' do
     generate_mcp_token
     mcp_initialize

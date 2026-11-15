@@ -7,9 +7,13 @@ require_relative 'import_instructions'
 require_relative 'step_stubs'
 
 module MainlineMCP
+  # Every tool only reads: it changes nothing a team edits, gives the same
+  # answer each time, and reaches nothing outside Mainline. A read of a story
+  # is logged, which is how the card knows a coding agent has read it.
+  READ_ONLY = { read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false }.freeze
+
   def self.build_server
-    instructions = 'Read-only access to a Mainline story map, except that ' \
-                   'fetching a story marks it as agent-assisted. ' \
+    instructions = 'Read-only access to a Mainline story map. ' \
                    'Use list_maps to see available maps, get_map for the full hierarchy, ' \
                    'get_story for details including scenarios (acceptance criteria), ' \
                    'and get_feature_file for those scenarios as a Gherkin feature file. ' \
@@ -34,6 +38,8 @@ module MainlineMCP
   def self.define_list_maps(server)
     server.define_tool(
       name:         'list_maps',
+      title:        'List maps',
+      annotations:  READ_ONLY,
       description:  'List all maps for this team',
       input_schema: { type: 'object', properties: {} }
     ) { MainlineMCP.call_list_maps }
@@ -42,6 +48,8 @@ module MainlineMCP
   def self.define_get_map(server)
     server.define_tool(
       name:         'get_map',
+      title:        'Get map',
+      annotations:  READ_ONLY,
       description:  'Get full map hierarchy: activities, steps, stories, personas, release slices',
       input_schema: {
         type:       'object',
@@ -54,8 +62,9 @@ module MainlineMCP
   def self.define_get_story(server)
     server.define_tool(
       name:         'get_story',
-      description:  'Get story detail: description, scenarios, deploy history, assignments. ' \
-                    'Marks the story as agent-assisted.',
+      title:        'Get story',
+      annotations:  READ_ONLY,
+      description:  'Get story detail: description, scenarios, deploy history, assignments.',
       input_schema: {
         type:       'object',
         properties: { story_id: { type: 'string', description: 'UUID of the story' } },
@@ -67,8 +76,10 @@ module MainlineMCP
   def self.define_get_feature_file(server)
     server.define_tool(
       name:         'get_feature_file',
+      title:        'Get feature file',
+      annotations:  READ_ONLY,
       description:  "Get a story's scenarios as a Gherkin .feature file, tagged with the story and scenario IDs. " \
-                    'With a language, also pending step definitions for it. Marks the story as agent-assisted.',
+                    'With a language, also pending step definitions for it.',
       input_schema: {
         type:       'object',
         properties: {
@@ -83,6 +94,8 @@ module MainlineMCP
   def self.define_get_import_format(server)
     server.define_tool(
       name:         'get_import_format',
+      title:        'Get import format',
+      annotations:  READ_ONLY,
       description:  'Get the instructions and JSON Schema for a Mainline import file: stories proposed from a ' \
                     "specification, for a person to upload and review. Lists the team's activities and steps. " \
                     'Reads only; nothing is marked or changed.',
