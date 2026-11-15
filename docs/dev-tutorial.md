@@ -391,7 +391,6 @@ The email version finds-or-creates your person and adds them to every team, so O
 | `rake prod_up` | Migrate production DB to latest |
 | `rake dev_seed` | Seed development database with sample team history |
 | `rake dev_teardown` | Remove seed data from development database |
-| `rake screenshot_seed` | Seed a compact team for map screenshots |
 | `rake demo_refresh` | Shift demo team timestamps to present |
 | `rake export[team_id]` | Export team data as JSON |
 | `rake test_irb` | IRB with models loaded in test mode |
