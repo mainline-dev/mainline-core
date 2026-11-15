@@ -428,6 +428,17 @@ module MainlineDSL
     driver.visit_walkthroughs(@team)
   end
 
+  # The stories the Walkthroughs page lists as needing one, by ID, in the
+  # order shown.
+  def walkthroughs_needed
+    driver.walkthroughs_needed
+  end
+
+  # The people the page's form offers as attending a story's walkthrough.
+  def could_attend(story)
+    driver.could_attend(story)
+  end
+
   def visit_edit_person(person)
     driver.visit_edit_person(@team, person)
   end

@@ -80,5 +80,6 @@ classes:
   StepStubs: { mutations: 822, killed: 796, alive: 26 }
   StoryPicker: { mutations: 816, killed: 730, alive: 86 }
   UnpromoteMuseumItem: { mutations: 232, killed: 187, alive: 45 }
-  TwoPersonRule: { mutations: 148, killed: 142, alive: 6 }
+  TwoPersonRule: { mutations: 208, killed: 204, alive: 4 }
   RecordWalkthrough: { mutations: 136, killed: 134, alive: 2 }
+  Walkthroughs: { mutations: 157, killed: 148, alive: 9 }

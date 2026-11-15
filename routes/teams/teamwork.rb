@@ -32,6 +32,7 @@ class Mainline
 
       r.get do
         @active_tab = 'walkthroughs'
+        @needed = Walkthroughs.needed(@team)
         @page_title = 'Walkthroughs - Mainline'
         view 'walkthroughs'
       end

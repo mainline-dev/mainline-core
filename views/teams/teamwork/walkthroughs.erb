@@ -4,6 +4,41 @@
 <div class="teamwork-layout">
   <div class="teamwork-main">
     <h2 class="section-heading" data-test-id="teamwork-page-walkthroughs">Walkthroughs</h2>
+
+    <% record_path = "/teams/#{@team.id}/teamwork/walkthroughs" %>
+    <h3 class="section-title">Needs a walkthrough</h3>
+    <% if @needed.any? %>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Story</th>
+            <th>On it</th>
+            <th>Who attended</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @needed.each do |row| %>
+            <tr data-test-id="walkthrough-needed" data-story="<%= row.story.id %>">
+              <td><%= row.story.title %></td>
+              <td><%= row.on_it.map(&:name).join(', ') %></td>
+              <td>
+                <form method="post" action="<%= record_path %>" class="walkthrough-form" data-test-id="walkthrough-form" data-story="<%= row.story.id %>">
+                  <%== csrf_tag(record_path) %>
+                  <input type="hidden" name="story_id" value="<%= row.story.id %>">
+                  <% row.could_attend.each do |person| %>
+                    <label class="form-label form-label--checkbox">
+                      <input type="checkbox" name="attendee_ids[]" class="form-checkbox" data-test-id="walkthrough-attendee" value="<%= person.id %>">
+                      <%= person.name %>
+                    </label>
+                  <% end %>
+                  <button type="submit" class="btn btn-sm" data-test-id="walkthrough-record">Record walkthrough</button>
+                </form>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
   </div>
 
   <div class="teamwork-sidebar">

@@ -646,6 +646,15 @@ class HttpDriver
     last_response
   end
 
+  def walkthroughs_needed
+    last_response.body.scan(/data-test-id="walkthrough-needed" data-story="([^"]+)"/).flatten
+  end
+
+  def could_attend(story)
+    form = last_response.body[%r{<form[^>]*data-test-id="walkthrough-form" data-story="#{story.id}".*?</form>}m].to_s
+    form.scan(/data-test-id="walkthrough-attendee" value="([^"]+)"/).flatten
+  end
+
   def visit_edit_person(_team, _person)
     get '/profile/edit'
     last_response

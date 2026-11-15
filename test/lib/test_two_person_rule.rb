@@ -21,10 +21,19 @@ describe TwoPersonRule do
     @story = create_story('Find things')
   end
 
-  def create_story(title)
+  def create_story(title, **attrs)
     position = (Story.where(task_id: @task.id).max(:position) || 0) + 1000
     Story.create(task_id: @task.id, map_id: @map.id, team_id: @team.id, title: title, position: position,
-      created_by_id: @alice.id)
+      created_by_id: @alice.id, **attrs)
+  end
+
+  # An active story, deployed once.
+  def deployed(title, at: Time.now, **attrs)
+    create_story(title, status: 'active', deploy_count: 1, first_deployed_at: at, last_deployed_at: at, **attrs)
+  end
+
+  def awaiting
+    TwoPersonRule.awaiting(@team).map(&:title)
   end
 
   def event(action, story: @story, **after_state)
@@ -38,6 +47,13 @@ describe TwoPersonRule do
 
     it 'holds a team with two working members to it' do
       TeamMembership.create(team_id: @team.id, person_id: @bob.id)
+
+      assert TwoPersonRule.applies?(@team)
+    end
+
+    it 'holds a team with three working members to it' do
+      carol = Person.create(name: 'Carol', email: 'carol@test.mainline')
+      [@bob, carol].each { |person| TeamMembership.create(team_id: @team.id, person_id: person.id) }
 
       assert TwoPersonRule.applies?(@team)
     end
@@ -111,6 +127,54 @@ describe TwoPersonRule do
 
       assert TwoPersonRule.blocks_release?(@story, @team)
     end
+  end
+
+  describe 'the stories awaiting a walkthrough, on a team of two' do
+    before do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id)
+    end
+
+    it 'are the active, deployed stories one person worked on, longest since their last deploy first' do
+      deployed('Pay', at: Time.now - 60)
+      deployed('Browse', at: Time.now - 3600)
+
+      assert_equal %w[Browse Pay], awaiting
+    end
+
+    it 'leave out a story that has not been deployed, and one that is still planned' do
+      create_story('Started', status: 'active')
+      create_story('Planned')
+
+      assert_empty awaiting
+    end
+
+    it 'leave out a released story and an archived one' do
+      deployed('Released', status: 'released', released_at: Time.now)
+      deployed('Archived', archived_at: Time.now)
+
+      assert_empty awaiting
+    end
+
+    it 'leave out a story that had two people on it' do
+      event('collaboration_changed', story: deployed('Paired'), mode: 'paired')
+      event('collaboration_changed', story: deployed('Mobbed'), mode: 'ensemble')
+      event('collaboration_changed', story: deployed('Alone'), mode: 'solo')
+
+      assert_equal ['Alone'], awaiting
+    end
+
+    it 'leave out a story that has been walked through' do
+      event('walked_through', story: deployed('Walked'), attendee_ids: [@bob.id])
+      deployed('Waiting')
+
+      assert_equal ['Waiting'], awaiting
+    end
+  end
+
+  it 'has no story awaiting a walkthrough on a team of one' do
+    deployed('Pay')
+
+    assert_empty awaiting
   end
 
   it 'blocks nothing on a team of one' do

@@ -62,6 +62,7 @@ requires:
   - ./lib/story_picker
   - ./lib/throughput_scatter
   - ./lib/two_person_rule
+  - ./lib/walkthroughs
   - ./lib/unpromote_museum_item
 
 environment_variables:

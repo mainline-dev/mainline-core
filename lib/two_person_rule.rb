@@ -18,19 +18,26 @@ module TwoPersonRule
   end
 
   def self.blocks_release?(story, team)
-    applies?(team) && !had_two_people?(story) && !walked_through?(story)
+    applies?(team) && seen_by_two([story]).empty?
   end
 
-  def self.walked_through?(story)
-    story_events(story, RecordWalkthrough::ACTION).any?
+  # The stories waiting for a walkthrough: active, deployed, worked on by one
+  # person and not walked through. The longest since its last deploy is first.
+  def self.awaiting(team)
+    return [] unless applies?(team)
+
+    stories = Story.where(team_id: team.id, status: 'active', archived_at: nil).exclude(deploy_count: 0)
+      .order(:last_deployed_at).all
+    seen = seen_by_two(stories)
+    stories.reject { |story| seen.include?(story.id) }
   end
 
-  def self.had_two_people?(story)
-    story_events(story, 'collaboration_changed').all.any? { |event| TOGETHER.include?(event.after_state['mode']) }
+  # Which of these stories two people have seen, by ID.
+  def self.seen_by_two(stories)
+    Event.where(entity_type: RecordEvent.entity_type_for(Story), entity_id: stories.map(&:id),
+      action: ['collaboration_changed', RecordWalkthrough::ACTION]).all
+      .select { |event| event.action == RecordWalkthrough::ACTION || TOGETHER.include?(event.after_state['mode']) }
+      .to_set(&:entity_id)
   end
-
-  def self.story_events(story, action)
-    Event.where(entity_type: RecordEvent.entity_type_for(Story), entity_id: story.id, action: action)
-  end
-  private_class_method :story_events
+  private_class_method :seen_by_two
 end

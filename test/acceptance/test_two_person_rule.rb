@@ -95,6 +95,24 @@ describe 'The Walkthroughs page' do
     assert_shown('teamwork-page-walkthroughs')
     assert_shown('teamwork-tab-walkthroughs')
   end
+
+  describe 'with a story one person has deployed' do
+    before do
+      create_map
+      activity = create_activity('Browse', for_personas: [create_persona('Shopper')])
+      @story = create_story('Find things', under_task: create_task('Search', under_activity: activity))
+      update_settings(allow_solo_activation: '1')
+      assign_person(@story, person: @alice)
+      deploy_story(@story)
+    end
+
+    it 'lists the story as needing a walkthrough, with a form offering the people who are not on it' do
+      visit_walkthroughs
+
+      assert_equal [@story.id], walkthroughs_needed
+      assert_equal [@bob.id], could_attend(@story)
+    end
+  end
 end
 
 describe 'A team of one and the two-person rule' do
