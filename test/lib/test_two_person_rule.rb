@@ -208,6 +208,77 @@ describe TwoPersonRule do
     end
   end
 
+  describe 'the limit on stories awaiting a walkthrough' do
+    before do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id)
+    end
+
+    def limit_saved_as(value)
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'walkthrough_limit', value: value,
+        min_value: 1, max_value: 10, default_value: 3)
+    end
+
+    def waiting(count)
+      count.times { |number| deployed("Story #{number}") }
+    end
+
+    it 'is three until the team changes it' do
+      assert_equal 3, TwoPersonRule.limit(@team)
+    end
+
+    it 'is what the team has set it to' do
+      limit_saved_as(5)
+
+      assert_equal 5, TwoPersonRule.limit(@team)
+    end
+
+    it 'is not reached while fewer stories are waiting than it allows' do
+      waiting(2)
+
+      refute TwoPersonRule.at_limit?(@team)
+    end
+
+    it 'is reached when as many stories are waiting as it allows, and stays reached with more' do
+      waiting(3)
+
+      assert TwoPersonRule.at_limit?(@team)
+      waiting(1)
+
+      assert TwoPersonRule.at_limit?(@team)
+    end
+
+    it 'is reached sooner when the team lowers it' do
+      limit_saved_as(1)
+      waiting(1)
+
+      assert TwoPersonRule.at_limit?(@team)
+    end
+
+    it 'is never reached while the rule is off' do
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'two_person_rule', value: 0,
+        min_value: 0, max_value: 1, default_value: 1)
+      waiting(3)
+
+      refute TwoPersonRule.at_limit?(@team)
+    end
+
+    it 'says how many stories are waiting, in the words for one or for several' do
+      waiting(1)
+      one = TwoPersonRule.limit_refusal(@team)
+      waiting(2)
+      several = TwoPersonRule.limit_refusal(@team)
+
+      assert_match(/\A1 story /, one)
+      assert_match(/\A3 stories /, several)
+    end
+  end
+
+  it 'never reaches the limit on a team of one' do
+    3.times { |number| deployed("Story #{number}") }
+
+    refute TwoPersonRule.at_limit?(@team)
+  end
+
   it 'has no story awaiting a walkthrough on a team of one' do
     deployed('Pay')
 

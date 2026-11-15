@@ -1,10 +1,17 @@
 # frozen_string_literal: true
 
+require_relative 'two_person_rule'
+
 # Puts a person on a story, up to the team's WIP limit: one active story per
 # person unless the team has raised it. The limit is checked under a lock on
 # the person, in the transaction that assigns, so two assignments at once
 # can't both pass. Lowering a limit leaves stories in flight alone; the person
 # just can't start another until they are under it.
+#
+# An assignment that would start a story is refused while the team has as
+# many stories awaiting a walkthrough as it allows. That is checked under a
+# lock on the team in the same transaction, and it too leaves stories in
+# flight alone.
 module AssignPerson
   Result = Struct.new(:success?, :errors, keyword_init: true)
 
@@ -32,6 +39,7 @@ module AssignPerson
     DB.transaction do
       lock_person(person_id, team)
       next Result.new(success?: false, errors: [limit_message(team)]) if at_limit?(person_id, team)
+      next Result.new(success?: false, errors: [TwoPersonRule.limit_refusal(team)]) if held_for_walkthroughs?(story, team)
 
       StoryAssignment.create(story_id: story.id, person_id: person_id, team_id: team.id)
       RecordEvent.call(
@@ -95,13 +103,30 @@ module AssignPerson
   end
   private_class_method :limit_message
 
-  def self.maybe_activate(story, team, actor_id, count)
-    return unless story.status == 'planned'
+  # Whether one more person on this story would start it, while the team has
+  # its fill of stories awaiting a walkthrough.
+  def self.held_for_walkthroughs?(story, team)
+    return false unless story.status == 'planned'
+    return false unless enough_to_start?(team, StoryAssignment.where(story_id: story.id).count + 1)
+
+    DB.get(Sequel.function(:pg_advisory_xact_lock, Sequel.function(:hashtext, "walkthroughs:#{team.id}")))
+    TwoPersonRule.at_limit?(team)
+  end
+  private_class_method :held_for_walkthroughs?
+
+  # Two people start a story. One does on a team of one, or where the team
+  # allows it.
+  def self.enough_to_start?(team, count)
+    return true if count >= 2
 
     working_count = TeamMembership.where(team_id: team.id, left_at: nil, working: true).count
-    solo_allowed = working_count == 1 ||
-                   TeamConstraint.for_team(team.id, 'allow_solo_activation', default: 0) == 1
-    return unless count >= 2 || (solo_allowed && count >= 1)
+    count == 1 && (working_count == 1 || TeamConstraint.for_team(team.id, 'allow_solo_activation', default: 0) == 1)
+  end
+  private_class_method :enough_to_start?
+
+  def self.maybe_activate(story, team, actor_id, count)
+    return unless story.status == 'planned'
+    return unless enough_to_start?(team, count)
 
     reason = count >= 2 ? 'paired' : 'solo'
     story.update(status: 'active')

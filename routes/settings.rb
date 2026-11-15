@@ -32,6 +32,8 @@ class Mainline
           save_solo_activation(r)
         elsif r.params.key?(TwoPersonRule::KEY)
           save_two_person_rule(r)
+        elsif r.params.key?(TwoPersonRule::LIMIT_KEY)
+          save_walkthrough_limit(r)
         elsif r.params.key?('timezone')
           save_timezone(r)
         elsif r.params.key?('holiday_region')
@@ -51,6 +53,7 @@ class Mainline
     @allow_solo_activation = TeamConstraint.for_team(@team.id, 'allow_solo_activation', default: 0)
     @wip_limit = AssignPerson.wip_limit(@team)
     @two_person_rule = TwoPersonRule.on?(@team)
+    @walkthrough_limit = TwoPersonRule.limit(@team)
     @split_percentile = TeamConstraint.for_team(@team.id, 'split_percentile', default: 80)
     @split_min_released = TeamConstraint.for_team(@team.id, 'split_min_released', default: 10)
     template_idx = TeamConstraint.for_team(@team.id, 'default_story_template', default: 0)
@@ -150,6 +153,36 @@ class Mainline
       flash['notice'] = 'Two-person rule updated'
     end
     req.redirect '/settings'
+  end
+
+  # Like the WIP limit: anyone working on the team can change it, with a
+  # reason in both directions.
+  def save_walkthrough_limit(req)
+    limit = Integer(req.params[TwoPersonRule::LIMIT_KEY].to_s, 10, exception: false)
+    reason = req.params['walkthrough_limit_reason'].to_s.strip[0, 280]
+    error, error_reason = walkthrough_limit_refusal(limit, reason)
+    if error
+      flash['error'] = error
+      flash['error_reason'] = error_reason
+    else
+      DB.transaction do
+        upsert_constraint_with_event(
+          TwoPersonRule::LIMIT_KEY, limit,
+          min: TwoPersonRule::LIMIT_RANGE.min, max: TwoPersonRule::LIMIT_RANGE.max,
+          default: TwoPersonRule::DEFAULT_LIMIT, reason: reason
+        )
+      end
+      flash['notice'] = 'Walkthrough limit updated'
+    end
+    req.redirect '/settings'
+  end
+
+  # Why the limit cannot be saved, with the reason's short name, if it cannot.
+  def walkthrough_limit_refusal(limit, reason)
+    range = TwoPersonRule::LIMIT_RANGE
+    return ["The limit must be between #{range.min} and #{range.max}.", 'out-of-range'] unless range.cover?(limit)
+
+    ['Give a reason for changing the limit.', 'reason-needed'] if reason.empty? && limit != TwoPersonRule.limit(@team)
   end
 
   def save_timezone(req)

@@ -324,6 +324,69 @@ describe AssignPerson do
     assert_empty StoryAssignment.where(story_id: @story.id).all
   end
 
+  describe 'when the team has as many stories awaiting a walkthrough as its limit allows' do
+    before do
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'walkthrough_limit', value: 1,
+        min_value: 1, max_value: 10, default_value: 3)
+      @waiting = Story.create(map_id: @map.id, team_id: @team.id, task_id: @task.id, title: 'Waiting', position: 2000,
+        created_by_id: @person.id, status: 'active', deploy_count: 1, first_deployed_at: Time.now,
+        last_deployed_at: Time.now)
+    end
+
+    def allow_solo
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'allow_solo_activation',
+        value: 1, min_value: 0, max_value: 1, default_value: 0)
+    end
+
+    def assign(person, story = @story)
+      AssignPerson.call(story: story, person_id: person.id, team: @team, actor_id: person.actor_id)
+    end
+
+    def on_story
+      StoryAssignment.where(story_id: @story.id).select_map(:person_id)
+    end
+
+    it 'refuses an assignment that would start a story, leaving nobody on it' do
+      allow_solo
+
+      result = assign(@person)
+
+      refute_predicate result, :success?
+      assert_equal [TwoPersonRule.limit_refusal(@team)], result.errors
+      assert_empty on_story
+      assert_equal 'planned', @story.reload.status
+    end
+
+    it 'refuses the second of a pair, whose assignment would start the story' do
+      assign(@person)
+
+      result = assign(@bob)
+
+      refute_predicate result, :success?
+      assert_equal [@person.id], on_story
+      assert_equal 'planned', @story.reload.status
+    end
+
+    it 'lets an assignment through that does not start the story' do
+      assert_predicate assign(@person), :success?
+      assert_equal [@person.id], on_story
+    end
+
+    it 'lets a second person join a story that has already started' do
+      StoryAssignment.create(story_id: @waiting.id, person_id: @person.id, team_id: @team.id)
+
+      assert_predicate assign(@bob, @waiting), :success?
+    end
+
+    it 'lets a story start once the team raises its limit' do
+      allow_solo
+      TeamConstraint.where(team_id: @team.id, constraint_key: 'walkthrough_limit').update(value: 2)
+
+      assert_predicate assign(@person), :success?
+      assert_equal 'active', @story.reload.status
+    end
+  end
+
   it 'rejects non-working member' do
     TeamMembership.where(team_id: @team.id, person_id: @bob.id).update(working: false)
 

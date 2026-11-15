@@ -11,6 +11,9 @@
 
     <% record_path = "/teams/#{@team.id}/teamwork/walkthroughs" %>
     <h3 class="section-title">Needs a walkthrough</h3>
+    <% if @rule_on %>
+      <p class="lens-help" data-test-id="walkthrough-count" data-waiting="<%= @needed.size %>" data-limit="<%= @limit %>"><%= @needed.size %> of <%= @limit %> <%= @limit == 1 ? 'story' : 'stories' %> waiting</p>
+    <% end %>
     <% if @needed.any? %>
       <table class="data-table">
         <thead>

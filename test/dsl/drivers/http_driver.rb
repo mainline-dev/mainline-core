@@ -650,6 +650,11 @@ class HttpDriver
     last_response.body.scan(/data-test-id="walkthrough-needed" data-story="([^"]+)"/).flatten
   end
 
+  def walkthroughs_against_limit
+    count = last_response.body[/<[^>]*data-test-id="walkthrough-count"[^>]*>/].to_s
+    { waiting: count[/data-waiting="([^"]*)"/, 1], limit: count[/data-limit="([^"]*)"/, 1] }
+  end
+
   def walkthrough_row(story)
     row = last_response.body[/<tr[^>]*data-test-id="walkthrough-needed" data-story="#{story.id}"[^>]*>/].to_s
     { scenarios: row[/data-scenarios="([^"]*)"/, 1], last_deployed: row[/data-last-deployed="([^"]*)"/, 1] }

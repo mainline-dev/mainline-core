@@ -6,7 +6,7 @@
 # scripts/mutation.sh AssignPerson
 measured_on: '2026-11-14'
 classes:
-  AssignPerson: { mutations: 959, killed: 727, alive: 232 }
+  AssignPerson: { mutations: 1091, killed: 849, alive: 242 }
   BusinessDays: { mutations: 66, killed: 66, alive: 0 }
   BypassRLS: { mutations: 51, killed: 37, alive: 14 }
   CumulativeFlow: { mutations: 494, killed: 446, alive: 48 }
@@ -80,6 +80,6 @@ classes:
   StepStubs: { mutations: 822, killed: 796, alive: 26 }
   StoryPicker: { mutations: 816, killed: 730, alive: 86 }
   UnpromoteMuseumItem: { mutations: 232, killed: 187, alive: 45 }
-  TwoPersonRule: { mutations: 245, killed: 241, alive: 4 }
+  TwoPersonRule: { mutations: 313, killed: 309, alive: 4 }
   RecordWalkthrough: { mutations: 136, killed: 134, alive: 2 }
   Walkthroughs: { mutations: 201, killed: 191, alive: 10 }

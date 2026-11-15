@@ -236,3 +236,86 @@ describe 'A team of one and the two-person rule' do
     assert_equal "/teams/#{@team.id}/teamwork", URI(visit_walkthroughs.location.to_s).path
   end
 end
+
+describe 'The limit on stories awaiting a walkthrough' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice, @bob, @carol, @dan = %w[Alice Bob Carol Dan].map { |name| add_person(name: name) }
+    create_map
+    activity = create_activity('Browse', for_personas: [create_persona('Shopper')])
+    @task = create_task('Search', under_activity: activity)
+    update_settings(allow_solo_activation: '1')
+    @waiting = [@alice, @bob, @carol].map { |person| deployed_by_one(person) }
+    @next = create_story('Next', under_task: @task)
+  end
+
+  def deployed_by_one(person)
+    story = create_story("#{person.name}'s story", under_task: @task)
+    assign_person(story, person: person)
+    deploy_story(story)
+    story
+  end
+
+  it 'stops anyone starting another story once three are waiting' do
+    assign_person(@next, person: @dan)
+
+    assert_shown('form-errors')
+    assert_equal 'planned', @next.reload.status
+  end
+
+  it 'lets a story start once the team raises the limit, giving a reason' do
+    update_settings(walkthrough_limit: 4, walkthrough_limit_reason: 'Two people are away this week')
+
+    assign_person(@next, person: @dan)
+
+    assert_equal 'active', @next.reload.status
+  end
+
+  it 'keeps the limit when it is raised with no reason given' do
+    update_settings(walkthrough_limit: 4, walkthrough_limit_reason: ' ')
+    driver.follow_redirect! if driver.last_response.redirect?
+
+    assert_refused_because('reason-needed')
+    assign_person(@next, person: @dan)
+
+    assert_equal 'planned', @next.reload.status
+  end
+
+  it 'refuses a limit above ten or below one, and keeps the one it had' do
+    [11, 0].each do |limit|
+      update_settings(walkthrough_limit: limit, walkthrough_limit_reason: 'Trying it')
+      driver.follow_redirect! if driver.last_response.redirect?
+
+      assert_refused_because('out-of-range')
+    end
+    assign_person(@next, person: @dan)
+
+    assert_equal 'planned', @next.reload.status
+  end
+
+  it 'shows on the Walkthroughs page how many stories are waiting against the limit' do
+    update_settings(walkthrough_limit: 5, walkthrough_limit_reason: 'Two people are away this week')
+
+    visit_walkthroughs
+
+    assert_equal({ waiting: '3', limit: '5' }, walkthroughs_against_limit)
+  end
+
+  it 'shows in the settings history that the limit was changed, and why' do
+    update_settings(walkthrough_limit: 5, walkthrough_limit_reason: 'Two people are away this week')
+    visit_settings
+
+    assert_page_includes('data-setting="walkthrough_limit"')
+    assert_shown('settings-event-reason')
+  end
+
+  it 'lets a story start once one of the three has been walked through' do
+    record_walkthrough(@waiting.first, attended_by: [@dan])
+
+    assign_person(@next, person: @dan)
+
+    assert_equal 'active', @next.reload.status
+  end
+end

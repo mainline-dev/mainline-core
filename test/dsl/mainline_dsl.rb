@@ -434,6 +434,11 @@ module MainlineDSL
     driver.walkthroughs_needed
   end
 
+  # The Walkthroughs page's count of stories waiting, against the team's limit.
+  def walkthroughs_against_limit
+    driver.walkthroughs_against_limit
+  end
+
   # What the page says about a story needing a walkthrough: how many
   # scenarios it has and the day it was last deployed.
   def walkthrough_row(story)

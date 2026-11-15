@@ -36,6 +36,7 @@ class Mainline
         @active_tab = 'walkthroughs'
         @needed = Walkthroughs.needed(@team)
         @rule_on = TwoPersonRule.on?(@team)
+        @limit = TwoPersonRule.limit(@team)
         @page_title = 'Walkthroughs - Mainline'
         view 'walkthroughs'
       end

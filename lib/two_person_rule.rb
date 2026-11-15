@@ -14,6 +14,9 @@ module TwoPersonRule
   REASON = 'needs-walkthrough'
   TOGETHER = %w[paired ensemble].freeze
   KEY = 'two_person_rule'
+  LIMIT_KEY = 'walkthrough_limit'
+  DEFAULT_LIMIT = 3
+  LIMIT_RANGE = (1..10)
 
   # On for every team until it turns it off in its settings.
   def self.on?(team)
@@ -37,6 +40,23 @@ module TwoPersonRule
       .order(:last_deployed_at).all
     seen = seen_by_two(stories)
     stories.reject { |story| seen.include?(story.id) }
+  end
+
+  # How many stories may wait for a walkthrough before nobody on the team can
+  # start another.
+  def self.limit(team)
+    TeamConstraint.for_team(team.id, LIMIT_KEY, default: DEFAULT_LIMIT)
+  end
+
+  def self.at_limit?(team)
+    awaiting(team).size >= limit(team)
+  end
+
+  def self.limit_refusal(team)
+    waiting = awaiting(team).size
+    return '1 story is waiting for a walkthrough. Walk it through before starting another.' if waiting == 1
+
+    "#{waiting} stories are waiting for a walkthrough. Walk one through before starting another."
   end
 
   # Which of these stories two people have seen, by ID.

@@ -22,7 +22,7 @@
 
   <div class="settings-card">
     <h3 class="settings-card-title">WIP limit</h3>
-    <p class="settings-card-desc">Active stories per person, from 1 to <%= AssignPerson::WIP_CEILING %>. Changing it needs a reason, which everyone on the team can see below.</p>
+    <p class="settings-card-desc">Active stories per person, from 1 to <%= AssignPerson::WIP_CEILING %>. Changing it needs a reason.</p>
     <form method="post" action="/settings" data-test-id="wip-limit">
       <%== csrf_tag('/settings') %>
       <div class="form-row">
@@ -55,7 +55,7 @@
 
   <div class="settings-card">
     <h3 class="settings-card-title">Two-person rule</h3>
-    <p class="settings-card-desc">A story can be released only if two people have seen it: two people were on it while it was active, or a walkthrough is recorded. Turning this off or on needs a reason, which everyone on the team can see below.</p>
+    <p class="settings-card-desc">A story can be released only if two people have seen it: two people were on it while it was active, or a walkthrough is recorded. Turning this off or on needs a reason.</p>
     <form method="post" action="/settings" data-test-id="two-person-rule">
       <%== csrf_tag('/settings') %>
       <div class="form-row">
@@ -70,6 +70,23 @@
         <input type="text" id="two_person_rule_reason" name="two_person_rule_reason" maxlength="280" class="form-input">
       </div>
       <button type="submit" class="btn">Save rule</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h3 class="settings-card-title">Walkthrough limit</h3>
+    <p class="settings-card-desc">How many stories can wait for a walkthrough before nobody can start another, from <%= TwoPersonRule::LIMIT_RANGE.min %> to <%= TwoPersonRule::LIMIT_RANGE.max %>. Changing it needs a reason.</p>
+    <form method="post" action="/settings" data-test-id="walkthrough-limit">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label" for="walkthrough_limit">Stories awaiting a walkthrough</label>
+        <input type="number" id="walkthrough_limit" name="walkthrough_limit" value="<%= @walkthrough_limit %>" min="<%= TwoPersonRule::LIMIT_RANGE.min %>" max="<%= TwoPersonRule::LIMIT_RANGE.max %>" class="form-input">
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="walkthrough_limit_reason">Reason for the change</label>
+        <input type="text" id="walkthrough_limit_reason" name="walkthrough_limit_reason" maxlength="280" class="form-input">
+      </div>
+      <button type="submit" class="btn">Save limit</button>
     </form>
   </div>
 
@@ -177,7 +194,7 @@
             else
               key = event.after_state['constraint_key']
               setting = key
-              label = { 'max_active_stories' => 'WIP limit', 'inventory_aging_days' => 'Aging', 'inventory_stale_days' => 'Stale', 'split_percentile' => 'Percentile', 'split_min_released' => 'Min released', 'allow_solo_activation' => 'Solo activation', 'default_story_template' => 'Story template', 'two_person_rule' => 'Two-person rule' }[key] || key
+              label = { 'max_active_stories' => 'WIP limit', 'inventory_aging_days' => 'Aging', 'inventory_stale_days' => 'Stale', 'split_percentile' => 'Percentile', 'split_min_released' => 'Min released', 'allow_solo_activation' => 'Solo activation', 'default_story_template' => 'Story template', 'two_person_rule' => 'Two-person rule', 'walkthrough_limit' => 'Walkthrough limit' }[key] || key
               unit = { 'inventory_aging_days' => ' days', 'inventory_stale_days' => ' days', 'split_percentile' => '%', 'split_min_released' => '', 'allow_solo_activation' => '', 'default_story_template' => '' }[key] || ''
               from_val = event.before_state['value']
               to_val = event.after_state['value']
