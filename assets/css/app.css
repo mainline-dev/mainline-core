@@ -7161,6 +7161,7 @@ ol.mu-md-list { padding-left: 20px; }
 .mu-scenario textarea:focus { background: var(--bg-surface); }
 .mu-add-scenario { justify-self: start; border: 0; background: none; padding: 0; font: 400 13px var(--font-body); color: var(--accent-cyan); cursor: pointer; }
 .mu-note { margin: -8px 0 0; font-size: 12px; color: var(--text-tertiary); }
+.mu-never-pulled { margin: 8px 0 0; font: 400 14px/1.4 var(--font-body); color: var(--text-secondary); }
 .mu-rewrite-foot { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
 .mu-rewrite-foot .btn { background: var(--accent-cyan); color: var(--bg-base); font-size: 14px; font-weight: 600; padding: 8px 16px; border-radius: 4px; }
 .mu-rewrite-foot .btn:hover { filter: brightness(1.1); box-shadow: none; }

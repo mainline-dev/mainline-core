@@ -1175,6 +1175,10 @@ class HttpDriver
     last_response
   end
 
+  def never_pulled_percent
+    last_response.body[/data-test-id="museum-never-pulled" data-percent="(\d+)"/, 1]&.to_i
+  end
+
   def invite_token_shown
     last_response.body[%r{/invite/([^"<\s]+)}, 1]
   end

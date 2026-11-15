@@ -614,6 +614,21 @@ module MainlineDSL
   end
 
   # Filters: type, label, epic (its key), age and page.
+  # Moves the clock on, for scenarios about time passing.
+  def days_pass(days)
+    Timecop.travel(Time.now + (days * 86_400))
+  end
+
+  def back_to_today
+    Timecop.return
+  end
+
+  # The share of the backlog the museum says was never pulled, as a
+  # percentage, or nil when it says nothing.
+  def never_pulled_percent
+    driver.never_pulled_percent
+  end
+
   def visit_museum(**filters)
     driver.visit_museum(@team, filters)
   end

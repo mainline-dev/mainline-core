@@ -18,6 +18,7 @@ class Mainline
       @empty = MuseumItem.where(team_id: @team.id).empty?
       @no_tasks = !@empty && promotable_tasks.empty?
       @let_go_prompt = LetGoPrompt.call(team: @team)
+      @never_pulled = NeverPulled.percent(@team.id)
       @let_go_tries = 1 if flash['let_go_watch']
       @waiting = MuseumImport.where(team_id: @team.id, status: 'staged').reverse(:created_at).first
       @page_title = 'Ticket Museum - Mainline'

@@ -32,6 +32,9 @@
         </span>
         <span><b><%= catalogue.on_display %></b> on display &middot; <b><%= catalogue.promoted %></b> promoted &middot; <b><%= catalogue.stored %></b> stored</span>
       </div>
+      <% if @never_pulled %>
+        <p class="mu-never-pulled" data-test-id="museum-never-pulled" data-percent="<%= @never_pulled %>">After <%= NeverPulled::AFTER_DAYS %> days, <%= @never_pulled %>% of this backlog has never been pulled.</p>
+      <% end %>
     </div>
     <div class="mu-acquire-link">
       <a href="<%= @museum_path %>/import" class="btn" data-test-id="museum-import-link">Acquire</a>

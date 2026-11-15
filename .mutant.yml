@@ -44,6 +44,7 @@ requires:
   - ./lib/mainline_file
   - ./lib/map_grid
   - ./lib/museum_list
+  - ./lib/never_pulled
   - ./lib/pairing_matrix
   - ./lib/promote_museum_item
   - ./lib/rate_limiter
