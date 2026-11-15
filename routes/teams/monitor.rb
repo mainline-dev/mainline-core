@@ -104,6 +104,17 @@ class Mainline
   end
 
   hash_branch('teams', 'monitor') do |r|
+    # An install without a GitHub App: the page says so, and nothing else here exists.
+    unless CIMonitorSetup.on?
+      r.is do
+        r.get do
+          @page_title = 'CI Monitor - Mainline'
+          view 'off'
+        end
+      end
+      next
+    end
+
     r.is do
       r.get do
         if team_installations.any?

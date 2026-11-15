@@ -14,6 +14,7 @@ requires:
   - ./lib/bypass_rls
   - ./lib/ci_monitor/branch_age
   - ./lib/ci_monitor/status
+  - ./lib/ci_monitor_setup
   - ./lib/create_activity
   - ./lib/create_persona
   - ./lib/create_story

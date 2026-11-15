@@ -23,7 +23,7 @@ module MutationBaseline
   # what they cover (cover 'Name*'), since those are the tests mutant uses.
   LIB = %w[
     AddScenario AddToStory ArchivePersona ArchiveStory AssignPerson
-    BusinessDays BypassRLS CIMonitor::BranchAge CIMonitor::Status
+    BusinessDays BypassRLS CIMonitor::BranchAge CIMonitor::Status CIMonitorSetup
     CreateActivity CreatePersona CreateStory CreateTask CumulativeFlow
     DataExport DeleteTeam DiscardMuseumItem EditActivity EditPersona EditTask
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FlashAdapter

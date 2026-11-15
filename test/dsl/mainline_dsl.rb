@@ -1127,6 +1127,24 @@ module MainlineDSL
     assert_equal path, driver.redirect_path
   end
 
+  def visit_ci_monitor
+    driver.visit_ci_monitor(@team)
+  end
+
+  # GitHub delivering an event to the CI Monitor's webhook address.
+  def send_github_webhook
+    driver.send_github_webhook
+  end
+
+  # Runs the block on an install whose CI Monitor settings are all disabled.
+  def with_ci_monitor_off
+    settings = ENV.to_h.select { |name, _| name.start_with?('CI_MONITOR_GITHUB_') }
+    settings.each_key { |name| ENV[name] = 'disabled' }
+    yield
+  ensure
+    settings.each { |name, value| ENV[name] = value }
+  end
+
   def refute_sent_anywhere
     assert_empty driver.redirect_path.to_s
   end

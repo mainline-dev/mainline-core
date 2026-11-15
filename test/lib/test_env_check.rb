@@ -24,6 +24,24 @@ describe 'Environment check' do
     assert_includes out, 'MAINLINE_SESSION_SECRET'
   end
 
+  def ci_monitor(value)
+    required_env.keys.grep(/\ACI_MONITOR_GITHUB_/).to_h { |var| [var, value] }
+  end
+
+  it 'boots with every CI Monitor setting disabled' do
+    _, status = boot(required_env.merge(ci_monitor('disabled')))
+
+    assert_predicate status, :success?
+  end
+
+  it 'refuses to boot with only some CI Monitor settings disabled, naming those still set' do
+    out, status = boot(required_env.merge(ci_monitor('disabled')).merge('CI_MONITOR_GITHUB_APP_ID' => '12345'))
+
+    refute_predicate status, :success?
+    assert_includes out, 'CI_MONITOR_GITHUB_APP_ID'
+    refute_includes out, 'CI_MONITOR_GITHUB_APP_SLUG'
+  end
+
   it 'boots when every required variable is set' do
     _, status = boot(required_env)
 

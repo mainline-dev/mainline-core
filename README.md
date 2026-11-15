@@ -55,14 +55,18 @@ This pulls the published image, `ghcr.io/mainline-dev/mainline-core`. To run you
 | `SMTP_PASSWORD` | Mail server password |
 | `SMTP_TLS` | `starttls` (port 587) or `tls` (encrypted from the start, port 465) |
 | `MAIL_FROM` | Sender for all email, for example `Mainline <noreply@example.org>` |
-| `CI_MONITOR_GITHUB_APP_ID` | CI Monitor GitHub App ID |
-| `CI_MONITOR_GITHUB_APP_SLUG` | CI Monitor GitHub App URL name, used for the install link |
-| `CI_MONITOR_GITHUB_APP_CLIENT_ID` | CI Monitor GitHub App client ID |
-| `CI_MONITOR_GITHUB_APP_CLIENT_SECRET` | CI Monitor GitHub App client secret |
-| `CI_MONITOR_GITHUB_PRIVATE_KEY` | CI Monitor GitHub App private key (PEM) |
-| `CI_MONITOR_GITHUB_WEBHOOK_SECRET` | CI Monitor GitHub App webhook signing secret |
+| `CI_MONITOR_GITHUB_APP_ID` | CI Monitor GitHub App ID, or `disabled` |
+| `CI_MONITOR_GITHUB_APP_SLUG` | CI Monitor GitHub App URL name, used for the install link, or `disabled` |
+| `CI_MONITOR_GITHUB_APP_CLIENT_ID` | CI Monitor GitHub App client ID, or `disabled` |
+| `CI_MONITOR_GITHUB_APP_CLIENT_SECRET` | CI Monitor GitHub App client secret, or `disabled` |
+| `CI_MONITOR_GITHUB_PRIVATE_KEY` | CI Monitor GitHub App private key (PEM), or `disabled` |
+| `CI_MONITOR_GITHUB_WEBHOOK_SECRET` | CI Monitor GitHub App webhook signing secret, or `disabled` |
 | `SENTRY_DSN` | Sentry DSN for error reports; a plain word such as `disabled` turns sending off |
 | `SENTRY_ENVIRONMENT` | Label on error reports, for example `production` |
+
+### CI Monitor
+
+The CI Monitor shows how long each branch has lived across your GitHub repositories. It needs a GitHub App of your own, held in the six `CI_MONITOR_GITHUB_*` variables, with its webhook sent to `https://your-host/webhooks/github` for branch creation and deletion, pushes and pull requests. To run without it, set all six to `disabled`: the CI Monitor page then says it isn't set up on this server. Disabling only some of them stops the app starting.
 
 ### Sign-in providers
 

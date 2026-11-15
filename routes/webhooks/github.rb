@@ -4,6 +4,8 @@ require 'openssl'
 
 class Mainline
   hash_branch('webhooks', 'github') do |r|
+    next unless CIMonitorSetup.on?
+
     r.hash_branches('webhooks/github')
 
     r.post do

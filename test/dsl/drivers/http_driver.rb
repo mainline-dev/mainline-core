@@ -19,6 +19,16 @@ class HttpDriver
     post '/_test_login', { 'person_id' => person.id }
   end
 
+  def visit_ci_monitor(team)
+    get "/teams/#{team.id}/monitor"
+    last_response
+  end
+
+  def send_github_webhook
+    post '/webhooks/github', '{}', { 'HTTP_X_GITHUB_EVENT' => 'ping' }
+    last_response
+  end
+
   def follow_login_link(person, to:)
     get '/_test_login', { 'person_id' => person.id, 'to' => to }
     last_response
