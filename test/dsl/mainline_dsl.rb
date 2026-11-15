@@ -511,6 +511,11 @@ module MainlineDSL
     driver.walked_not_released
   end
 
+  # Who the solo log says a story was walked through with, by ID.
+  def walked_through_with(story)
+    driver.walked_through_with(story)
+  end
+
   # The stories the Walkthroughs page lists as seen by two people, by ID.
   def seen_by_two
     driver.seen_by_two

@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
+require_relative 'record_walkthrough'
+
 module SoloLog
-  Entry = Struct.new(:story_id, :story_title, :person_name, :released_at, keyword_init: true)
+  Entry = Struct.new(:story_id, :story_title, :person_name, :released_at, :walked_with, keyword_init: true)
 
   def self.call(team_id:, days: 180)
     cutoff = Time.now - (days * 86_400)
@@ -27,6 +29,7 @@ module SoloLog
     stories = Story.where(id: story_ids).to_hash(:id)
     person_ids = solo_events.values.flatten.filter_map { |e| e.after_state['solo_person_id'] }.uniq
     people = Person.where(id: person_ids).to_hash(:id)
+    walked_with = walked_with(story_ids)
 
     story_ids.map { |story_id|
       solo_event = solo_events.fetch(story_id, []).detect { |e| e.after_state['mode'] == 'solo' }
@@ -36,10 +39,23 @@ module SoloLog
         story_id:    story_id,
         story_title: stories[story_id]&.title || '(deleted)',
         person_name: people[person_id]&.name || '?',
-        released_at: released_at_map[story_id]
+        released_at: released_at_map[story_id],
+        walked_with: walked_with[story_id]
       )
     }
   end
 
-  private_class_method :events_since, :ended_solo?, :entries
+  # Who each of these stories was walked through with, by name.
+  def self.walked_with(story_ids)
+    walks = Event.where(entity_id: story_ids, action: RecordWalkthrough::ACTION).all
+    attending = walks.group_by(&:entity_id).transform_values { |story_walks|
+      story_walks.flat_map { |walk| walk.after_state['attendee_ids'].to_a }
+    }
+    people = Person.where(id: attending.values.flatten).order(:name).all
+    story_ids.to_h { |story_id|
+      [story_id, people.select { |person| attending.fetch(story_id, []).include?(person.id) }]
+    }
+  end
+
+  private_class_method :events_since, :ended_solo?, :entries, :walked_with
 end

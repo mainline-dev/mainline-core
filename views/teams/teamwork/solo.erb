@@ -27,14 +27,16 @@
             <th>Released</th>
             <th>Story</th>
             <th>Person</th>
+            <th>Walked through with</th>
           </tr>
         </thead>
         <tbody>
           <% @entries.each do |entry| %>
-            <tr data-test-id="solo-row">
+            <tr data-test-id="solo-row" data-story="<%= entry.story_id %>" data-walked-with="<%= entry.walked_with.map(&:id).join(',') %>">
               <td><%= entry.released_at.strftime('%Y-%m-%d') %></td>
               <td><%= entry.story_title %></td>
               <td><%= entry.person_name %></td>
+              <td><%= entry.walked_with.map(&:name).join(', ') %></td>
             </tr>
           <% end %>
         </tbody>

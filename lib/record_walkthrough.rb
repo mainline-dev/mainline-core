@@ -4,8 +4,9 @@ require_relative 'record_event'
 
 # Writes down that people were walked through what was built on a story: an
 # event on the story naming who attended and how many times the story had
-# been deployed by then. The one way a walkthrough is recorded. A story can be walked through more than once. The people attending
-# are other than the people on the story, who are the ones showing it.
+# been deployed by then. The one way a walkthrough is recorded. A story can
+# be walked through more than once. The people attending are other than the
+# people on the story, who are the ones showing it.
 module RecordWalkthrough
   ACTION = 'walked_through'
   Result = Struct.new(:success?, :error, :reason, keyword_init: true)

@@ -86,6 +86,32 @@ describe SoloLog do
     assert_equal Time.utc(2026, 4, 12, 12, 0, 0), entry.released_at
   end
 
+  def walk(story, *people)
+    RecordEvent.call(actor_id: @alice.actor.id, entity: story, action: 'walked_through',
+      after_state: { attendee_ids: people.map(&:id) })
+  end
+
+  it 'names who each story was walked through with, by name and each once' do
+    carol = Person.create(name: 'Carol', email: 'carol@test.mainline')
+    aaron = Person.create(name: 'Aaron', email: 'aaron@test.mainline')
+    story = create_story('Solo ship')
+    walk(story, carol, @bob)
+    walk(story, @bob, aaron)
+    make_solo_and_release(story, @alice)
+
+    assert_equal(%w[Aaron Bob Carol], SoloLog.call(team_id: @team.id).first.walked_with.map(&:name))
+  end
+
+  it 'names nobody for a story that was not walked through' do
+    walk(create_story('Walked'), @bob)
+    make_solo_and_release(create_story('Not walked'), @alice)
+    make_solo_and_release(Story.first(title: 'Walked'), @alice)
+
+    entries = SoloLog.call(team_id: @team.id).to_h { |entry| [entry.story_title, entry.walked_with.map(&:name)] }
+
+    assert_equal({ 'Walked' => ['Bob'], 'Not walked' => [] }, entries)
+  end
+
   it 'excludes stories that were ever paired' do
     Timecop.freeze(Time.utc(2026, 4, 10, 12, 0, 0))
     story = create_story('Paired ship')

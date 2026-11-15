@@ -390,3 +390,29 @@ describe 'The limit on stories awaiting a walkthrough' do
     assert_equal 'active', status_of(@next)
   end
 end
+
+describe 'The solo log and walkthroughs' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    @bob   = add_person(name: 'Bob')
+    @carol = add_person(name: 'Carol')
+    update_settings(allow_solo_activation: '1')
+    create_map
+    activity = create_activity('Browse', for_personas: [create_persona('Shopper')])
+    @story = create_story('Find things', under_task: create_task('Search', under_activity: activity))
+    assign_person(@story, person: @alice)
+    deploy_story(@story)
+  end
+
+  it 'says who a story shipped by one person was walked through with' do
+    record_walkthrough(@story, attended_by: [@bob, @carol])
+    release_story(@story)
+
+    visit_solo_log
+
+    assert_equal [@bob.id, @carol.id].sort, walked_through_with(@story).sort
+  end
+end

@@ -670,6 +670,11 @@ class HttpDriver
     last_response.body.scan(/data-test-id="walked-not-released" data-story="([^"]+)"/).flatten
   end
 
+  def walked_through_with(story)
+    row = last_response.body[/<tr[^>]*data-test-id="solo-row"[^>]*data-story="#{story.id}"[^>]*>/].to_s
+    row[/data-walked-with="([^"]*)"/, 1].to_s.split(',')
+  end
+
   def seen_by_two
     last_response.body.scan(/data-test-id="seen-by-two" data-story="([^"]+)"/).flatten
   end
