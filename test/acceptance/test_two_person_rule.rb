@@ -157,6 +157,21 @@ describe 'The Walkthroughs page' do
     assert_shown('teamwork-tab-walkthroughs')
   end
 
+  it 'says the rule is off, with the way to Settings, once the team has turned it off' do
+    update_settings(two_person_rule: '0', two_person_rule_reason: 'Reviewing another way for now')
+
+    visit_walkthroughs
+
+    assert_shown('walkthrough-rule-off')
+    assert_shown('walkthrough-rule-settings')
+  end
+
+  it 'says nothing about the rule being off while it is on' do
+    visit_walkthroughs
+
+    refute_shown('walkthrough-rule-off')
+  end
+
   it 'says so when no story is waiting for a walkthrough' do
     visit_walkthroughs
 
@@ -181,6 +196,16 @@ describe 'The Walkthroughs page' do
       assert_equal [@bob.id], could_attend(@story)
       refute_shown('walkthrough-none-needed')
     end
+
+    it 'shows how many scenarios the story has and the day it was last deployed' do
+      create_scenario(@story, given_text: 'a full shop', when_text: 'a guest searches', then_text: 'matches are listed')
+      create_scenario(@story, given_text: 'an empty shop', when_text: 'a guest searches', then_text: 'nothing is listed')
+
+      visit_walkthroughs
+
+      assert_equal '2', walkthrough_row(@story)[:scenarios]
+      assert_equal @story.reload.last_deployed_at.strftime('%Y-%m-%d'), walkthrough_row(@story)[:last_deployed]
+    end
   end
 end
 
@@ -202,5 +227,12 @@ describe 'A team of one and the two-person rule' do
     release_story(@story)
 
     assert_equal 'released', @story.reload.status
+  end
+
+  it 'has no Walkthroughs tab, and is sent on to the pairing matrix from the page address' do
+    visit_teamwork
+
+    refute_shown('teamwork-tab-walkthroughs')
+    assert_equal "/teams/#{@team.id}/teamwork", URI(visit_walkthroughs.location.to_s).path
   end
 end

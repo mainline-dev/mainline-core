@@ -434,6 +434,12 @@ module MainlineDSL
     driver.walkthroughs_needed
   end
 
+  # What the page says about a story needing a walkthrough: how many
+  # scenarios it has and the day it was last deployed.
+  def walkthrough_row(story)
+    driver.walkthrough_row(story)
+  end
+
   # The people the page's form offers as attending a story's walkthrough.
   def could_attend(story)
     driver.could_attend(story)

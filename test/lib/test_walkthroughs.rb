@@ -72,6 +72,19 @@ describe Walkthroughs do
       assert_equal ['Bob'], names(Walkthroughs.needed(@team).first.could_attend)
     end
 
+    it 'counts the scenarios each story has' do
+      two = deployed('Find things', on_it: [@alice])
+      deployed('Pay', on_it: [@bob])
+      %w[first second].each_with_index do |name, index|
+        Scenario.create(story_id: two.id, name: name, given_text: 'a shop', when_text: 'a search', then_text: name,
+          position: (index + 1) * 1000)
+      end
+
+      counts = Walkthroughs.needed(@team).to_h { |row| [row.story.title, row.scenario_count] }
+
+      assert_equal({ 'Find things' => 2, 'Pay' => 0 }, counts)
+    end
+
     it 'keeps each story to its own people' do
       deployed('Find things', on_it: [@alice])
       deployed('Pay', on_it: [@bob])

@@ -5,6 +5,10 @@
   <div class="teamwork-main">
     <h2 class="section-heading" data-test-id="teamwork-page-walkthroughs">Walkthroughs</h2>
 
+    <% unless @rule_on %>
+      <p class="lens-help" data-test-id="walkthrough-rule-off">The two-person rule is off for this team. <a href="/settings" data-test-id="walkthrough-rule-settings">Settings</a></p>
+    <% end %>
+
     <% record_path = "/teams/#{@team.id}/teamwork/walkthroughs" %>
     <h3 class="section-title">Needs a walkthrough</h3>
     <% if @needed.any? %>
@@ -13,14 +17,19 @@
           <tr>
             <th>Story</th>
             <th>On it</th>
+            <th>Last deployed</th>
+            <th>Scenarios</th>
             <th>Who attended</th>
           </tr>
         </thead>
         <tbody>
           <% @needed.each do |row| %>
-            <tr data-test-id="walkthrough-needed" data-story="<%= row.story.id %>">
+            <% last_deployed = row.story.last_deployed_at.strftime('%Y-%m-%d') %>
+            <tr data-test-id="walkthrough-needed" data-story="<%= row.story.id %>" data-scenarios="<%= row.scenario_count %>" data-last-deployed="<%= last_deployed %>">
               <td><%= row.story.title %></td>
               <td><%= row.on_it.map(&:name).join(', ') %></td>
+              <td><%= last_deployed %></td>
+              <td><%= row.scenario_count %></td>
               <td>
                 <form method="post" action="<%= record_path %>" class="walkthrough-form" data-test-id="walkthrough-form" data-story="<%= row.story.id %>">
                   <%== csrf_tag(record_path) %>

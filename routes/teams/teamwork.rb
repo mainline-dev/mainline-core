@@ -31,8 +31,11 @@ class Mainline
       end
 
       r.get do
+        next r.redirect("/teams/#{@team.id}/teamwork") if @members.size < 2
+
         @active_tab = 'walkthroughs'
         @needed = Walkthroughs.needed(@team)
+        @rule_on = TwoPersonRule.on?(@team)
         @page_title = 'Walkthroughs - Mainline'
         view 'walkthroughs'
       end

@@ -82,4 +82,4 @@ classes:
   UnpromoteMuseumItem: { mutations: 232, killed: 187, alive: 45 }
   TwoPersonRule: { mutations: 245, killed: 241, alive: 4 }
   RecordWalkthrough: { mutations: 136, killed: 134, alive: 2 }
-  Walkthroughs: { mutations: 157, killed: 148, alive: 9 }
+  Walkthroughs: { mutations: 201, killed: 191, alive: 10 }
