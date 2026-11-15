@@ -1175,6 +1175,15 @@ class HttpDriver
     last_response
   end
 
+  def invite_token_shown
+    last_response.body[%r{/invite/([^"<\s]+)}, 1]
+  end
+
+  def visit_team(team)
+    get "/teams/#{team.id}"
+    last_response
+  end
+
   def follow_invite_redirect
     follow_redirect!
     last_response

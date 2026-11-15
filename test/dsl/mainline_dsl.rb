@@ -33,6 +33,37 @@ module MainlineDSL
     person
   end
 
+  # A member who does not build, such as an account holder.
+  def add_observer(name:, email: nil)
+    email ||= "#{name.downcase.gsub(/\s+/, '.')}@test.mainline"
+    driver.add_observer(@team, name: name, email: email)
+  end
+
+  # Invites someone to the team from its members page. The invite link, by its
+  # token, when one was sent.
+  def invite(email)
+    driver.submit_invite(@team, email: email)
+    driver.settle
+    driver.invite_token_shown
+  end
+
+  # Someone new opens the link and signs up with Google, confirming their email.
+  def accept_invite(token, name:, email:)
+    driver.visit_invite(token)
+    driver.oauth_signup(provider: 'google_oauth2', uid: email, email: email, name: name)
+  end
+
+  def join_as_working_member
+    driver.submit_join_team(@team)
+  end
+
+  # Whether the person signed in can open the team's page.
+  def on_team?
+    driver.visit_team(@team)
+    driver.settle
+    !driver.forbidden?
+  end
+
   def login_as(person)
     driver.login_as(person)
     @_login_person = person

@@ -24,6 +24,12 @@ module Records
     person
   end
 
+  def add_observer(team, name:, email:)
+    person = Person.create(name: name, email: email, email_verified_at: Time.now)
+    TeamMembership.create(team_id: team.id, person_id: person.id, working: false)
+    person
+  end
+
   def create_map(team, name:)
     SetTeamContext.call(team.id)
     next_pos = (Map.where(team_id: team.id).max(:position) || 0) + 1000
