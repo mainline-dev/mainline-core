@@ -11,6 +11,7 @@ permissions:
 
 # Shared by every job: docker compose needs them all to read its file.
 env:
+  COMPOSE_FILE: docker-compose.dev.yml
   LOCKBOX_MASTER_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
   SMTP_HOST: test
   SMTP_PORT: "465"

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
+# Contributors' stack; docker-compose.yml is the quick start's trial.
+export COMPOSE_FILE=docker-compose.dev.yml
 
 DUMMY_KEY="0000000000000000000000000000000000000000000000000000000000000000"
 # The sign-in tests need every provider present; the development compose ships them disabled.

@@ -30,11 +30,35 @@ class DevSeed # rubocop:disable Metrics/ClassLength
     @assertions = 0
   end
 
+  # Seeds, then writes the login links to tmp/dev_seed.txt.
   def self.call
+    return unless seed
+
+    FileUtils.mkdir_p('tmp')
+    File.write('tmp/dev_seed.txt', "#{links}\n")
+    puts "\nDone. URLs written to tmp/dev_seed.txt"
+  end
+
+  # The quick start's trial: seeds on the first start only, then prints the
+  # login links on every start, so they are in the log whenever it comes up.
+  # The published image cannot write into the app's folder, so no file.
+  def self.trial
+    seed unless Team.any? || Person.any?
+    puts "\n#{links}"
+  end
+
+  # Whether it seeded: it refuses a database that is not empty.
+  def self.seed
     new.run
   ensure
     Timecop.return
     ENV.delete('MAINLINE_SEED')
+  end
+
+  def self.links
+    teams = Team.order(:name).map { |team| "  #{team.name}: http://localhost:3000/teams/#{team.id}" }
+    people = Person.order(:name).map { |person| "  #{person.name}: http://localhost:3000/_test_login?person_id=#{person.id}&to=/teams" }
+    ['Teams:', *teams, '', 'Login as:', *people].join("\n")
   end
 
   GROWING_PAINS = TeamPersona::LOW.to_h.merge(team_size: 13..15).then { |h| TeamPersona.new(**h) }
@@ -69,9 +93,7 @@ class DevSeed # rubocop:disable Metrics/ClassLength
     seed_persona_teams
     seed_ci_monitor
     seed_persona_ci_monitors
-
-    puts "\nDone. URLs written to tmp/dev_seed.txt"
-    write_seed_urls
+    true
   end
 
   def seed_persona_teams
@@ -367,20 +389,6 @@ class DevSeed # rubocop:disable Metrics/ClassLength
   end
 
   private
-
-  def write_seed_urls
-    FileUtils.mkdir_p('tmp')
-    File.open('tmp/dev_seed.txt', 'w') do |f|
-      f.puts 'Teams:'
-      Team.order(:name).each do |team|
-        f.puts "  #{team.name}: http://localhost:3000/teams/#{team.id}"
-      end
-      f.puts "\nLogin as:"
-      Person.order(:name).each do |person|
-        f.puts "  #{person.name}: http://localhost:3000/_test_login?person_id=#{person.id}"
-      end
-    end
-  end
 
   def create_team_and_people
     setup_team(name: TEAM_NAME)

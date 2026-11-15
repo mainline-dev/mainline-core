@@ -303,6 +303,9 @@ class Mainline < Roda
             session['ci_monitor_token'] = r.params['ci_monitor_token']
             session['ci_monitor_token_at'] = (r.params['ci_monitor_token_at'] || Time.now.to_i).to_i
           end
+          # A trial's login link names a page on this site to go on to.
+          to = r.params['to'].to_s
+          r.redirect(to) if to.match?(%r{\A/(?![/\\])})
         end
         'ok'
       end

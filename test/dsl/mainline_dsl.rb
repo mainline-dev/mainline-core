@@ -1127,6 +1127,15 @@ module MainlineDSL
     assert_equal path, driver.redirect_path
   end
 
+  def refute_sent_anywhere
+    assert_empty driver.redirect_path.to_s
+  end
+
+  # A trial's printed login link, naming where it goes after signing in.
+  def follow_login_link(person, to:)
+    driver.follow_login_link(person, to: to)
+  end
+
   # An error is on the page, in a form's error list or the flash, whatever it
   # says. With a body, checks that body; otherwise asks the driver.
   def assert_error_shown(body = nil)

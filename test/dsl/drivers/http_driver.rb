@@ -19,6 +19,11 @@ class HttpDriver
     post '/_test_login', { 'person_id' => person.id }
   end
 
+  def follow_login_link(person, to:)
+    get '/_test_login', { 'person_id' => person.id, 'to' => to }
+    last_response
+  end
+
   def visit_login
     get '/login'
     last_response

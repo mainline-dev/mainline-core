@@ -7,8 +7,9 @@ require 'yaml'
 require_relative '../../lib/env_requirements'
 
 # Self-hosting runs docker-compose.selfhost.yml with the variables the README
-# lists. These fail when the compose file, the README or the app's list of
-# required variables drift apart.
+# lists; the quick start's docker-compose.yml is a trial of the published
+# image; contributors run docker-compose.dev.yml. These fail when the compose
+# files, the README or the app's list of required variables drift apart.
 describe 'Self-host setup' do
   def root
     File.expand_path('../..', __dir__)
@@ -23,6 +24,19 @@ describe 'Self-host setup' do
     File.read(File.join(root, 'docker-compose.selfhost.yml')).scan(/\$\{([A-Z0-9_]+):\?/).flatten.uniq.sort
   end
 
+  def trial
+    YAML.safe_load_file(File.join(root, 'docker-compose.yml'), aliases: true)
+  end
+
+  def development
+    YAML.safe_load_file(File.join(root, 'docker-compose.dev.yml'), aliases: true)
+  end
+
+  def published_image
+    workflow = YAML.load_file(File.join(root, '.github/workflows/publish_image.yml'))
+    workflow.dig('jobs', 'image', 'steps').filter_map { |step| step.dig('with', 'images') }.first
+  end
+
   def readme_table
     File.read(File.join(root, 'README.md')).scan(/^\| `([A-Z0-9_]+)`/).flatten.uniq.sort
   end
@@ -31,11 +45,20 @@ describe 'Self-host setup' do
     # Self-hosting pulls the image the public repository publishes, so nobody
     # has to build. Building from the checkout stays possible with --build.
     it "runs the #{service} from the published image, or from the checkout when asked to build" do
-      workflow = YAML.load_file(File.join(root, '.github/workflows/publish_image.yml'))
-      published = workflow.dig('jobs', 'image', 'steps').filter_map { |step| step.dig('with', 'images') }.first
-
-      assert_equal "#{published}:latest", compose.dig('services', service, 'image')
+      assert_equal "#{published_image}:latest", compose.dig('services', service, 'image')
       assert_equal '.', compose.dig('services', service, 'build')
+    end
+
+    # The quick start is a trial: nothing is built on the person's machine.
+    it "runs the trial #{service} from the published image, building nothing" do
+      assert_equal "#{published_image}:latest", trial.dig('services', service, 'image')
+      assert_nil trial.dig('services', service, 'build')
+    end
+
+    it "gives the trial #{service} every variable core requires" do
+      env = trial.dig('services', service, 'environment').keys
+
+      assert_empty EnvRequirements::CORE.keys - env
     end
 
     it "gives the #{service} every variable core requires" do
@@ -44,10 +67,8 @@ describe 'Self-host setup' do
       assert_empty EnvRequirements::CORE.keys - env
     end
 
-    # The README's quick start runs docker-compose.yml, and a service missing a
-    # required variable refuses to boot.
+    # A service missing a required variable refuses to boot.
     it "gives the development #{service} every variable the app requires" do
-      development = YAML.safe_load_file(File.join(root, 'docker-compose.yml'), aliases: true)
       env = development.dig('services', service, 'environment').keys
 
       assert_empty EnvRequirements.required.keys - env
@@ -63,13 +84,25 @@ describe 'Self-host setup' do
     assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
   end
 
-  # The quick start's stack: on a fresh clone the app runs the migrations, so
-  # a worker started before it finds no tables and exits.
-  it 'starts the quick start worker once the app answers its health check too' do
-    services = YAML.safe_load_file(File.join(root, 'docker-compose.yml'), aliases: true)['services']
+  # On a fresh start the app runs the migrations, so a worker started before
+  # it finds no tables and exits. The trial and the development stack alike.
+  { 'trial' => 'docker-compose.yml', 'development' => 'docker-compose.dev.yml' }.each do |name, file|
+    it "starts the #{name} worker once the app answers its health check too" do
+      services = YAML.safe_load_file(File.join(root, file), aliases: true)['services']
 
-    assert_includes services.dig('app', 'healthcheck', 'test').join(' '), '/up'
-    assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
+      assert_includes services.dig('app', 'healthcheck', 'test').join(' '), '/up'
+      assert_equal 'service_healthy', services.dig('worker', 'depends_on', 'app', 'condition')
+    end
+  end
+
+  it 'publishes only the trial app, and only on this machine' do
+    published = trial['services'].transform_values { |service| service['ports'] }.compact
+
+    assert_equal({ 'app' => ['127.0.0.1:3000:3000'] }, published)
+  end
+
+  it 'seeds the trial on its first start and prints the login links' do
+    assert_includes trial.dig('services', 'app', 'command').to_s, 'rake trial_up'
   end
 
   it 'publishes the app only to the local proxy, not to the internet' do

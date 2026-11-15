@@ -7,6 +7,8 @@
 #
 # It uses the test database, so do not run it alongside scripts/test.sh.
 set -euo pipefail
+# Contributors' stack; docker-compose.yml is the quick start's trial.
+export COMPOSE_FILE=docker-compose.dev.yml
 cd "$(dirname "$0")/.."
 
 DUMMY_KEY="0000000000000000000000000000000000000000000000000000000000000000"

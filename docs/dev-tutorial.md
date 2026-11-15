@@ -22,7 +22,11 @@ Model tests (`test/models/test_*.rb`) test database constraints and model behavi
 
 ## Running the tests
 
-Everything runs inside Docker:
+Everything runs inside Docker, in the development stack, `docker-compose.dev.yml`. Point compose at it in your shell first; the scripts set it themselves:
+
+```sh
+export COMPOSE_FILE=docker-compose.dev.yml
+```
 
 ```sh
 # All tests (lint + model + acceptance)

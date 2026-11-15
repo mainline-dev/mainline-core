@@ -237,6 +237,11 @@ task :dev_seed do
   sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/dev_seed', '-e', 'DevSeed.call')
 end
 
+desc 'The trial: migrate, seed the sample teams on the first start, and print their login links'
+task trial_up: :dev_up do
+  sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/dev_seed', '-e', 'DevSeed.trial')
+end
+
 desc 'Remove seed data from development database'
 task :dev_teardown do
   sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/dev_teardown', '-e', 'DevTeardown.call')

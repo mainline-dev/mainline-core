@@ -23,18 +23,12 @@ You need Docker with Compose.
 ```shell
 git clone https://github.com/mainline-dev/mainline-core.git
 cd mainline-core
-docker compose up --build
+docker compose up
 ```
 
-The app runs at http://localhost:3000. `docker-compose.yml` is the development setup and carries its own throwaway values, so no configuration is needed.
+It pulls the published image, seeds sample teams on its first start and prints a login link for each person in its log. Open one at http://localhost:3000 to look around. Every value in `docker-compose.yml` is a throwaway for a trial on your own machine.
 
-For sample teams, seed the empty database before signing up. It writes a login link for each person to `tmp/dev_seed.txt`:
-
-```shell
-docker compose exec app bundle exec rake dev_seed
-```
-
-To start from nothing instead, sign up with an email address. Development sends no mail, so it doesn't ask you to verify the address. The Google, GitHub and GitLab buttons appear once their variables hold real OAuth apps.
+To try it with your own team instead, sign up with an email address. The trial sends no mail, so it doesn't ask you to verify the address. The Google, GitHub and GitLab buttons appear once their variables hold real OAuth apps.
 
 ## Self-host
 
@@ -97,7 +91,20 @@ Set `BASE_URL` to `https://mainline.example.org` and `MAINLINE_HOST` to `mainlin
 
 Set `SIGNUPS=closed` on anything reachable from the internet, and sign up as soon as it starts, because the first person to sign up gets in. After that, people need an invitation. New email accounts verify their address before creating a team, so SMTP has to work.
 
-## Running the tests
+## Working on the code
+
+Contributors run the development stack, `docker-compose.dev.yml`, built from the checkout. Point compose at it in your shell, then start it:
+
+```shell
+export COMPOSE_FILE=docker-compose.dev.yml
+docker compose up --build
+```
+
+For sample teams, seed its empty database. It writes a login link for each person to `tmp/dev_seed.txt`:
+
+```shell
+docker compose exec app bundle exec rake dev_seed
+```
 
 The suite runs inside Docker. With the development stack up:
 
