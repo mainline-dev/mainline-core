@@ -786,7 +786,6 @@ class Mainline < Roda
   end
 
   def join_team(invitation, person)
-
     existing = TeamMembership.where(team_id: invitation.team_id, person_id: person.id).first
     if existing
       existing.update(left_at: nil, working: true) if existing.left_at
