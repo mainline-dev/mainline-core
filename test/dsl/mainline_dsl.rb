@@ -642,6 +642,12 @@ module MainlineDSL
     driver.visit_team(@team)
   end
 
+  # What the block wrote to the team's records: the stories it changed, whether
+  # it changed the team, how many actors it added, and the events it recorded.
+  def writes_during(&)
+    driver.writes_during(@team, &)
+  end
+
   # What the team page names as the next thing to connect.
   def next_to_connect
     driver.next_to_connect

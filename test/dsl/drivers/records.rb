@@ -24,6 +24,29 @@ module Records
     person
   end
 
+  def writes_during(team)
+    before = records_of(team)
+    yield
+    after = records_of(team)
+    {
+      stories: after[:stories].reject { |id, row| before[:stories][id] == row }.keys,
+      team:    before[:team] != after[:team],
+      actors:  after[:actors] - before[:actors],
+      events:  after[:events].drop(before[:events].size)
+    }
+  end
+
+  def records_of(team)
+    BypassRLS.call {
+      {
+        stories: Story.where(team_id: team.id).all.to_h { |story| [story.id, story.values] },
+        team:    Team[team.id].values,
+        actors:  Actor.count,
+        events:  Event.where(team_id: team.id).order(:event_no).select_map(:action)
+      }
+    }
+  end
+
   def make_account_holder(team, person)
     team.update(creator_id: person.id)
   end

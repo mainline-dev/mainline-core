@@ -171,6 +171,7 @@ describe DeleteTeam do
 
     DeleteTeam.call(team: @team)
 
-    assert_equal actor_count - 1, Actor.count
+    # The member's actor, and the coding agent every team has from the start.
+    assert_equal actor_count - 2, Actor.count
   end
 end

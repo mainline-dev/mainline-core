@@ -263,6 +263,17 @@ describe 'MCP server' do
     assert_equal @story.id[0, 8].upcase, story_data['short_id']
   end
 
+  it 'records a read with the coding agent the team already has, creating and changing nothing else' do
+    generate_mcp_token
+    mcp_initialize
+
+    writes = writes_during { mcp_call_tool('get_story', arguments: { 'story_id' => @story.id }) }
+
+    assert_equal ['agent_read'], writes[:events]
+    assert_equal 0, writes[:actors]
+    refute writes[:team]
+  end
+
   it 'marks story as agent_assisted when accessed via get_story' do
     generate_mcp_token
     mcp_initialize

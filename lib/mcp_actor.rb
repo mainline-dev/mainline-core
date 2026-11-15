@@ -1,12 +1,9 @@
 # frozen_string_literal: true
 
+# The team's coding agent: the actor its agent reads are recorded with. Every
+# team has one from its creation, so looking it up changes nothing.
 module McpActor
   def self.id_for(team_id)
-    team = Team[team_id]
-    return team.mcp_actor_id if team.mcp_actor_id
-
-    actor = Actor.create(kind: 'system', name: 'Coding agent')
-    team.update(mcp_actor_id: actor.id)
-    actor.id
+    Team[team_id].mcp_actor_id
   end
 end

@@ -12,6 +12,13 @@ class Team < Sequel::Model
     validates_max_length 100, :name
   end
 
+  # Each team has a coding agent from the start, the actor its agent reads are
+  # recorded with, so a read never has to create or change anything.
+  def before_create
+    self.mcp_actor_id ||= Actor.create(kind: 'system', name: 'Coding agent').id
+    super
+  end
+
   def suspended?
     !suspended_at.nil?
   end
