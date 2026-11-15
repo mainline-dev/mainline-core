@@ -171,10 +171,58 @@ module MainlineDSL
     driver.kickoff_of(@map, story)
   end
 
-  # Someone on the team writes down that these people were walked through
-  # what was built on the story.
-  def record_walkthrough(story, attended_by:)
-    driver.submit_walkthrough(@team, story, attendee_ids: attended_by.map(&:id))
+  # Someone writes down that these people were walked through what was built
+  # on the story, from the Teamwork pages of this team or another.
+  def record_walkthrough(story, attended_by:, through: @team)
+    driver.submit_walkthrough(through, story, attendee_ids: attended_by.map(&:id))
+  end
+
+  # Presses the cross on the story's scenario, which asks before deleting.
+  def press_scenario_cross
+    driver.press('scenario-delete')
+  end
+
+  def confirm_scenario_delete
+    driver.press('scenario-delete-yes')
+  end
+
+  # Where the scenario's cross is on screen, to click the same spot again.
+  def where_the_scenario_cross_is
+    driver.spot_of('scenario-delete')
+  end
+
+  def click_at(spot)
+    driver.click_at(spot)
+  end
+
+  # From here on, each form the browser sends waits half a second first.
+  def send_forms_slowly
+    driver.send_forms_slowly
+  end
+
+  # The story's scenarios, in the order the story lists them.
+  def scenarios_on(story)
+    driver.scenarios_on(story)
+  end
+
+  # The story that was split out of this one.
+  def split_out_of(story)
+    driver.split_out_of(story)
+  end
+
+  # The story's status: planned, active or released.
+  def status_of(story)
+    driver.status_of(story)
+  end
+
+  # The day the story was last deployed, as the pages write it.
+  def last_deployed_on(story)
+    driver.last_deployed_on(story)
+  end
+
+  # A team the person belongs to.
+  def team_of(person)
+    driver.team_of(person)
   end
 
   def visit_story_panel(story)
@@ -961,6 +1009,8 @@ module MainlineDSL
   end
 
   def assert_notice_shown
+    driver.settle
+
     assert driver.flash_shown?('notice'), 'Expected the page to show a notice'
   end
 
@@ -971,7 +1021,9 @@ module MainlineDSL
   end
 
   def refute_shown(test_id, body = nil)
-    refute element_on_page?(test_id, body), "Expected no #{test_id} on the page"
+    gone = body ? !body.include?(%(data-test-id="#{test_id}")) : driver.test_id_gone?(test_id)
+
+    assert gone, "Expected no #{test_id} on the page"
   end
 
   def element_on_page?(test_id, body)
@@ -987,11 +1039,32 @@ module MainlineDSL
 
   # The error on the page gives this reason for refusing.
   def assert_refused_because(reason)
+    driver.settle
+
     assert driver.response_includes?(%(data-reason="#{reason}")), "Expected the refusal reason #{reason}"
   end
 
   def refute_refused_because(reason)
+    driver.settle
+
     refute driver.response_includes?(%(data-reason="#{reason}")), "Expected no refusal reason #{reason}"
+  end
+
+  # The page turned away the person signed in, who is not on the team.
+  def assert_not_a_member
+    assert_predicate driver, :forbidden?, 'Expected the page to turn away someone who is not on the team'
+  end
+
+  # There is no such page for the person signed in.
+  def assert_no_such_page(&)
+    error = assert_raises(RuntimeError, &)
+
+    assert_match(/\A404/, error.message)
+  end
+
+  # The page sent the person on to this path.
+  def assert_sent_on_to(path)
+    assert_equal path, driver.redirect_path
   end
 
   # An error is on the page, in a form's error list or the flash, whatever it

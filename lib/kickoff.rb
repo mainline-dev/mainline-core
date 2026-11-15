@@ -13,7 +13,10 @@ require_relative 'two_person_rule'
 # again. It is shown and never enforced.
 module Kickoff
   AGREED = 'scenarios_agreed'
-  CHANGES = %w[scenario_added scenario_edited scenario_removed].freeze
+  # What changes a story's scenarios. Scenarios split out to another story
+  # leave this one changed, and a story split from another arrives with its
+  # scenarios, so whoever created it changed them last until someone else does.
+  CHANGES = %w[created scenario_added scenario_edited scenario_removed split_out].freeze
   REFUSALS = {
     'released'     => 'The scenarios of a released story cannot be agreed.',
     'no-scenarios' => 'This story has no scenarios to agree.',

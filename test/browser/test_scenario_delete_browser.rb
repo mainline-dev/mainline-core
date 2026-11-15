@@ -16,55 +16,42 @@ describe 'Deleting a scenario (browser)' do
     @story = create_story('Find things', under_task: create_task('Search', under_activity: activity))
     create_scenario(@story, given_text: 'a full shop', when_text: 'a guest searches', then_text: 'matches are listed')
     use_browser!
-    visit "/maps/#{@map.id}/stories/#{@story.id}/edit"
-  end
-
-  def cross
-    find('[data-test-id="scenario-delete"]')
-  end
-
-  def middle_of_the_cross
-    evaluate_script(<<~JS)
-      (function() {
-        var box = document.querySelector('[data-test-id="scenario-delete"]').getBoundingClientRect();
-        return [box.left + box.width / 2, box.top + box.height / 2];
-      })()
-    JS
+    visit_edit_story(@story)
   end
 
   it 'asks first, with a way to delete and a way to keep' do
-    cross.click
+    press_scenario_cross
 
-    assert_selector '[data-test-id="scenario-delete-ask"]'
-    assert_selector '[data-test-id="scenario-delete-yes"]'
-    assert_selector '[data-test-id="scenario-keep"]'
-    assert_selector '[data-test-id="scenario-name"]'
+    assert_shown('scenario-delete-ask')
+    assert_shown('scenario-delete-yes')
+    assert_shown('scenario-keep')
+    assert_shown('scenario-name')
   end
 
   it 'keeps the scenario when the same spot is clicked a second time' do
-    x, y = middle_of_the_cross
-    page.driver.click(x, y)
+    spot = where_the_scenario_cross_is
+    click_at(spot)
 
-    assert_selector '[data-test-id="scenario-keep"]'
-    page.driver.click(x, y)
+    assert_shown('scenario-keep')
+    click_at(spot)
 
-    assert_no_selector '[data-test-id="scenario-keep"]'
-    assert_selector '[data-test-id="scenario-delete"]'
-    assert_selector '[data-test-id="scenario-name"]'
+    refute_shown('scenario-keep')
+    assert_shown('scenario-delete')
+    assert_shown('scenario-name')
   end
 
   it 'goes on asking until someone answers' do
-    cross.click
+    press_scenario_cross
     sleep 3.2
 
-    assert_selector '[data-test-id="scenario-keep"]'
-    assert_selector '[data-test-id="scenario-name"]'
+    assert_shown('scenario-keep')
+    assert_shown('scenario-name')
   end
 
   it 'deletes the scenario on Delete' do
-    cross.click
-    find('[data-test-id="scenario-delete-yes"]').click
+    press_scenario_cross
+    confirm_scenario_delete
 
-    assert_no_selector '[data-test-id="scenario-name"]'
+    refute_shown('scenario-name')
   end
 end

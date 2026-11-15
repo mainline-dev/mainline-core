@@ -46,33 +46,14 @@ describe 'Story templates (browser)' do
     assert_equal 'As a Returning Customer, I want to reorder with one click, so that I save time', story.title
   end
 
-  # A click waits for a page load only if one begins within a tenth of a
-  # second. A busy browser can take longer than that to send the form, and
-  # then the step that fills it in has to do the waiting itself.
-  # Added to this test's page only, which is thrown away when the test ends.
-  def hold_each_form_back
-    page.driver.browser.page.command('Page.addScriptToEvaluateOnNewDocument', source: <<~JS)
-      document.addEventListener('submit', function(event) {
-        var form = event.target;
-        if (form.dataset.held) return;
-        event.preventDefault();
-        form.dataset.held = 'yes';
-        setTimeout(function() { form.requestSubmit(event.submitter); }, 500);
-      }, true);
-    JS
-  end
-
+  # A busy browser can take longer to send a form than a click waits for, so
+  # the step that fills the form in has to wait for its answer itself.
   it 'has the story as soon as the form step returns, however long the browser takes to send the form' do
     use_browser!
-    hold_each_form_back
-    driver.submit_create_story_from_template(@map, {
-      task_id:  @task.id,
-      template: 'card',
-      persona:  'Customer',
-      action:   'signs up'
-    })
+    send_forms_slowly
+    submit_create_story_from_template(task_id: @task.id, template: 'card', persona: 'Customer', action: 'signs up')
 
-    refute_nil Story.where(map_id: @map.id).first
+    refute_nil story_titled('Customer signs up')
   end
 
   it 'creates story via behaviour template in real browser' do

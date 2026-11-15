@@ -133,6 +133,22 @@ module Records
     MuseumImport.where(team_id: team.id, status: 'imported').order(:imported_at).last
   end
 
+  def scenarios_on(story)
+    Scenario.where(story_id: story.id).order(:position).all
+  end
+
+  def split_out_of(story)
+    Story.where(split_from_id: story.id).first
+  end
+
+  def status_of(story)
+    Story[story.id].status
+  end
+
+  def last_deployed_on(story)
+    Story[story.id].last_deployed_at.strftime('%Y-%m-%d')
+  end
+
   def story_titled(team, title)
     Story.where(team_id: team.id, title: title).first
   end

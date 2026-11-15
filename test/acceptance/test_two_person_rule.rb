@@ -18,7 +18,7 @@ describe 'Two people see every story before release' do
   end
 
   def released?
-    @story.reload.status == 'released'
+    status_of(@story) == 'released'
   end
 
   it 'releases a paired story with no walkthrough' do
@@ -36,7 +36,6 @@ describe 'Two people see every story before release' do
     assign_person(@story, person: @alice)
 
     record_walkthrough(@story, attended_by: [@bob])
-    driver.follow_redirect! if driver.last_response.redirect?
 
     assert_refused_because('not-deployed')
     deploy_story(@story)
@@ -52,7 +51,6 @@ describe 'Two people see every story before release' do
     deploy_story(@story)
 
     record_walkthrough(@story, attended_by: [carol])
-    driver.follow_redirect! if driver.last_response.redirect?
 
     assert_notice_shown
   end
@@ -66,7 +64,6 @@ describe 'Two people see every story before release' do
 
     it 'cannot be released without a walkthrough' do
       release_story(@story)
-      driver.follow_redirect! if driver.last_response.redirect?
 
       assert_refused_because('needs-walkthrough')
       refute_predicate self, :released?
@@ -90,7 +87,6 @@ describe 'Two people see every story before release' do
 
     it 'keeps the rule on when it is turned off with no reason given' do
       update_settings(two_person_rule: '0', two_person_rule_reason: '  ')
-      driver.follow_redirect! if driver.last_response.redirect?
 
       assert_refused_because('reason-needed')
       release_story(@story)
@@ -108,15 +104,15 @@ describe 'Two people see every story before release' do
 
     describe 'and someone on another team' do
       before do
-        @eve = Person.create(name: 'Eve', email: 'eve@elsewhere.co')
-        @elsewhere = Team.create(name: 'Elsewhere')
-        TeamMembership.create(team_id: @elsewhere.id, person_id: @eve.id)
-        login_as(@eve)
+        @outsider = other_team_member
+        login_as(@outsider)
       end
 
       it "cannot record a walkthrough for this team's story, here or through their own team" do
-        assert_equal 403, driver.submit_walkthrough(@team, @story, attendee_ids: [@bob.id]).status
-        assert_raises(RuntimeError) { driver.submit_walkthrough(@elsewhere, @story, attendee_ids: [@bob.id]) }
+        record_walkthrough(@story, attended_by: [@bob])
+
+        assert_not_a_member
+        assert_no_such_page { record_walkthrough(@story, attended_by: [@bob], through: team_of(@outsider)) }
 
         login_as(@alice)
         release_story(@story)
@@ -125,13 +121,14 @@ describe 'Two people see every story before release' do
       end
 
       it "cannot see this team's walkthroughs" do
-        assert_equal 403, visit_walkthroughs.status
+        visit_walkthroughs
+
+        assert_not_a_member
       end
     end
 
     it 'does not take the person on the story as attending its walkthrough' do
       record_walkthrough(@story, attended_by: [@alice])
-      driver.follow_redirect! if driver.last_response.redirect?
 
       assert_refused_because('attendee-on-story')
       release_story(@story)
@@ -216,7 +213,7 @@ describe 'The Walkthroughs page' do
       visit_walkthroughs
 
       assert_equal '2', walkthrough_row(@story)[:scenarios]
-      assert_equal @story.reload.last_deployed_at.strftime('%Y-%m-%d'), walkthrough_row(@story)[:last_deployed]
+      assert_equal last_deployed_on(@story), walkthrough_row(@story)[:last_deployed]
     end
   end
 end
@@ -238,14 +235,16 @@ describe 'A team of one and the two-person rule' do
 
     release_story(@story)
 
-    assert_equal 'released', @story.reload.status
+    assert_equal 'released', status_of(@story)
   end
 
   it 'has no Walkthroughs tab, and is sent on to the pairing matrix from the page address' do
     visit_teamwork
 
     refute_shown('teamwork-tab-walkthroughs')
-    assert_equal "/teams/#{@team.id}/teamwork", URI(visit_walkthroughs.location.to_s).path
+    visit_walkthroughs
+
+    assert_sent_on_to("/teams/#{@team.id}/teamwork")
   end
 end
 
@@ -274,7 +273,7 @@ describe 'The limit on stories awaiting a walkthrough' do
     assign_person(@next, person: @dan)
 
     assert_shown('form-errors')
-    assert_equal 'planned', @next.reload.status
+    assert_equal 'planned', status_of(@next)
   end
 
   it 'lets a story start once the team raises the limit, giving a reason' do
@@ -282,29 +281,27 @@ describe 'The limit on stories awaiting a walkthrough' do
 
     assign_person(@next, person: @dan)
 
-    assert_equal 'active', @next.reload.status
+    assert_equal 'active', status_of(@next)
   end
 
   it 'keeps the limit when it is raised with no reason given' do
     update_settings(walkthrough_limit: 4, walkthrough_limit_reason: ' ')
-    driver.follow_redirect! if driver.last_response.redirect?
 
     assert_refused_because('reason-needed')
     assign_person(@next, person: @dan)
 
-    assert_equal 'planned', @next.reload.status
+    assert_equal 'planned', status_of(@next)
   end
 
   it 'refuses a limit above ten or below one, and keeps the one it had' do
     [11, 0].each do |limit|
       update_settings(walkthrough_limit: limit, walkthrough_limit_reason: 'Trying it')
-      driver.follow_redirect! if driver.last_response.redirect?
 
       assert_refused_because('out-of-range')
     end
     assign_person(@next, person: @dan)
 
-    assert_equal 'planned', @next.reload.status
+    assert_equal 'planned', status_of(@next)
   end
 
   it 'shows on the Walkthroughs page how many stories are waiting against the limit' do
@@ -328,6 +325,6 @@ describe 'The limit on stories awaiting a walkthrough' do
 
     assign_person(@next, person: @dan)
 
-    assert_equal 'active', @next.reload.status
+    assert_equal 'active', status_of(@next)
   end
 end

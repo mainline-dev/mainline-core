@@ -1226,6 +1226,19 @@ class HttpDriver
     box.match?(/\bchecked\b/)
   end
 
+  # Arrives where the last answer sent the browser, as a browser would.
+  def settle
+    follow_redirect! while last_response.redirect?
+  end
+
+  def forbidden?
+    last_response.status == 403
+  end
+
+  def redirect_path
+    URI(last_response.location.to_s).path
+  end
+
   def flash_shown?(kind)
     last_response.body.include?(%(data-test-id="flash-#{kind}"))
   end
@@ -1236,6 +1249,10 @@ class HttpDriver
 
   def test_id_shown?(test_id)
     last_response.body.include?(%(data-test-id="#{test_id}"))
+  end
+
+  def test_id_gone?(test_id)
+    !test_id_shown?(test_id)
   end
 
   def content_includes?(text)

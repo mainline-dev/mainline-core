@@ -34,7 +34,7 @@ describe 'The kickoff on a story one person works on' do
     login_as(@bob)
     agree_scenarios(@story)
     login_as(@alice)
-    update_scenario(@story, Scenario.where(story_id: @story.id).first,
+    update_scenario(@story, scenarios_on(@story).first,
       given_text: 'a full shop', when_text: 'a guest searches', then_text: 'matches are listed by price')
 
     assert_equal({ state: 'changed', people: [@bob.id] }, kickoff_of(@story))
@@ -44,7 +44,7 @@ describe 'The kickoff on a story one person works on' do
     login_as(@bob)
     agree_scenarios(@story)
     login_as(@alice)
-    update_scenario(@story, Scenario.where(story_id: @story.id).first, name: 'matches are listed',
+    update_scenario(@story, scenarios_on(@story).first, name: 'matches are listed',
       given_text: 'a full shop', when_text: 'a guest searches', then_text: 'matches are listed')
 
     assert_equal({ state: 'agreed', people: [@bob.id] }, kickoff_of(@story))
@@ -62,5 +62,40 @@ describe 'The kickoff on a story one person works on' do
     agree_scenarios(@story)
 
     assert_equal({ state: 'none', people: [] }, kickoff_of(@story))
+  end
+end
+
+describe 'The kickoff after a story is split' do
+  include MainlineDSL
+
+  before do
+    setup_team
+    @alice = add_person(name: 'Alice')
+    @bob   = add_person(name: 'Bob')
+    create_map
+    activity = create_activity('Browse', for_personas: [create_persona('Shopper')])
+    @story = create_story('Find things', under_task: create_task('Search', under_activity: activity))
+    %w[matches prices].each do |topic|
+      create_scenario(@story, given_text: 'a full shop', when_text: 'a guest searches', then_text: "#{topic} are listed")
+    end
+    @moved = scenarios_on(@story).last
+    login_as(@bob)
+    agree_scenarios(@story)
+    split_story(@story, title: 'See prices', scenario_ids: [@moved.id])
+    @child = split_out_of(@story)
+  end
+
+  it 'reads as changed on the story the scenarios left' do
+    assert_equal({ state: 'changed', people: [@bob.id] }, kickoff_of(@story))
+  end
+
+  it 'does not take whoever split the story as agreeing the scenarios that arrived on the new one' do
+    agree_scenarios(@child)
+
+    assert_equal 'none', kickoff_of(@child)[:state]
+    login_as(@alice)
+    agree_scenarios(@child)
+
+    assert_equal({ state: 'agreed', people: [@alice.id] }, kickoff_of(@child))
   end
 end

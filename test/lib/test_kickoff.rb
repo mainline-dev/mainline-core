@@ -86,6 +86,12 @@ describe Kickoff do
         assert_equal :agreed, kickoff.kind
       end
 
+      it 'reads as changed once some of the scenarios are split out to another story' do
+        event('split_out', by: @alice)
+
+        assert_equal :changed, kickoff.kind
+      end
+
       it 'is agreed again once someone agrees the changed scenarios' do
         event('scenario_edited', by: @alice)
         Kickoff.agree(story: @story, person: @carol)
@@ -160,6 +166,22 @@ describe Kickoff do
         TeamMembership.create(team_id: Team.create(name: 'Other').id, person_id: dana.id)
 
         refused(dana, 'not-working')
+      end
+
+      it 'is not the person who split scenarios out of the story' do
+        event('split_out', by: @carol)
+
+        refused(@carol, 'own-change')
+
+        assert Kickoff.can_agree?(@story, @alice)
+      end
+
+      it 'is not the person who made a story that arrived with its scenarios, as one split from another does' do
+        event('created', by: @carol)
+
+        refused(@carol, 'own-change')
+
+        assert Kickoff.can_agree?(@story, @alice)
       end
 
       it 'takes the last change from this story only' do
