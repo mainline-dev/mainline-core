@@ -7,14 +7,21 @@ require_relative 'record_walkthrough'
 # were on it at some point while it was active, which its collaboration events
 # show as they do for the solo log, or a walkthrough is recorded for it. The
 # rule counts people and never asks how the code was written. A team with one
-# working member has no second person, so it is never held to it.
+# working member has no second person, so it is never held to it, and a team
+# can turn the rule off.
 module TwoPersonRule
   REFUSAL = 'One person worked on this story. Record a walkthrough before releasing it.'
   REASON = 'needs-walkthrough'
   TOGETHER = %w[paired ensemble].freeze
+  KEY = 'two_person_rule'
+
+  # On for every team until it turns it off in its settings.
+  def self.on?(team)
+    TeamConstraint.for_team(team.id, KEY, default: 1) == 1
+  end
 
   def self.applies?(team)
-    TeamMembership.where(team_id: team.id, left_at: nil, working: true).count >= 2
+    on?(team) && TeamMembership.where(team_id: team.id, left_at: nil, working: true).count >= 2
   end
 
   def self.blocks_release?(story, team)

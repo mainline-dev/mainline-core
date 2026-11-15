@@ -1197,6 +1197,13 @@ class HttpDriver
     last_response.body.include?(text)
   end
 
+  def ticked?(test_id)
+    box = last_response.body[/<input[^>]*data-test-id="#{test_id}"[^>]*>/]
+    raise "No tick box #{test_id} on the page" unless box
+
+    box.match?(/\bchecked\b/)
+  end
+
   def flash_shown?(kind)
     last_response.body.include?(%(data-test-id="flash-#{kind}"))
   end

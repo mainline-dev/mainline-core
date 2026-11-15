@@ -45,6 +45,18 @@ describe 'Two people see every story before release' do
     refute_predicate self, :released?
   end
 
+  it 'records a walkthrough on a paired story, which never needs one' do
+    carol = add_person(name: 'Carol')
+    assign_person(@story, person: @alice)
+    assign_person(@story, person: @bob)
+    deploy_story(@story)
+
+    record_walkthrough(@story, attended_by: [carol])
+    driver.follow_redirect! if driver.last_response.redirect?
+
+    assert_notice_shown
+  end
+
   describe 'a story one person worked on' do
     before do
       update_settings(allow_solo_activation: '1')
@@ -66,6 +78,55 @@ describe 'Two people see every story before release' do
       release_story(@story)
 
       assert_predicate self, :released?
+    end
+
+    it 'releases with no walkthrough once the team has turned the rule off' do
+      update_settings(two_person_rule: '0', two_person_rule_reason: 'Reviewing another way for now')
+
+      release_story(@story)
+
+      assert_predicate self, :released?
+    end
+
+    it 'keeps the rule on when it is turned off with no reason given' do
+      update_settings(two_person_rule: '0', two_person_rule_reason: '  ')
+      driver.follow_redirect! if driver.last_response.redirect?
+
+      assert_refused_because('reason-needed')
+      release_story(@story)
+
+      refute_predicate self, :released?
+    end
+
+    it 'shows in the settings history that the rule was turned off, and why' do
+      update_settings(two_person_rule: '0', two_person_rule_reason: 'Reviewing another way for now')
+      visit_settings
+
+      assert_page_includes('data-setting="two_person_rule"')
+      assert_shown('settings-event-reason')
+    end
+
+    describe 'and someone on another team' do
+      before do
+        @eve = Person.create(name: 'Eve', email: 'eve@elsewhere.co')
+        @elsewhere = Team.create(name: 'Elsewhere')
+        TeamMembership.create(team_id: @elsewhere.id, person_id: @eve.id)
+        login_as(@eve)
+      end
+
+      it "cannot record a walkthrough for this team's story, here or through their own team" do
+        assert_equal 403, driver.submit_walkthrough(@team, @story, attendee_ids: [@bob.id]).status
+        assert_raises(RuntimeError) { driver.submit_walkthrough(@elsewhere, @story, attendee_ids: [@bob.id]) }
+
+        login_as(@alice)
+        release_story(@story)
+
+        refute_predicate self, :released?
+      end
+
+      it "cannot see this team's walkthroughs" do
+        assert_equal 403, visit_walkthroughs.status
+      end
     end
 
     it 'does not take the person on the story as attending its walkthrough' do
@@ -96,6 +157,13 @@ describe 'The Walkthroughs page' do
     assert_shown('teamwork-tab-walkthroughs')
   end
 
+  it 'says so when no story is waiting for a walkthrough' do
+    visit_walkthroughs
+
+    assert_shown('walkthrough-none-needed')
+    assert_empty walkthroughs_needed
+  end
+
   describe 'with a story one person has deployed' do
     before do
       create_map
@@ -111,6 +179,7 @@ describe 'The Walkthroughs page' do
 
       assert_equal [@story.id], walkthroughs_needed
       assert_equal [@bob.id], could_attend(@story)
+      refute_shown('walkthrough-none-needed')
     end
   end
 end

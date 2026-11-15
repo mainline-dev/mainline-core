@@ -174,7 +174,7 @@ describe 'Settings' do
     visit_settings
 
     assert_page_includes('data-test-id="solo-activation"')
-    refute_page_includes('checked')
+    refute ticked?('allow-solo-activation')
   end
 
   it 'enables solo activation' do

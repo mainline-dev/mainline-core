@@ -30,6 +30,8 @@ class Mainline
           save_split_thresholds(r)
         elsif r.params.key?('allow_solo_activation')
           save_solo_activation(r)
+        elsif r.params.key?(TwoPersonRule::KEY)
+          save_two_person_rule(r)
         elsif r.params.key?('timezone')
           save_timezone(r)
         elsif r.params.key?('holiday_region')
@@ -48,6 +50,7 @@ class Mainline
     @stale_days = TeamConstraint.for_team(@team.id, 'inventory_stale_days', default: 10)
     @allow_solo_activation = TeamConstraint.for_team(@team.id, 'allow_solo_activation', default: 0)
     @wip_limit = AssignPerson.wip_limit(@team)
+    @two_person_rule = TwoPersonRule.on?(@team)
     @split_percentile = TeamConstraint.for_team(@team.id, 'split_percentile', default: 80)
     @split_min_released = TeamConstraint.for_team(@team.id, 'split_min_released', default: 10)
     template_idx = TeamConstraint.for_team(@team.id, 'default_story_template', default: 0)
@@ -129,6 +132,23 @@ class Mainline
     value = typecast_params.str('allow_solo_activation') == '1' ? 1 : 0
     upsert_constraint_with_event('allow_solo_activation', value, min: 0, max: 1, default: 0)
     flash['notice'] = 'Activation setting updated'
+    req.redirect '/settings'
+  end
+
+  # The rule guards every release, so turning it off or back on needs a
+  # reason, which everyone on the team can see in the history.
+  def save_two_person_rule(req)
+    value = typecast_params.str(TwoPersonRule::KEY) == '1' ? 1 : 0
+    reason = req.params['two_person_rule_reason'].to_s.strip[0, 280]
+    if reason.empty? && (value == 1) != TwoPersonRule.on?(@team)
+      flash['error'] = 'Give a reason for changing the two-person rule.'
+      flash['error_reason'] = 'reason-needed'
+    else
+      DB.transaction do
+        upsert_constraint_with_event(TwoPersonRule::KEY, value, min: 0, max: 1, default: 1, reason: reason)
+      end
+      flash['notice'] = 'Two-person rule updated'
+    end
     req.redirect '/settings'
   end
 

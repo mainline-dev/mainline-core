@@ -932,6 +932,11 @@ module MainlineDSL
     driver.press_shortcut(*keys)
   end
 
+  # Whether the tick box with this test ID is ticked on the page.
+  def ticked?(test_id)
+    driver.ticked?(test_id)
+  end
+
   def assert_notice_shown
     assert driver.flash_shown?('notice'), 'Expected the page to show a notice'
   end

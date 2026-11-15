@@ -171,6 +171,43 @@ describe TwoPersonRule do
     end
   end
 
+  describe 'the team turning it off and on' do
+    before do
+      TeamMembership.create(team_id: @team.id, person_id: @bob.id)
+    end
+
+    def rule_saved_as(value)
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'two_person_rule', value: value,
+        min_value: 0, max_value: 1, default_value: 1)
+    end
+
+    it 'is on until the team says otherwise' do
+      assert TwoPersonRule.on?(@team)
+    end
+
+    it 'is off once the team has turned it off, and then holds the team to nothing' do
+      rule_saved_as(0)
+
+      refute TwoPersonRule.on?(@team)
+      refute TwoPersonRule.applies?(@team)
+    end
+
+    it 'blocks no release and has no story awaiting a walkthrough while it is off' do
+      rule_saved_as(0)
+      deployed('Pay')
+
+      refute TwoPersonRule.blocks_release?(@story, @team)
+      assert_empty awaiting
+    end
+
+    it 'holds the team to it again once it is turned back on' do
+      rule_saved_as(1)
+
+      assert TwoPersonRule.on?(@team)
+      assert TwoPersonRule.applies?(@team)
+    end
+  end
+
   it 'has no story awaiting a walkthrough on a team of one' do
     deployed('Pay')
 

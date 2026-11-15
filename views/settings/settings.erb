@@ -45,11 +45,31 @@
       <div class="form-row">
         <label class="form-label form-label--checkbox" for="allow_solo_activation">
           <input type="hidden" name="allow_solo_activation" value="0">
-          <input type="checkbox" id="allow_solo_activation" name="allow_solo_activation" value="1" class="form-checkbox" <%= 'checked' if @allow_solo_activation == 1 %>>
+          <input type="checkbox" id="allow_solo_activation" name="allow_solo_activation" value="1" class="form-checkbox" data-test-id="allow-solo-activation" <%= 'checked' if @allow_solo_activation == 1 %>>
           Allow solo activation
         </label>
       </div>
       <button type="submit" class="btn">Save activation</button>
+    </form>
+  </div>
+
+  <div class="settings-card">
+    <h3 class="settings-card-title">Two-person rule</h3>
+    <p class="settings-card-desc">A story can be released only if two people have seen it: two people were on it while it was active, or a walkthrough is recorded. Turning this off or on needs a reason, which everyone on the team can see below.</p>
+    <form method="post" action="/settings" data-test-id="two-person-rule">
+      <%== csrf_tag('/settings') %>
+      <div class="form-row">
+        <label class="form-label form-label--checkbox" for="two_person_rule">
+          <input type="hidden" name="two_person_rule" value="0">
+          <input type="checkbox" id="two_person_rule" name="two_person_rule" value="1" class="form-checkbox" <%= 'checked' if @two_person_rule %>>
+          Two people see every story before release
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="form-label" for="two_person_rule_reason">Reason for the change</label>
+        <input type="text" id="two_person_rule_reason" name="two_person_rule_reason" maxlength="280" class="form-input">
+      </div>
+      <button type="submit" class="btn">Save rule</button>
     </form>
   </div>
 
@@ -157,10 +177,11 @@
             else
               key = event.after_state['constraint_key']
               setting = key
-              label = { 'max_active_stories' => 'WIP limit', 'inventory_aging_days' => 'Aging', 'inventory_stale_days' => 'Stale', 'split_percentile' => 'Percentile', 'split_min_released' => 'Min released', 'allow_solo_activation' => 'Solo activation', 'default_story_template' => 'Story template' }[key] || key
+              label = { 'max_active_stories' => 'WIP limit', 'inventory_aging_days' => 'Aging', 'inventory_stale_days' => 'Stale', 'split_percentile' => 'Percentile', 'split_min_released' => 'Min released', 'allow_solo_activation' => 'Solo activation', 'default_story_template' => 'Story template', 'two_person_rule' => 'Two-person rule' }[key] || key
               unit = { 'inventory_aging_days' => ' days', 'inventory_stale_days' => ' days', 'split_percentile' => '%', 'split_min_released' => '', 'allow_solo_activation' => '', 'default_story_template' => '' }[key] || ''
               from_val = event.before_state['value']
               to_val = event.after_state['value']
+              from_val, to_val = [from_val, to_val].map { |value| value == 1 ? 'On' : 'Off' } if key == 'two_person_rule'
             end
           %>
           <td data-setting="<%= setting %>"><%= label %></td>
