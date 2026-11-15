@@ -2,6 +2,7 @@
 
 require 'json'
 require 'time'
+require_relative 'agent_reads'
 
 # The full record of a team, as export.json carries it. The format is
 # versioned: public/schemas/export-1.json describes version 1, and a change
@@ -88,6 +89,7 @@ module DataExport
   def self.stories(map_ids)
     return [] if map_ids.empty?
 
+    agent_read = AgentReads.story_ids(Story.where(map_id: map_ids).select(:id))
     Story.where(map_id: map_ids).all.map { |s|
       assignments = StoryAssignment.where(story_id: s.id).all.map { |sa|
         { person_id: sa.person_id, assigned_at: sa.assigned_at }
@@ -97,7 +99,7 @@ module DataExport
         split_from_id: s.split_from_id, created_at: s.created_at,
         deploy_count: s.deploy_count, first_deployed_at: s.first_deployed_at, last_deployed_at: s.last_deployed_at,
         released_at: s.released_at, decoupling_strategy: s.decoupling_strategy, decoupling_label: s.decoupling_label,
-        agent_assisted: s.agent_assisted, scenarios: scenarios(s.id), assignments: assignments }
+        agent_assisted: agent_read.include?(s.id), scenarios: scenarios(s.id), assignments: assignments }
     }
   end
 

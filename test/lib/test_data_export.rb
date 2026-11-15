@@ -182,9 +182,13 @@ describe DataExport do
     assert_nil m[:left_at]
   end
 
+  it 'exports a story no coding agent has read as not agent-assisted' do
+    refute DataExport.call(team_id: @team.id)[:stories].first[:agent_assisted]
+  end
+
   it "exports a story's description, delivery details and scenarios in order" do
-    @story.update(description: 'Email and password', decoupling_strategy: 'flag', decoupling_label: 'FF_REGISTER',
-      agent_assisted: true)
+    @story.update(description: 'Email and password', decoupling_strategy: 'flag', decoupling_label: 'FF_REGISTER')
+    RecordEvent.call(actor_id: @team.mcp_actor_id, entity: @story, action: 'agent_read')
     Scenario.create(story_id: @story.id, given_text: 'an old one', when_text: 'w', then_text: 'no name yet', position: 2000)
     Scenario.create(story_id: @story.id, name: 'Registers with an email', given_text: 'no account',
       when_text: 'I register', then_text: 'I am signed in', position: 1000, done_at: Time.now)

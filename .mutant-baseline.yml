@@ -91,3 +91,4 @@ classes:
   Activation: { mutations: 90, killed: 86, alive: 4 }
   UrgentStory: { mutations: 95, killed: 90, alive: 5 }
   StartUrgentStory: { mutations: 200, killed: 184, alive: 16 }
+  AgentReads: { mutations: 47, killed: 45, alive: 2 }

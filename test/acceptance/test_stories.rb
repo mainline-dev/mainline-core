@@ -26,7 +26,7 @@ describe 'Stories' do
     browse  = create_activity('Browse', for_personas: [visitor])
     search  = create_task('Search', under_activity: browse)
     story   = create_story('Keyword search', under_task: search)
-    story.update(agent_assisted: true)
+    coding_agent_reads(story)
 
     visit_map
 

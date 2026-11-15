@@ -115,7 +115,7 @@ module MainlineMCP
     story = team_story(story_id)
     return error_response('Story not found') unless story
 
-    mark_agent_read(story)
+    record_agent_read(story)
     json = build_story_data(story)
     MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
   end
@@ -125,7 +125,7 @@ module MainlineMCP
     return error_response('Story not found') unless story
     return error_response("Unknown language: #{language}") if language && !StepStubs::LANGUAGES.key?(language)
 
-    mark_agent_read(story)
+    record_agent_read(story)
     files = [FeatureFile.for(story)]
     files << StepStubs.for(story, language) if language
     MCP::Tool::Response.new(files.map { |text| { type: 'text', text: text } })
@@ -136,22 +136,18 @@ module MainlineMCP
     story if story && story.team_id == current_team_id
   end
 
-  # Reading a story, in any form, marks it as agent-assisted and records who
-  # was on it.
-  def self.mark_agent_read(story)
-    team_id = current_team_id
-    DB.transaction do
-      DB[:stories].where(id: story.id).update(agent_assisted: true) unless story.agent_assisted
-      RecordEvent.call(
-        actor_id:    McpActor.id_for(team_id),
-        entity:      story,
-        action:      'agent_read',
-        after_state: {
-          user_agent: Thread.current[:mcp_user_agent],
-          person_ids: StoryAssignment.where(story_id: story.id).select_map(:person_id)
-        }.compact
-      )
-    end
+  # Reading a story, in any form, records the read and who was on the story,
+  # and writes nothing else: the AGENT chip is worked out from these reads.
+  def self.record_agent_read(story)
+    RecordEvent.call(
+      actor_id:    McpActor.id_for(current_team_id),
+      entity:      story,
+      action:      AgentReads::ACTION,
+      after_state: {
+        user_agent: Thread.current[:mcp_user_agent],
+        person_ids: StoryAssignment.where(story_id: story.id).select_map(:person_id)
+      }.compact
+    )
   end
 
   def self.build_map_data(map)

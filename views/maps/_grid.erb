@@ -133,7 +133,7 @@
                  data-reorder-url="/maps/<%= @map.id %>/tasks/<%= task.id %>/reorder_stories"
                  <% if @grid.sliced %>data-slice-id="<%= slice&.id %>"<% end %>>
               <% MapGrid.visible_stories(task, slice, sliced: @grid.sliced, active_filter: @active_filter, slice_sort: @grid.slice_sort, hide_released: @hide_released, slice_filter: @slice_filter).each do |story| %>
-                <%== render('maps/stories/_card', locals: { story: story, locked: locked, map_id: @map.id, story_notes: @story_notes[story.id] || [], deploy_count: @deploy_counts[story.id] || 0, awaiting_walkthrough: @awaiting_walkthrough.include?(story.id), urgent: @urgent_story&.id == story.id }) %>
+                <%== render('maps/stories/_card', locals: { story: story, locked: locked, map_id: @map.id, story_notes: @story_notes[story.id] || [], deploy_count: @deploy_counts[story.id] || 0, awaiting_walkthrough: @awaiting_walkthrough.include?(story.id), urgent: @urgent_story&.id == story.id, agent_assisted: @agent_read_ids.include?(story.id) }) %>
               <% end %>
             </div>
           <% end %>

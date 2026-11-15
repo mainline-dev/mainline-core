@@ -8,6 +8,7 @@ requires:
   - ./lib/activation
   - ./lib/add_scenario
   - ./lib/add_to_story
+  - ./lib/agent_reads
   - ./lib/archive_persona
   - ./lib/archive_story
   - ./lib/assign_person

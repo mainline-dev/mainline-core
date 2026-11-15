@@ -65,6 +65,13 @@ class Mainline
     @awaiting_walkthrough = TwoPersonRule.awaiting(@current_team).to_set(&:id)
     @solo_allowed = AssignPerson.solo_allowed?(@current_team)
     load_urgent_story
+    load_card_history(active_ids)
+  end
+
+  # What the cards show from the event log: how often each active story has
+  # been deployed, and which stories on the map a coding agent has read.
+  def load_card_history(active_ids)
+    @agent_read_ids = AgentReads.story_ids(Story.where(map_id: @map.id).select(:id))
     @deploy_counts = if active_ids.any?
                        Event.where(entity_id: active_ids, action: 'deployed')
                          .group_and_count(:entity_id)

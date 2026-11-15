@@ -203,10 +203,10 @@ describe 'MCP server' do
     generate_mcp_token
     mcp_initialize
 
-    mcp_call_tool('get_import_format')
+    writes = writes_during { mcp_call_tool('get_import_format') }
 
-    assert_equal(0, BypassRLS.call { Event.where(team_id: @team.id, action: 'agent_read').count })
-    refute @story.refresh.agent_assisted
+    assert_empty writes[:events]
+    assert_empty writes[:stories]
   end
 
   it 'get_feature_file refuses a language it does not know' do
@@ -272,19 +272,30 @@ describe 'MCP server' do
     assert_equal ['agent_read'], writes[:events]
     assert_equal 0, writes[:actors]
     refute writes[:team]
+    assert_empty writes[:stories]
   end
 
-  it 'marks story as agent_assisted when accessed via get_story' do
+  it 'get_feature_file records a read and changes no story' do
     generate_mcp_token
     mcp_initialize
 
-    refute @story.agent_assisted
+    writes = writes_during { mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id }) }
+
+    assert_equal ['agent_read'], writes[:events]
+    assert_empty writes[:stories]
+  end
+
+  it 'shows AGENT on the card once a coding agent has read the story' do
+    generate_mcp_token
+    mcp_initialize
+    visit_story_card(@story)
+
+    refute_page_includes('data-test-id="agent-chip"')
 
     mcp_call_tool('get_story', arguments: { 'story_id' => @story.id })
+    visit_story_card(@story)
 
-    @story.refresh
-
-    assert @story.agent_assisted
+    assert_page_includes('data-test-id="agent-chip"')
   end
 
   it 'only the account holder can rotate the MCP token' do

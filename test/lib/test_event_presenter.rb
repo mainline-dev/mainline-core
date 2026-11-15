@@ -39,6 +39,12 @@ describe EventPresenter do
     assert_equal 'read by coding agent (claude-code/2.0)', EventPresenter.describe(event, lookup)
   end
 
+  it 'describes a read backfilled from before reads were logged' do
+    event = build_event(action: 'agent_read', after_state: { 'backfilled' => true })
+
+    assert_equal 'read by coding agent before reads were logged', EventPresenter.describe(event, lookup)
+  end
+
   it 'describes agent_read without user agent' do
     event = build_event(action: 'agent_read')
 

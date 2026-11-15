@@ -99,7 +99,7 @@ class Mainline
         awaiting = TwoPersonRule.awaiting(@current_team).any? { |waiting| waiting.id == @story.id }
         locals = { story: @story, locked: locked, map_id: @map.id,
                    story_notes: notes[@story.id] || [], deploy_count: deploy_count, awaiting_walkthrough: awaiting,
-                   urgent: UrgentStory.urgent?(@story) }
+                   urgent: UrgentStory.urgent?(@story), agent_assisted: AgentReads.read?(@story.id) }
         render('maps/stories/_card', locals: locals)
       end
 

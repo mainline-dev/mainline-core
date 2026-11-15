@@ -24,6 +24,10 @@ module Records
     person
   end
 
+  def record_agent_read(story)
+    BypassRLS.call { RecordEvent.call(actor_id: McpActor.id_for(story.team_id), entity: story, action: 'agent_read') }
+  end
+
   def writes_during(team)
     before = records_of(team)
     yield

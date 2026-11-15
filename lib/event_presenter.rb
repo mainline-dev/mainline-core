@@ -80,6 +80,8 @@ module EventPresenter
   end
 
   def self.describe_agent_read(event, _lookup, _include_name)
+    return 'read by coding agent before reads were logged' if event.after_state['backfilled']
+
     ua = event.after_state['user_agent']
     ua ? "read by coding agent (#{ua})" : 'read by coding agent'
   end

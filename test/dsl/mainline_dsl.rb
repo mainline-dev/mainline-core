@@ -642,6 +642,11 @@ module MainlineDSL
     driver.visit_team(@team)
   end
 
+  # A coding agent read the story over MCP, as the read log records it.
+  def coding_agent_reads(story)
+    driver.record_agent_read(story)
+  end
+
   # What the block wrote to the team's records: the stories it changed, whether
   # it changed the team, how many actors it added, and the events it recorded.
   def writes_during(&)

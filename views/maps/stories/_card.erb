@@ -1,4 +1,4 @@
-<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:, awaiting_walkthrough:, urgent:) %>
+<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:, awaiting_walkthrough:, urgent:, agent_assisted:) %>
 <%
   assign_count = story.story_assignments.length
   pairing_label, pairing_short = if story.status == 'released'
@@ -33,7 +33,7 @@
     <% if awaiting_walkthrough %>
       <span class="state-label state-walk" data-tippy-content="Needs a walkthrough before release." data-test-id="story-walk">WALK</span>
     <% end %>
-    <% if story.agent_assisted %>
+    <% if agent_assisted %>
       <span class="card-note-chip note-chip-agent"
             data-tippy-content="A coding agent has read this story via MCP."
             data-test-id="agent-chip">AGENT</span>
