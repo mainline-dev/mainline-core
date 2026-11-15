@@ -152,6 +152,13 @@
                       data-delete-target=".map-grid-container"
                       data-label="Archive"
                       data-test-id="archive-<%= story_slug %>">Archive</button>
+              <form method="post" action="/maps/<%= map_id %>/stories/<%= story.id %>/urgent" class="urgent-form"
+                    hx-post="/maps/<%= map_id %>/stories/<%= story.id %>/urgent" hx-target=".map-grid-container" hx-swap="outerHTML"
+                    data-test-id="urgent-form">
+                <%== csrf_tag('/maps/' + map_id + '/stories/' + story.id + '/urgent') %>
+                <input type="text" name="reason" class="urgent-reason" placeholder="Why is it urgent?" maxlength="200" required>
+                <button type="submit" class="urgent-btn" data-test-id="start-urgent">Start as urgent</button>
+              </form>
               <button type="button" class="kebab-copy-id preview-copy-id" data-story-id="<%= story.id %>" data-test-id="card-copy-id">Copy ID &middot; <%= short_id %></button>
             </div>
           </details>

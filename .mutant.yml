@@ -64,10 +64,12 @@ requires:
   - ./lib/signup_timer
   - ./lib/solo_log
   - ./lib/split_candidate
+  - ./lib/start_urgent_story
   - ./lib/step_stubs
   - ./lib/story_picker
   - ./lib/throughput_scatter
   - ./lib/two_person_rule
+  - ./lib/urgent_story
   - ./lib/walkthroughs
   - ./lib/unpromote_museum_item
 

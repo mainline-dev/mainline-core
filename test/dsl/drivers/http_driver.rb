@@ -356,6 +356,11 @@ class HttpDriver
     last_response
   end
 
+  def submit_start_urgent(map, story, reason:)
+    post "/maps/#{map.id}/stories/#{story.id}/urgent", { 'reason' => reason }
+    last_response
+  end
+
   def submit_release(map, story)
     post "/maps/#{map.id}/stories/#{story.id}/release"
     last_response

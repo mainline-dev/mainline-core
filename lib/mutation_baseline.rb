@@ -32,8 +32,8 @@ module MutationBaseline
     NeverPulled PairingMatrix PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
     ReleaseNotes RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeOauthToken SetTeamContext SignedState SignupTimer
-    SoloLog SplitCandidate StepStubs StoryPicker ThroughputScatter TwoPersonRule
-    UnpromoteMuseumItem Walkthroughs
+    SoloLog SplitCandidate StartUrgentStory StepStubs StoryPicker ThroughputScatter TwoPersonRule
+    UnpromoteMuseumItem UrgentStory Walkthroughs
   ].freeze
   hosted_classes = []
   HOSTED_CLASSES = hosted_classes.freeze

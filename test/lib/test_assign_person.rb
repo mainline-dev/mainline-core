@@ -324,6 +324,47 @@ describe AssignPerson do
     assert_empty StoryAssignment.where(story_id: @story.id).all
   end
 
+  describe 'the urgent story' do
+    before do
+      @busy = Story.create(map_id: @map.id, team_id: @team.id, task_id: @task.id, title: 'Busy', position: 2000,
+        created_by_id: @person.id)
+      StoryAssignment.create(story_id: @busy.id, person_id: @person.id, team_id: @team.id)
+      RecordEvent.call(actor_id: @person.actor_id, entity: @story, action: 'marked_urgent', after_state: { reason: 'Leak' })
+    end
+
+    def assign(person, story = @story)
+      AssignPerson.call(story: story, person_id: person.id, team: @team, actor_id: person.actor_id)
+    end
+
+    it 'takes someone already at their limit' do
+      assert_predicate assign(@person), :success?
+    end
+
+    it 'starts with one person, where working alone is not allowed' do
+      assign(@bob)
+
+      assert_equal 'active', @story.reload.status
+    end
+
+    it 'starts while the team has its fill of stories awaiting a walkthrough' do
+      TeamConstraint.create(team_id: @team.id, constraint_key: 'walkthrough_limit', value: 1,
+        min_value: 1, max_value: 10, default_value: 3)
+      Story.create(map_id: @map.id, team_id: @team.id, task_id: @task.id, title: 'Waiting', position: 3000,
+        created_by_id: @bob.id, status: 'active', deploy_count: 1, first_deployed_at: Time.now, last_deployed_at: Time.now)
+
+      assert_predicate assign(@bob), :success?
+    end
+
+    it 'does not count against the limit of the people on it' do
+      assign(@bob)
+      other = Story.create(map_id: @map.id, team_id: @team.id, task_id: @task.id, title: 'Other', position: 4000,
+        created_by_id: @bob.id)
+
+      refute_includes AssignPerson.people_at_limit(@team), @bob.id
+      assert_predicate assign(@bob, other), :success?
+    end
+  end
+
   describe 'when the team has as many stories awaiting a walkthrough as its limit allows' do
     before do
       TeamConstraint.create(team_id: @team.id, constraint_key: 'walkthrough_limit', value: 1,

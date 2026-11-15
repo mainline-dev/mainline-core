@@ -151,6 +151,10 @@ module Records
     Story.where(split_from_id: story.id).first
   end
 
+  def people_on(story)
+    Person.where(id: StoryAssignment.where(story_id: story.id).select(:person_id)).order(:name).select_map(:name)
+  end
+
   def status_of(story)
     Story[story.id].status
   end

@@ -242,6 +242,16 @@ module MainlineDSL
   end
 
   # The story's status: planned, active or released.
+  # As the planned card's menu does it, for the person signed in.
+  def start_as_urgent(story, reason:)
+    driver.submit_start_urgent(@map, story, reason: reason)
+  end
+
+  # The names of the people on a story, in order of name.
+  def people_on(story)
+    driver.people_on(story)
+  end
+
   def status_of(story)
     driver.status_of(story)
   end

@@ -218,6 +218,17 @@ class Mainline
         next htmx_grid_or_redirect(r)
       end
 
+      r.post 'urgent' do
+        result = StartUrgentStory.call(story: @story, person_id: @current_person.id, reason: typecast_params.str('reason'),
+          team: @current_team, actor_id: @current_actor.id)
+        if result.success?
+          flash_msg.notice("'#{@story.title}' is the team's urgent story")
+        else
+          flash_msg.error(result.error, reason: result.reason)
+        end
+        htmx_grid_or_redirect(r)
+      end
+
       r.post 'release' do
         if @story.status == 'active' && @story.deploy_count.positive?
           undone = Scenario.where(story_id: @story.id, done_at: nil).count

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'two_person_rule'
+require_relative 'urgent_story'
 
 # Puts a person on a story, up to the team's WIP limit: one active story per
 # person unless the team has raised it. The limit is checked under a lock on
@@ -12,6 +13,9 @@ require_relative 'two_person_rule'
 # many stories awaiting a walkthrough as it allows. That is checked under a
 # lock on the team in the same transaction, and it too leaves stories in
 # flight alone.
+#
+# The team's urgent story is outside all of that: anyone can go on it whatever
+# their limit, one person starts it, and it counts against no one's limit.
 module AssignPerson
   Result = Struct.new(:success?, :errors, keyword_init: true)
 
@@ -36,10 +40,13 @@ module AssignPerson
     errors = validate(story, person_id, team)
     return Result.new(success?: false, errors: errors) unless errors.empty?
 
+    urgent = UrgentStory.urgent?(story)
     DB.transaction do
       lock_person(person_id, team)
-      next Result.new(success?: false, errors: [limit_message(team)]) if at_limit?(person_id, team)
-      next Result.new(success?: false, errors: [TwoPersonRule.limit_refusal(team)]) if held_for_walkthroughs?(story, team)
+      unless urgent
+        next Result.new(success?: false, errors: [limit_message(team)]) if at_limit?(person_id, team)
+        next Result.new(success?: false, errors: [TwoPersonRule.limit_refusal(team)]) if held_for_walkthroughs?(story, team)
+      end
 
       StoryAssignment.create(story_id: story.id, person_id: person_id, team_id: team.id)
       RecordEvent.call(
@@ -49,7 +56,7 @@ module AssignPerson
 
       count = StoryAssignment.where(story_id: story.id).count
       if story.status == 'planned'
-        maybe_activate(story, team, actor_id, count)
+        maybe_activate(story, team, actor_id, count, urgent: urgent)
       elsif story.status == 'active'
         record_collaboration_change(story, actor_id, count - 1, count)
       end
@@ -79,11 +86,13 @@ module AssignPerson
   end
   private_class_method :assignment_conflict
 
+  # The assignments that count against a limit: the urgent story's don't.
   def self.active_assignments(team)
     StoryAssignment
       .join(:stories, id: :story_id)
       .where(Sequel[:story_assignments][:team_id] => team.id)
       .where(Sequel[:stories][:archived_at] => nil)
+      .exclude(Sequel[:stories][:id] => UrgentStory.of(team)&.id)
   end
   private_class_method :active_assignments
 
@@ -128,9 +137,9 @@ module AssignPerson
   end
   private_class_method :enough_to_start?
 
-  def self.maybe_activate(story, team, actor_id, count)
+  def self.maybe_activate(story, team, actor_id, count, urgent: false)
     return unless story.status == 'planned'
-    return unless enough_to_start?(team, count)
+    return unless urgent || enough_to_start?(team, count)
 
     reason = count >= 2 ? 'paired' : 'solo'
     story.update(status: 'active')
