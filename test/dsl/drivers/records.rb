@@ -158,6 +158,18 @@ module Records
     BypassRLS.call { Map.create(team_id: Team.create(name: 'Other team').id, name: 'Theirs', position: 1000) }
   end
 
+  def other_team_story
+    BypassRLS.call {
+      team = Team.create(name: 'Other team')
+      map = Map.create(team_id: team.id, name: 'Theirs', position: 1000)
+      activity = Activity.create(map_id: map.id, team_id: team.id, name: 'Theirs', position: 1000)
+      task = Task.create(map_id: map.id, team_id: team.id, activity_id: activity.id, name: 'Theirs', position: 1000)
+      author = Person.create(name: 'Theirs', email: "theirs-#{SecureRandom.hex(4)}@other.test")
+      Story.create(map_id: map.id, team_id: team.id, task_id: task.id, title: 'Their story', position: 1000,
+        created_by_id: author.id)
+    }
+  end
+
   def activities_on(map)
     BypassRLS.call { Activity.where(map_id: map.id).count }
   end

@@ -1027,6 +1027,11 @@ module MainlineDSL
     driver.other_team_map
   end
 
+  # A story on a different team's map.
+  def other_team_story
+    driver.other_team_story
+  end
+
   # Someone who belongs to a different team and not to this one.
   def other_team_member
     driver.other_team_member

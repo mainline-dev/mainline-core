@@ -250,6 +250,49 @@ describe 'MCP server' do
     assert_equal ['Search shows matching results', 'I see a prompt'], names
   end
 
+  it 'get_story finds a story by the 8-character ID on its card' do
+    generate_mcp_token
+    mcp_initialize
+
+    text, error = mcp_tool_text(mcp_call_tool('get_story', arguments: { 'story_id' => @story.id[0, 8].upcase }))
+
+    refute error
+    assert_equal 'Show results', JSON.parse(text)['title']
+  end
+
+  it 'get_feature_file finds a story by the 8-character ID on its card' do
+    generate_mcp_token
+    mcp_initialize
+
+    text, error = mcp_tool_text(mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id[0, 8] }))
+
+    refute error
+    assert_includes text, "@story-#{@story.id}"
+  end
+
+  it 'tells an agent where to find a story ID when none matches' do
+    generate_mcp_token
+    mcp_initialize
+
+    %w[get_story get_feature_file].product(['00000000', 'YOUR_STORY_ID', '{story_id}']).each do |tool, id|
+      text, error = mcp_tool_text(mcp_call_tool(tool, arguments: { 'story_id' => id }))
+
+      assert error, "#{tool} #{id}"
+      assert_includes text, 'get_map', "#{tool} #{id}"
+    end
+  end
+
+  it "finds nothing by the short ID of another team's story" do
+    theirs = other_team_story
+    generate_mcp_token
+    mcp_initialize
+
+    text, error = mcp_tool_text(mcp_call_tool('get_story', arguments: { 'story_id' => theirs.id[0, 8] }))
+
+    assert error
+    refute_includes text, 'Their story'
+  end
+
   it 'get_story does not expose deploy webhook URL' do
     generate_mcp_token
     mcp_initialize

@@ -92,3 +92,4 @@ classes:
   UrgentStory: { mutations: 95, killed: 90, alive: 5 }
   StartUrgentStory: { mutations: 200, killed: 184, alive: 16 }
   AgentReads: { mutations: 47, killed: 45, alive: 2 }
+  StoryId: { mutations: 64, killed: 64, alive: 0 }

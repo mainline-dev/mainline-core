@@ -67,6 +67,7 @@ requires:
   - ./lib/split_candidate
   - ./lib/start_urgent_story
   - ./lib/step_stubs
+  - ./lib/story_id
   - ./lib/story_picker
   - ./lib/throughput_scatter
   - ./lib/two_person_rule

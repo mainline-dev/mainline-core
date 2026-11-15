@@ -5,12 +5,14 @@ require_relative 'core_events'
 require_relative 'feature_file'
 require_relative 'import_instructions'
 require_relative 'step_stubs'
+require_relative 'story_id'
 
 module MainlineMCP
   # Every tool only reads: it changes nothing a team edits, gives the same
   # answer each time, and reaches nothing outside Mainline. A read of a story
   # is logged, which is how the card knows a coding agent has read it.
   READ_ONLY = { read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false }.freeze
+  NO_STORY = 'No story with that ID in this team. Use an ID from get_map, or the 8-character ID on the card.'
 
   def self.build_server
     instructions = 'Read-only access to a Mainline story map. ' \
@@ -126,7 +128,7 @@ module MainlineMCP
 
   def self.call_get_story(story_id)
     story = team_story(story_id)
-    return error_response('Story not found') unless story
+    return error_response(NO_STORY) unless story
 
     record_agent_read(story)
     json = build_story_data(story)
@@ -135,7 +137,7 @@ module MainlineMCP
 
   def self.call_get_feature_file(story_id, language = nil)
     story = team_story(story_id)
-    return error_response('Story not found') unless story
+    return error_response(NO_STORY) unless story
     return error_response("Unknown language: #{language}") if language && !StepStubs::LANGUAGES.key?(language)
 
     record_agent_read(story)
@@ -144,9 +146,9 @@ module MainlineMCP
     MCP::Tool::Response.new(files.map { |text| { type: 'text', text: text } })
   end
 
+  # A story of this team, by its full ID or the short one on its card.
   def self.team_story(story_id)
-    story = Story[story_id]
-    story if story && story.team_id == current_team_id
+    StoryId.matching(Story.where(team_id: current_team_id), story_id).first
   end
 
   # Reading a story, in any form, records the read and who was on the story,

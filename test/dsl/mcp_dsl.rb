@@ -26,6 +26,12 @@ module McpDSL
     last_response
   end
 
+  # The text a tool call returned, and whether it was an error.
+  def mcp_tool_text(response)
+    result = JSON.parse(response.body)['result']
+    [result['content'].find { |c| c['type'] == 'text' }['text'], result['isError']]
+  end
+
   # The tools the server offers, as a client lists them.
   def mcp_list_tools(team_id: @team.id, token: nil)
     token ||= @mcp_token

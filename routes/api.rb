@@ -2,6 +2,7 @@
 
 require 'bcrypt'
 require_relative '../lib/rate_limiter'
+require_relative '../lib/story_id'
 
 DEPLOY_RATE_LIMITER = SharedRateLimiter.new(name: 'deploy', capacity: 10, refill_rate: 0.2)
 
@@ -61,19 +62,9 @@ class Mainline
           deployed = 0
           now = Time.now
 
+          active = Story.where(map_id: Map.where(team_id: team.id).select(:id), status: 'active')
           story_ids.each do |sid|
-            normalized = sid.downcase
-            next unless normalized.match?(/\A[0-9a-f-]+\z/)
-
-            next unless normalized.length >= 8
-
-            story = if normalized.length == 36
-                      Story.where(id: normalized, map_id: Map.where(team_id: team.id).select(:id)).where(status: 'active').first
-                    else
-                      Story.where(Sequel.like(Sequel.cast(:id, String), "#{normalized.gsub(/[%_]/, '')}%")).where(
-                        map_id: Map.where(team_id: team.id).select(:id), status: 'active'
-                      ).first
-                    end
+            story = StoryId.matching(active, sid).first
             next unless story
 
             DB.transaction do
