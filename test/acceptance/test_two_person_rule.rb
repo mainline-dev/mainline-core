@@ -197,6 +197,18 @@ describe 'The Walkthroughs page' do
       refute_shown('walkthrough-none-needed')
     end
 
+    it 'flags the story as having had no kickoff, until someone else agrees its scenarios' do
+      create_scenario(@story, given_text: 'a full shop', when_text: 'a guest searches', then_text: 'matches are listed')
+      visit_walkthroughs
+
+      assert_equal 'none', walkthrough_row(@story)[:kickoff]
+      login_as(@bob)
+      agree_scenarios(@story)
+      visit_walkthroughs
+
+      assert_equal 'agreed', walkthrough_row(@story)[:kickoff]
+    end
+
     it 'shows how many scenarios the story has and the day it was last deployed' do
       create_scenario(@story, given_text: 'a full shop', when_text: 'a guest searches', then_text: 'matches are listed')
       create_scenario(@story, given_text: 'an empty shop', when_text: 'a guest searches', then_text: 'nothing is listed')

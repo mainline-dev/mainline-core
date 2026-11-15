@@ -4770,6 +4770,15 @@ footer.landing a:hover {
 }
 
 /* Editable scenario form - CSS grid layout */
+.kickoff-line {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
 .feature-export {
     display: flex;
     gap: 0.75rem;

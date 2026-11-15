@@ -159,6 +159,18 @@ module MainlineDSL
     driver.submit_deploy_story(@map, story)
   end
 
+  # The person signed in agrees the story's scenarios: its kickoff, when one
+  # person works on it.
+  def agree_scenarios(story)
+    driver.submit_kickoff(@map, story)
+  end
+
+  # What the story's page says about its kickoff: the state it is in and the
+  # people it names.
+  def kickoff_of(story)
+    driver.kickoff_of(@map, story)
+  end
+
   # Someone on the team writes down that these people were walked through
   # what was built on the story.
   def record_walkthrough(story, attended_by:)
@@ -440,7 +452,7 @@ module MainlineDSL
   end
 
   # What the page says about a story needing a walkthrough: how many
-  # scenarios it has and the day it was last deployed.
+  # scenarios it has, the day it was last deployed and where its kickoff stands.
   def walkthrough_row(story)
     driver.walkthrough_row(story)
   end

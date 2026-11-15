@@ -21,40 +21,6 @@ class BrowserDriver
     visit "/maps/#{map.id}?slices=1"
   end
 
-  def submit_create_persona(map, attrs)
-    visit "/maps/#{map.id}"
-    click_on '+ Persona'
-    fill_in 'Name', with: attrs[:name]
-    fill_in 'Description', with: attrs.fetch(:description, '') if attrs[:description]
-    click_on 'Create Persona'
-  end
-
-  def submit_create_activity(map, attrs)
-    visit "/maps/#{map.id}"
-    click_on '+ Activity'
-    fill_in 'Name', with: attrs[:name]
-    attrs[:persona_names].each { |name| check name }
-    click_on 'Create Activity'
-  end
-
-  def submit_create_task(map, attrs)
-    visit "/maps/#{map.id}"
-    within '.activity-col', text: attrs[:activity_name] do
-      click_on '+ Task'
-    end
-    fill_in 'Name', with: attrs[:name]
-    click_on 'Create Task'
-  end
-
-  def submit_create_story(map, attrs)
-    visit "/maps/#{map.id}"
-    within '.tasks-block', text: attrs[:task_name] do
-      click_on '+ Story'
-    end
-    fill_in 'Title', with: attrs[:title]
-    click_on 'Create Story'
-  end
-
   TEMPLATE_LABELS = {
     'connextra' => 'As a... I want to... so that...',
     'card'      => 'Persona does thing',
@@ -79,7 +45,18 @@ class BrowserDriver
       fill_in 'beh_action',  with: attrs[:action]
     end
 
-    click_on 'Create Story'
+    send_form 'Create Story'
+  end
+
+  # Clicks the form's button, then waits for the browser to leave the form's
+  # page. A click on its own waits for a page load only if one begins within
+  # a tenth of a second, and a busy browser can take longer than that to send
+  # a form, so the step would return before the form had been answered.
+  def send_form(button)
+    form = current_url
+    click_on button
+
+    assert_no_current_path(form, url: true)
   end
 
   def visit_team_dashboard(team)

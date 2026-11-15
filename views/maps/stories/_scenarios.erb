@@ -1,6 +1,23 @@
 <div id="scenarios-container" class="scenarios">
   <h2 class="scenarios-heading">Scenarios</h2>
   <% if (@scenarios || []).any? %>
+    <% kickoff = Kickoff.for(@story) %>
+    <% kickoff_path = "/maps/#{@map.id}/stories/#{@story.id}/kickoff" %>
+    <p class="kickoff-line" data-test-id="kickoff" data-state="<%= kickoff.kind %>" data-people="<%= kickoff.people.map(&:id).join(',') %>">
+      <% if kickoff.kind == :together %>
+        Kickoff: <%= kickoff.people.map(&:name).join(' and ') %>
+      <% elsif kickoff.kind == :agreed %>
+        Kickoff: <%= kickoff.people.map(&:name).join(' and ') %> agreed the scenarios
+      <% elsif kickoff.kind == :changed %>
+        Kickoff: scenarios changed since <%= kickoff.people.map(&:name).join(' and ') %> agreed
+      <% else %>
+        Kickoff: nobody else has agreed the scenarios
+      <% end %>
+      <% if kickoff.kind != :together && Kickoff.can_agree?(@story, @current_person) %>
+        <button type="button" class="btn btn-sm" data-test-id="kickoff-agree"
+                hx-post="<%= kickoff_path %>" hx-target="#scenarios-container" hx-swap="outerHTML">Agree the scenarios</button>
+      <% end %>
+    </p>
     <p class="feature-export">
       <a href="/maps/<%= @map.id %>/stories/<%= @story.id %>/feature" download data-tippy-content="The scenarios as a Gherkin file for your repo" data-test-id="feature-download">Download .feature</a>
       <button type="button" class="preview-copy-id" data-copy="<%= FeatureFile.for(@story) %>" data-tooltip="Copy the feature file" data-test-id="feature-copy">Copy</button>

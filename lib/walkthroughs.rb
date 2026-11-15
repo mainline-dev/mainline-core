@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 require_relative 'two_person_rule'
+require_relative 'kickoff'
 
 # What the Walkthroughs page shows.
 module Walkthroughs
   # A story waiting for a walkthrough: the people on it, who show it, the
-  # working members who are not, any of whom could attend, and how many
-  # scenarios there are to walk through.
-  Needed = Struct.new(:story, :on_it, :could_attend, :scenario_count, keyword_init: true)
+  # working members who are not, any of whom could attend, how many
+  # scenarios there are to walk through, and where its kickoff stands.
+  Needed = Struct.new(:story, :on_it, :could_attend, :scenario_count, :kickoff, keyword_init: true)
 
   def self.needed(team)
     stories = TwoPersonRule.awaiting(team)
@@ -19,7 +20,7 @@ module Walkthroughs
       ids = on_story.fetch(story.id, []).map(&:person_id)
       Needed.new(story: story, on_it: people.values_at(*ids).compact,
         could_attend: working.reject { |person| ids.include?(person.id) },
-        scenario_count: scenarios.fetch(story.id, 0))
+        scenario_count: scenarios.fetch(story.id, 0), kickoff: Kickoff.for(story).kind)
     }
   end
 

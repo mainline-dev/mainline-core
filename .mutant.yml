@@ -35,6 +35,7 @@ requires:
   - ./lib/inventory
   - ./lib/jira_csv
   - ./lib/jira_markup
+  - ./lib/kickoff
   - ./lib/lead_time
   - ./lib/let_go
   - ./lib/let_go_prompt

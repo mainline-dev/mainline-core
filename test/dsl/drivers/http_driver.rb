@@ -351,6 +351,17 @@ class HttpDriver
     last_response
   end
 
+  def submit_kickoff(map, story)
+    post "/maps/#{map.id}/stories/#{story.id}/kickoff"
+    last_response
+  end
+
+  def kickoff_of(map, story)
+    get "/maps/#{map.id}/stories/#{story.id}/edit"
+    line = last_response.body[/<[^>]*data-test-id="kickoff"[^>]*>/].to_s
+    { state: line[/data-state="([^"]*)"/, 1], people: line[/data-people="([^"]*)"/, 1].to_s.split(',') }
+  end
+
   def submit_walkthrough(team, story, attendee_ids:)
     post "/teams/#{team.id}/teamwork/walkthroughs", story_id: story.id, attendee_ids: attendee_ids
     last_response
@@ -657,7 +668,8 @@ class HttpDriver
 
   def walkthrough_row(story)
     row = last_response.body[/<tr[^>]*data-test-id="walkthrough-needed" data-story="#{story.id}"[^>]*>/].to_s
-    { scenarios: row[/data-scenarios="([^"]*)"/, 1], last_deployed: row[/data-last-deployed="([^"]*)"/, 1] }
+    { scenarios: row[/data-scenarios="([^"]*)"/, 1], last_deployed: row[/data-last-deployed="([^"]*)"/, 1],
+      kickoff: row[/data-kickoff="([^"]*)"/, 1] }
   end
 
   def could_attend(story)

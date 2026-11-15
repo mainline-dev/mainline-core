@@ -27,7 +27,7 @@ module MutationBaseline
     CreateActivity CreatePersona CreateStory CreateTask CumulativeFlow
     DataExport DeleteTeam DiscardMuseumItem EditActivity EditPersona EditTask
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FlashAdapter
-    ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup LeadTime
+    ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
     LetGo LetGoPrompt LetGoReview MainlineFile MapGrid MuseumList
     PairingMatrix PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
     RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks

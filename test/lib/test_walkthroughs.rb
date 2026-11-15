@@ -85,6 +85,16 @@ describe Walkthroughs do
       assert_equal({ 'Find things' => 2, 'Pay' => 0 }, counts)
     end
 
+    it 'says where the kickoff of each story stands' do
+      agreed = deployed('Find things', on_it: [@alice])
+      deployed('Pay', on_it: [@bob])
+      RecordEvent.call(actor_id: @bob.actor.id, entity: agreed, action: 'scenarios_agreed')
+
+      kickoffs = Walkthroughs.needed(@team).to_h { |row| [row.story.title, row.kickoff] }
+
+      assert_equal({ 'Find things' => :agreed, 'Pay' => :none }, kickoffs)
+    end
+
     it 'keeps each story to its own people' do
       deployed('Find things', on_it: [@alice])
       deployed('Pay', on_it: [@bob])

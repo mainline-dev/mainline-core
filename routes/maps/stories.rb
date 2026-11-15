@@ -404,6 +404,19 @@ class Mainline
         end
       end
 
+      r.post 'kickoff' do
+        result = Kickoff.agree(story: @story, person: @current_person)
+        unless htmx?(r)
+          flash['error'] = result.error
+          flash['error_reason'] = result.reason
+          next r.redirect("/maps/#{@map.id}/stories/#{@story.id}/edit")
+        end
+
+        @scenarios = @story.scenarios
+        @scenario_errors = [result.error].compact
+        with_preview(render('maps/stories/_scenarios'))
+      end
+
       r.on 'scenarios' do
         r.is do
           r.get do
@@ -491,7 +504,17 @@ class Mainline
 
               @scenario_errors = AddScenario.errors(name, given, whn, thn)
 
-              scenario.update(name: name, given_text: given, when_text: whn, then_text: thn) if @scenario_errors.empty?
+              if @scenario_errors.empty?
+                DB.transaction do
+                  scenario.set(name: name, given_text: given, when_text: whn, then_text: thn)
+                  # Recorded only when the edit changes something, so a save
+                  # of the form as it stood is no change to the scenarios.
+                  if scenario.modified?
+                    scenario.save_changes
+                    RecordEvent.call(actor_id: @current_actor.id, entity: @story, action: 'scenario_edited')
+                  end
+                end
+              end
 
               @scenarios = Scenario.where(story_id: @story.id).order(:position).all
               with_preview(render('maps/stories/_scenarios'))

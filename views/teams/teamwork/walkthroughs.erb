@@ -28,8 +28,13 @@
         <tbody>
           <% @needed.each do |row| %>
             <% last_deployed = row.story.last_deployed_at.strftime('%Y-%m-%d') %>
-            <tr data-test-id="walkthrough-needed" data-story="<%= row.story.id %>" data-scenarios="<%= row.scenario_count %>" data-last-deployed="<%= last_deployed %>">
-              <td><%= row.story.title %></td>
+            <tr data-test-id="walkthrough-needed" data-story="<%= row.story.id %>" data-scenarios="<%= row.scenario_count %>" data-last-deployed="<%= last_deployed %>" data-kickoff="<%= row.kickoff %>">
+              <td>
+                <%= row.story.title %>
+                <% if row.kickoff == :none %>
+                  <span class="card-note-chip note-chip-stale" data-test-id="walkthrough-no-kickoff">No kickoff</span>
+                <% end %>
+              </td>
               <td><%= row.on_it.map(&:name).join(', ') %></td>
               <td><%= last_deployed %></td>
               <td><%= row.scenario_count %></td>
