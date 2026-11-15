@@ -84,3 +84,4 @@ classes:
   RecordWalkthrough: { mutations: 136, killed: 134, alive: 2 }
   Walkthroughs: { mutations: 211, killed: 201, alive: 10 }
   Kickoff: { mutations: 424, killed: 409, alive: 15 }
+  ReleaseNotes: { mutations: 280, killed: 261, alive: 19 }

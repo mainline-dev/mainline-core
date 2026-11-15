@@ -27,7 +27,14 @@ class Mainline
       end
 
       r.get 'name' do
+        @notes_offered = ReleaseNotes.offered([@release_slice])
         render('maps/release_slices/_slice_name')
+      end
+
+      r.get 'release_notes' do
+        response['Content-Type'] = 'text/markdown; charset=utf-8'
+        response['Content-Disposition'] = %(attachment; filename="#{ReleaseNotes.file_name(@release_slice)}")
+        ReleaseNotes.for(@release_slice)
       end
 
       r.post 'delete' do
@@ -101,6 +108,7 @@ class Mainline
             @slice_events = Event.where(map_id: @map.id, entity_type: 'release_slice')
               .order(Sequel.desc(:event_no)).eager(:actor).all
             @oob = true
+            @notes_offered = ReleaseNotes.offered([@release_slice])
             html = render('maps/release_slices/_slice_name')
             next html + render('maps/release_slices/_history_oob')
           end
@@ -115,6 +123,7 @@ class Mainline
       r.get do
         @subnav_active = 'slices'
         @release_slices = ReleaseSlice.where(map_id: @map.id, archived_at: nil).order(:position).all
+        @notes_offered = ReleaseNotes.offered(@release_slices)
         base = Event.where(map_id: @map.id, entity_type: 'release_slice')
         total = base.count
         @show_all_history = total > 20

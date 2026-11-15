@@ -30,7 +30,7 @@ module MutationBaseline
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
     LetGo LetGoPrompt LetGoReview MainlineFile MapGrid MuseumList
     PairingMatrix PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
-    RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
+    ReleaseNotes RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeOauthToken SetTeamContext SignedState SignupTimer
     SoloLog SplitCandidate StepStubs StoryPicker ThroughputScatter TwoPersonRule
     UnpromoteMuseumItem Walkthroughs

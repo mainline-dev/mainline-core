@@ -440,6 +440,35 @@ module MainlineDSL
     driver.submit_edit_release_slice(@map, slice, name: name)
   end
 
+  # As the Slices page does it: the name is edited in place.
+  def rename_release_slice(slice, name:)
+    driver.htmx_edit_release_slice(@map, slice, name: name)
+  end
+
+  # Whether the page offers the slice's release notes.
+  def release_notes_offered?(slice)
+    driver.release_notes_offered?(slice)
+  end
+
+  # Follows the slice's release notes link on the Slices page.
+  def download_release_notes(slice)
+    driver.download_release_notes(slice)
+  end
+
+  def release_notes_file_name
+    driver.release_notes_file_name
+  end
+
+  # The story titles in the downloaded release notes, in order.
+  def release_notes_stories
+    driver.release_notes_stories
+  end
+
+  # The scenario lines under a story in the downloaded release notes.
+  def release_notes_scenarios(title)
+    driver.release_notes_scenarios(title)
+  end
+
   def visit_edit_map
     driver.visit_edit_map(@map)
   end

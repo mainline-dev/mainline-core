@@ -2,6 +2,10 @@
         hx-get="/maps/<%= @map.id %>/release_slices/<%= @release_slice.id %>/edit_name"
         hx-target="#slice-name-<%= @release_slice.id %>"
         hx-swap="innerHTML"><%= @release_slice.name %></strong>
+<% if @notes_offered&.include?(@release_slice.id) %>
+  <a href="/maps/<%= @map.id %>/release_slices/<%= @release_slice.id %>/release_notes" download class="add-link"
+     data-tippy-content="The stories released in this slice, as markdown" data-test-id="release-notes" data-slice="<%= @release_slice.id %>">Release notes</a>
+<% end %>
 <button type="button" class="delete-btn delete-confirm"
         data-label="&times;"
         data-delete-url="/maps/<%= @map.id %>/release_slices/<%= @release_slice.id %>/delete"

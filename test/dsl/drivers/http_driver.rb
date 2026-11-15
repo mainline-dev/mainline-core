@@ -571,6 +571,29 @@ class HttpDriver
     last_response
   end
 
+  def release_notes_offered?(slice)
+    last_response.body.match?(/data-test-id="release-notes" data-slice="#{slice.id}"/)
+  end
+
+  def download_release_notes(slice)
+    tag = last_response.body[/<a [^>]*data-test-id="release-notes" data-slice="#{slice.id}"[^>]*>/]
+    get CGI.unescapeHTML(tag[/href="([^"]+)"/, 1])
+    last_response
+  end
+
+  def release_notes_file_name
+    last_response['Content-Disposition'].to_s[/filename="([^"]+)"/, 1]
+  end
+
+  def release_notes_stories
+    last_response.body.scan(/^## (.+)$/).flatten
+  end
+
+  def release_notes_scenarios(title)
+    section = last_response.body.split(/^## /).find { |part| part.start_with?("#{title}\n") }.to_s
+    section.lines.grep(/^- /).map { |line| line.delete_prefix('- ').strip }
+  end
+
   def htmx_edit_release_slice(map, slice, attrs)
     post "/maps/#{map.id}/release_slices/#{slice.id}",
       { 'name' => attrs[:name] },
