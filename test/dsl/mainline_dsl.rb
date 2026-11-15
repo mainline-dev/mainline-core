@@ -247,6 +247,15 @@ module MainlineDSL
     driver.submit_start_urgent(@map, story, reason: reason)
   end
 
+  # The story the red bar above the map names, by ID, or nil without a bar.
+  def urgent_bar_story
+    driver.urgent_bar_story
+  end
+
+  def urgent_bar_link
+    driver.urgent_bar_link
+  end
+
   # The names of the people on a story, in order of name.
   def people_on(story)
     driver.people_on(story)

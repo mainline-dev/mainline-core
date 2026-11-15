@@ -356,6 +356,14 @@ class HttpDriver
     last_response
   end
 
+  def urgent_bar_story
+    last_response.body[/data-test-id="urgent-bar" data-story="([^"]+)"/, 1]
+  end
+
+  def urgent_bar_link
+    last_response.body[/<a [^>]*data-test-id="urgent-bar-link"[^>]*>/].to_s[/href="([^"]+)"/, 1]
+  end
+
   def submit_start_urgent(map, story, reason:)
     post "/maps/#{map.id}/stories/#{story.id}/urgent", { 'reason' => reason }
     last_response

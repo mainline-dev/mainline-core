@@ -66,4 +66,59 @@ describe 'The urgent story' do
     assert_equal 'active', status_of(@later)
     assert_equal %w[Carol Dan], people_on(@later)
   end
+
+  it 'has a red bar above the map, linking to it' do
+    start_as_urgent(@patch, reason: 'The payment key leaked')
+
+    visit_map
+
+    assert_equal @patch.id, urgent_bar_story
+    assert_equal "/maps/#{@map.id}/stories/#{@patch.id}/edit", urgent_bar_link
+  end
+
+  it 'has the bar on every map of the team, linking to the map it is on' do
+    start_as_urgent(@patch, reason: 'The payment key leaked')
+    first_map = @map
+    create_map(name: 'Back office')
+
+    visit_map
+
+    assert_equal "/maps/#{first_map.id}/stories/#{@patch.id}/edit", urgent_bar_link
+  end
+
+  it 'has no bar while the team has no urgent story' do
+    visit_map
+
+    refute_shown('urgent-bar')
+  end
+
+  it 'has no bar once the urgent story is released' do
+    start_as_urgent(@patch, reason: 'The payment key leaked')
+    assign_person(@patch, person: @carol)
+    deploy_story(@patch)
+    release_story(@patch)
+
+    visit_map
+
+    refute_shown('urgent-bar')
+  end
+
+  it 'has a red card' do
+    start_as_urgent(@patch, reason: 'The payment key leaked')
+
+    visit_story_card(@patch)
+
+    assert_shown('urgent-card')
+  end
+
+  it 'has an ordinary card once it is released' do
+    start_as_urgent(@patch, reason: 'The payment key leaked')
+    assign_person(@patch, person: @carol)
+    deploy_story(@patch)
+    release_story(@patch)
+
+    visit_story_card(@patch)
+
+    refute_shown('urgent-card')
+  end
 end

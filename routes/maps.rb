@@ -64,6 +64,7 @@ class Mainline
     @story_notes = build_story_notes(active_ids, @split_candidates)
     @awaiting_walkthrough = TwoPersonRule.awaiting(@current_team).to_set(&:id)
     @solo_allowed = AssignPerson.solo_allowed?(@current_team)
+    load_urgent_story
     @deploy_counts = if active_ids.any?
                        Event.where(entity_id: active_ids, action: 'deployed')
                          .group_and_count(:entity_id)
@@ -71,6 +72,15 @@ class Mainline
                      else
                        {}
                      end
+  end
+
+  # The team's urgent story and who is on it, for the bar above every map.
+  def load_urgent_story
+    @urgent_story = UrgentStory.of(@current_team)
+    return unless @urgent_story
+
+    @urgent_people = Person.where(id: StoryAssignment.where(story_id: @urgent_story.id).select(:person_id))
+      .order(:name).select_map(:name)
   end
 
   def build_story_notes(story_ids, split_candidates)

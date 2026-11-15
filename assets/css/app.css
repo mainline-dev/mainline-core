@@ -1592,9 +1592,18 @@ pre code {
     text-shadow: 0 0 8px rgba(0, 230, 138, 0.3);
 }
 
+/* The team's urgent story: a bar above every map, and a red card. */
+.urgent-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; margin: 0 0 12px; padding: 8px 14px; border-radius: 4px; background: var(--accent-red); color: #fff; font: 500 14px/1.4 var(--font-body); }
+.urgent-bar-label { font: 700 11px/1 var(--font-mono); letter-spacing: 0.1em; }
+.urgent-bar-link { color: #fff; font-weight: 600; text-decoration: underline; }
+.urgent-bar-link:hover { color: #fff; text-decoration: none; }
+.urgent-bar-people { opacity: 0.85; }
+.story-card.story-urgent { border-color: var(--accent-red); background: var(--accent-red-bg); box-shadow: inset 3px 0 0 var(--accent-red); }
+.state-urgent { color: #fff; background: var(--accent-red); border: 1px solid var(--accent-red); }
+
 /* Starting a planned story as the team's urgent story, from its menu. */
 .urgent-form { flex-basis: 100%; display: flex; gap: 6px; }
-.urgent-reason { flex: 1; min-width: 0; padding: 2px 6px; font-size: 0.7rem; background: var(--bg-base); color: var(--text-primary); border: 1px solid var(--border-strong); border-radius: 2px; }
+.urgent-reason { flex: 1 1 160px; min-width: 160px; padding: 4px 6px; font-size: 0.7rem; background: var(--bg-base); color: var(--text-primary); border: 1px solid var(--border-strong); border-radius: 2px; }
 .urgent-btn { padding: 0 0.3rem; font: 600 0.6rem/1.4 var(--font-mono); color: var(--accent-red); background: none; border: 1px solid rgba(255, 68, 102, 0.3); border-radius: 2px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.04em; }
 .urgent-btn:hover { border-color: var(--accent-red); }
 

@@ -1,4 +1,4 @@
-<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:, awaiting_walkthrough:) %>
+<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:, awaiting_walkthrough:, urgent:) %>
 <%
   assign_count = story.story_assignments.length
   pairing_label, pairing_short = if story.status == 'released'
@@ -22,9 +22,10 @@
   short_id = story.id[0, 8].upcase
   deploy_tip = "#{deploy_count || 0} deployment#{(deploy_count || 0) == 1 ? '' : 's'}"
 %>
-<div class="story-card<%= ' story-released' if story.status == 'released' %>" data-id="<%= story.id %>" data-test-id="story-card">
+<div class="story-card<%= ' story-released' if story.status == 'released' %><%= ' story-urgent' if urgent %>" data-id="<%= story.id %>" data-test-id="story-card">
   <input type="hidden" name="story_id" value="<%= story.id %>">
   <div class="card-header">
+    <% if urgent %><span class="state-label state-urgent" data-test-id="urgent-card">URGENT</span><% end %>
     <span class="state-label state-<%= pairing_label %><%= ' state-waiting' if awaiting_walkthrough %>"><%= pairing_short %></span>
     <% if story.status == 'active' && story.deploy_count.positive? %>
       <span class="state-label state-deployed" data-tippy-content="Deployed, not released" data-test-id="story-deployed">DEPLOYED</span>
