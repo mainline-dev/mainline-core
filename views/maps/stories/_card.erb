@@ -25,7 +25,7 @@
 <div class="story-card<%= ' story-released' if story.status == 'released' %>" data-id="<%= story.id %>" data-test-id="story-card">
   <input type="hidden" name="story_id" value="<%= story.id %>">
   <div class="card-header">
-    <span class="state-label state-<%= pairing_label %>"><%= pairing_short %></span>
+    <span class="state-label state-<%= pairing_label %><%= ' state-waiting' if awaiting_walkthrough %>"><%= pairing_short %></span>
     <% if story.status == 'active' && story.deploy_count.positive? %>
       <span class="state-label state-deployed" data-tippy-content="Deployed, not released" data-test-id="story-deployed">DEPLOYED</span>
     <% end %>

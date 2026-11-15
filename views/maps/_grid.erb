@@ -8,7 +8,7 @@
     col += span
   end
 %>
-<div class="map-grid-container">
+<div class="map-grid-container<%= ' solo-allowed' if @solo_allowed %>">
 <% if @activities.empty? %>
   <p class="empty-state" data-test-id="map-empty">
     An empty map. Add a persona -- the kind of person you're building for. Then the activities they do.

@@ -114,13 +114,17 @@ module AssignPerson
   end
   private_class_method :held_for_walkthroughs?
 
-  # Two people start a story. One does on a team of one, or where the team
-  # allows it.
+  # One person may start a story on a team of one, or where the team allows it.
+  def self.solo_allowed?(team)
+    working_count = TeamMembership.where(team_id: team.id, left_at: nil, working: true).count
+    working_count == 1 || TeamConstraint.for_team(team.id, 'allow_solo_activation', default: 0) == 1
+  end
+
+  # Two people start a story, or one where solo is allowed.
   def self.enough_to_start?(team, count)
     return true if count >= 2
 
-    working_count = TeamMembership.where(team_id: team.id, left_at: nil, working: true).count
-    count == 1 && (working_count == 1 || TeamConstraint.for_team(team.id, 'allow_solo_activation', default: 0) == 1)
+    count == 1 && solo_allowed?(team)
   end
   private_class_method :enough_to_start?
 

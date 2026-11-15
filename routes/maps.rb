@@ -63,6 +63,7 @@ class Mainline
     active_ids = active_stories.map(&:id)
     @story_notes = build_story_notes(active_ids, @split_candidates)
     @awaiting_walkthrough = TwoPersonRule.awaiting(@current_team).to_set(&:id)
+    @solo_allowed = AssignPerson.solo_allowed?(@current_team)
     @deploy_counts = if active_ids.any?
                        Event.where(entity_id: active_ids, action: 'deployed')
                          .group_and_count(:entity_id)

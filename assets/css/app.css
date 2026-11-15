@@ -1195,6 +1195,14 @@ pre code {
     border: 1px solid rgba(255, 68, 102, 0.15);
 }
 
+/* Where solo is allowed, solo is neutral until the story waits for a
+   walkthrough. */
+.solo-allowed .state-solo:not(.state-waiting) {
+    color: var(--text-secondary);
+    background: rgba(92, 92, 120, 0.08);
+    border-color: rgba(92, 92, 120, 0.12);
+}
+
 .state-paired {
     color: var(--accent-emerald);
     background: var(--accent-emerald-bg);
