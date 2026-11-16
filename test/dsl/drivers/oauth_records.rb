@@ -8,6 +8,7 @@ module OauthRecords
   def publish_client_document(client_id, name:, redirect_uris:)
     @client_documents ||= ClientDocuments.new
     ClientMetadata.network = @client_documents
+    ClientMetadata.forget
     @client_documents.publish(client_id, JSON.generate(client_id: client_id, client_name: name, redirect_uris: redirect_uris))
   end
 
