@@ -66,6 +66,7 @@ requires:
   - ./lib/reorder_stories
   - ./lib/reorder_tasks
   - ./lib/resource_cap
+  - ./lib/revoke_grant
   - ./lib/revoke_oauth_token
   - ./lib/set_team_context
   - ./lib/signed_state

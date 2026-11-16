@@ -695,6 +695,27 @@ module MainlineDSL
     driver.create_personal_token(name: name, team_ids: teams.map(&:id), expires_on: expires_on)
   end
 
+  # Revokes the listed personal token with this name, with its button.
+  def revoke_personal_token(name)
+    driver.revoke_personal_token(name)
+  end
+
+  # Posts the revoke button's form for whatever token ID is given, as a person
+  # tampering with the page might.
+  def revoke_personal_token_by_id(id)
+    driver.revoke_personal_token_by_id(id)
+  end
+
+  # A personal token someone else made for themselves, by its grant's ID.
+  def personal_token_of(person, team:)
+    driver.personal_token_of(person, team)
+  end
+
+  # Whether the personal token with this grant ID has not been revoked.
+  def personal_token_works?(id)
+    driver.personal_token_works?(id)
+  end
+
   # The personal tokens the Coding agents page lists.
   def personal_tokens_listed
     driver.personal_tokens_listed

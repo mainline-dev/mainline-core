@@ -123,6 +123,11 @@ class Mainline
         load_coding_agents
         view 'profile/coding_agents'
       end
+
+      r.post 'tokens', String, 'revoke' do |grant_id|
+        flash['notice'] = 'Token revoked' if RevokeGrant.call(person: @current_person, grant_id: grant_id)
+        r.redirect '/profile/coding-agents'
+      end
     end
 
     r.on 'providers' do

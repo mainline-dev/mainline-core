@@ -415,6 +415,16 @@ class HttpDriver
     Nokogiri::HTML(last_response.body).at_css('[data-test-id="new-token"]')&.text&.strip
   end
 
+  def revoke_personal_token(name)
+    row = Nokogiri::HTML(visit_coding_agents.body).css('[data-test-id="personal-token"]').find { |r| r['data-name'] == name }
+    revoke_personal_token_by_id(row['data-id'])
+  end
+
+  def revoke_personal_token_by_id(id)
+    post "/profile/coding-agents/tokens/#{id}/revoke"
+    last_response
+  end
+
   def personal_tokens_listed
     Nokogiri::HTML(visit_coding_agents.body).css('[data-test-id="personal-token"]').map { |row|
       { name: row['data-name'], teams: row['data-teams'].split(', '), expires_on: row['data-expires-on'],

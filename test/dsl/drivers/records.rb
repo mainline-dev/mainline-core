@@ -24,6 +24,15 @@ module Records
     person
   end
 
+  def personal_token_of(person, team)
+    made = CreatePersonalToken.call(person: person, name: 'theirs', team_ids: [team.id], expires_on: Date.today + 30)
+    OauthAccessToken.first(token_hash: PersonalToken.digest(made.token)).grant_id
+  end
+
+  def personal_token_works?(grant_id)
+    OauthGrant[grant_id].revoked_at.nil?
+  end
+
   def add_member(team, person, working:)
     TeamMembership.create(team_id: team.id, person_id: person.id, working: working)
   end

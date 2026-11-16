@@ -18,7 +18,7 @@
     <p class="lens-help" data-test-id="no-personal-tokens">You have no personal tokens.</p>
   <% end %>
   <% @personal_tokens.each do |token| %>
-    <div class="provider-row" data-test-id="personal-token" data-name="<%= token.name %>"
+    <div class="provider-row" data-test-id="personal-token" data-id="<%= token.id %>" data-name="<%= token.name %>"
          data-teams="<%= token.teams.join(', ') %>" data-expires-on="<%= token.expires_on.iso8601 %>"
          data-last-used="<%= token.last_used_at&.getutc&.iso8601 %>">
       <span class="provider-name"><%= token.name %></span>
@@ -26,6 +26,10 @@
         <%= token.teams.join(', ') %> &middot; expires <%= token.expires_on.strftime('%-d %b %Y') %> &middot;
         <%= token.last_used_at ? "last used #{token.last_used_at.strftime('%-d %b %Y')}" : 'never used' %>
       </span>
+      <form method="post" action="/profile/coding-agents/tokens/<%= token.id %>/revoke" class="inline-form">
+        <%== csrf_tag("/profile/coding-agents/tokens/#{token.id}/revoke") %>
+        <button type="submit" class="btn btn-danger btn-sm" data-test-id="revoke-token">Revoke</button>
+      </form>
     </div>
   <% end %>
 </section>

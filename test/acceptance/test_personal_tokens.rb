@@ -41,6 +41,25 @@ describe 'Personal tokens' do
       personal_tokens_listed
   end
 
+  it 'revokes a token from the list' do
+    create_personal_token(name: 'build runner', teams: [@team], expires_on: Date.today + 30)
+    create_personal_token(name: 'laptop', teams: [@team], expires_on: Date.today + 30)
+
+    revoke_personal_token('build runner')
+
+    assert_equal(['laptop'], personal_tokens_listed.map { |token| token[:name] })
+  end
+
+  it "cannot revoke someone else's token, even by naming it" do
+    bob = add_person(name: 'Bob')
+    theirs = personal_token_of(bob, team: @team)
+
+    revoke_personal_token_by_id(theirs)
+    revoke_personal_token_by_id('not-an-id')
+
+    assert personal_token_works?(theirs)
+  end
+
   it 'refuses a token for no team' do
     assert_nil create_personal_token(name: 'build runner', teams: [], expires_on: Date.today + 30)
     assert_empty personal_tokens_listed
