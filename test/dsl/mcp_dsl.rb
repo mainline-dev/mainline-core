@@ -18,6 +18,12 @@ module McpDSL
     last_response
   end
 
+  # A metadata document, as a coding agent's client fetches it.
+  def fetch_metadata(path)
+    get(path, {}, { 'HTTP_ACCEPT' => 'application/json', 'HTTP_HOST' => ENV.fetch('MAINLINE_HOST') })
+    last_response
+  end
+
   # A request to /mcp from a coding agent that has not signed in.
   def ask_mcp(method: 'POST')
     headers = { 'HTTP_ACCEPT' => 'application/json, text/event-stream', 'HTTP_HOST' => ENV.fetch('MAINLINE_HOST') }

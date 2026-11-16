@@ -86,6 +86,7 @@ require_relative 'lib/rate_limiter'
 require_relative 'lib/login_link_throttle'
 require_relative 'lib/mcp_actor'
 require_relative 'lib/mcp_sign_in'
+require_relative 'lib/oauth_metadata'
 require_relative 'lib/sign_in_providers'
 require_relative 'lib/signups'
 require_relative 'lib/mcp_server'
@@ -334,6 +335,13 @@ class Mainline < Roda
     end
 
     r.on '.well-known' do
+      # The MCP server as a protected resource, at the address /mcp's request
+      # to sign in links to and at the root of the well-known path.
+      r.get ['oauth-protected-resource/mcp', 'oauth-protected-resource'] do
+        response['Content-Type'] = 'application/json'
+        OAuthMetadata.protected_resource.to_json
+      end
+
       r.get 'mcp.json' do
         response['Content-Type'] = 'application/json'
         server = {
