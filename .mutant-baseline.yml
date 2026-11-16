@@ -105,3 +105,5 @@ classes:
   ReleaseBlock: { mutations: 257, killed: 251, alive: 6 }
   McpAccess: { mutations: 511, killed: 510, alive: 1 }
   ClientMetadata: { mutations: 978, killed: 953, alive: 25 }
+  OauthRequest: { mutations: 421, killed: 410, alive: 11 }
+  SignInGrant: { mutations: 232, killed: 226, alive: 6 }

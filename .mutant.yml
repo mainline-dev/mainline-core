@@ -63,6 +63,7 @@ requires:
   - ./lib/record_walkthrough
   - ./lib/client_metadata
   - ./lib/mcp_access
+  - ./lib/oauth_request
   - ./lib/release_block
   - ./lib/release_notes
   - ./lib/remove_unverified_accounts
@@ -73,6 +74,7 @@ requires:
   - ./lib/revoke_grant
   - ./lib/revoke_oauth_token
   - ./lib/set_team_context
+  - ./lib/sign_in_grant
   - ./lib/signed_state
   - ./lib/signup_timer
   - ./lib/solo_log

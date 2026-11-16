@@ -44,11 +44,17 @@ module ClientMetadata
 
   @kept = {}
   @lock = Mutex.new
+  @network = HttpsFetch
+
+  class << self
+    # Where documents come from: the internet, or a stand-in in tests.
+    attr_accessor :network
+  end
 
   # The document a client ID names, or why there is none: :invalid_client_id,
   # :rate_limited, :blocked_address, :too_many_redirects, :too_large,
   # :fetch_failed or :invalid_document.
-  def self.fetch(client_id, network: HttpsFetch, limiter: LIMITER, now: Time.now)
+  def self.fetch(client_id, network: self.network, limiter: LIMITER, now: Time.now)
     kept = kept(client_id, now)
     return Result.new(kept) if kept
 

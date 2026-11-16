@@ -92,6 +92,8 @@ require_relative 'lib/login_link_throttle'
 require_relative 'lib/mcp_actor'
 require_relative 'lib/mcp_sign_in'
 require_relative 'lib/mcp_access'
+require_relative 'lib/oauth_request'
+require_relative 'lib/sign_in_grant'
 require_relative 'lib/oauth_metadata'
 require_relative 'lib/sign_in_providers'
 require_relative 'lib/signups'
@@ -277,7 +279,7 @@ class Mainline < Roda
   end
 
   public_prefixes = %w[
-    /login /signup /auth/ /api/ /mcp/ /invite/ /webhooks/ /.well-known/
+    /login /signup /auth/ /api/ /mcp/ /oauth/ /invite/ /webhooks/ /.well-known/
     /forgot-password /magic-login/ /verify-email/ /confirm-email
   ]
   PUBLIC_PREFIXES = public_prefixes.freeze
@@ -413,11 +415,11 @@ class Mainline < Roda
         person = authenticate_email(r.params)
         if person
           accept_invite(person, r.params['email'].to_s.strip.downcase, session)
-          regenerate_session(preserve_keys: ['signup_plan'])
+          regenerate_session(preserve_keys: %w[signup_plan oauth_return])
           session['person_id'] = person.id
           flash['notice'] = "Signed in as #{person.name}"
           has_team = TeamMembership.where(person_id: person.id, left_at: nil).any?
-          r.redirect(has_team ? '/teams' : '/teams/new')
+          r.redirect(after_sign_in(has_team))
         else
           flash['error'] = 'Invalid email or password'
           r.redirect '/login'
@@ -802,6 +804,15 @@ class Mainline < Roda
   def clear_pending_signup
     session.delete('pending_signup')
     session.delete('oauth_verify_link')
+  end
+
+  # Where someone goes once signed in: back to a coding agent's sign-in that
+  # sent them, if one did, otherwise to their teams.
+  def after_sign_in(has_team)
+    back = session.delete('oauth_return').to_s
+    return back if back.start_with?('/oauth/authorize?')
+
+    has_team ? '/teams' : '/teams/new'
   end
 
   def regenerate_session(preserve_keys: [])

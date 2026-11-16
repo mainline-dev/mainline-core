@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Can't connect - Mainline</title>
+  <%== assets(:css) %>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');</style>
+  <%== public_head_tags %>
+</head>
+<body class="landing">
+<%== render('site/_nav') %>
+  <div class="hero">
+    <h2 class="login-heading">Can't connect this coding agent</h2>
+    <p data-test-id="oauth-refused"><%= @oauth_refusal %></p>
+  </div>
+</body>
+</html>

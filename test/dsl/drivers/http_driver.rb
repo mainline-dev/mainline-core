@@ -6,10 +6,12 @@ require 'rack/test'
 require 'timecop'
 require 'zip'
 require_relative 'records'
+require_relative 'oauth_records'
 
 class HttpDriver
   include Rack::Test::Methods
   include Records
+  include OauthRecords
 
   def app
     Mainline.app
@@ -37,6 +39,49 @@ class HttpDriver
   def visit_login
     get '/login'
     last_response
+  end
+
+  def visit_authorize(params)
+    get '/oauth/authorize', params
+    last_response
+  end
+
+  def consent_shown
+    page = Nokogiri::HTML(last_response.body)
+    return unless page.at_css('[data-test-id="oauth-consent"]')
+
+    shown = ->(id) { !page.at_css(%([data-test-id="#{id}"])).nil? }
+    { client: page.at_css('[data-test-id="oauth-client"]')&.text&.strip, recognised: shown.call('oauth-recognised'),
+      warning: shown.call('oauth-warning'), sends_back_to: page.at_css('[data-test-id="oauth-sends-back-to"]')&.text&.strip,
+      teams: page.css('[data-test-id="oauth-team"]').to_h { |box| [box['data-name'], box.key?('checked')] } }
+  end
+
+  # Posts the consent form as the page holds it, without its security token,
+  # with the decision and, if given, the teams ticked.
+  def submit_consent(decision, team_ids = nil)
+    form = Nokogiri::HTML(last_response.body).at_css('[data-test-id="oauth-consent"]')
+    fields = form.css('input[type="hidden"]').reject { |input| input['name'] == '_csrf' }.to_h { |input| [input['name'], input['value']] }
+    team_ids ||= form.css('[data-test-id="oauth-team"][checked]').map { |box| box['value'] }
+    post '/oauth/authorize', fields.merge('decision' => decision, 'team_ids' => team_ids)
+    last_response
+  end
+
+  def sent_back
+    return unless last_response.redirect?
+
+    uri = URI(last_response['Location'])
+    return unless uri.host
+
+    port = uri.port == uri.default_port ? '' : ":#{uri.port}"
+    { to: "#{uri.scheme}://#{uri.host}#{port}#{uri.path}" }.merge(URI.decode_www_form(uri.query.to_s).to_h)
+  end
+
+  def sent_to_sign_in?
+    last_response.redirect? && URI(last_response['Location']).path == '/login'
+  end
+
+  def sign_in_refused_on_page?
+    last_response.status == 400 && last_response.body.include?('data-test-id="oauth-refused"')
   end
 
   def submit_logout

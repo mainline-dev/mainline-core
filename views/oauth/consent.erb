@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Connect a coding agent - Mainline</title>
+  <%== assets(:css) %>
+  <style>@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap');</style>
+  <%== public_head_tags %>
+</head>
+<body class="landing">
+<%== render('site/_nav') %>
+  <div class="hero">
+    <h2 class="login-heading">Connect a coding agent</h2>
+    <form method="post" action="/oauth/authorize" class="oauth-consent" data-test-id="oauth-consent">
+      <%== csrf_tag('/oauth/authorize') %>
+      <% { 'response_type' => 'code', 'client_id' => @oauth.client_id, 'redirect_uri' => @oauth.redirect_uri,
+           'state' => @oauth.state, 'code_challenge' => @oauth.challenge, 'code_challenge_method' => 'S256',
+           'resource' => @oauth.resource }.compact.each do |name, value| %>
+        <input type="hidden" name="<%= name %>" value="<%= value %>">
+      <% end %>
+      <p class="oauth-client">
+        <strong data-test-id="oauth-client"><%= @oauth.shown_name %></strong>
+        <% if @oauth.recognised %><span class="oauth-recognised" data-test-id="oauth-recognised">Recognised</span><% end %>
+      </p>
+      <% unless @oauth.recognised %>
+        <p class="flash flash-error" role="alert" data-test-id="oauth-warning">Mainline doesn't recognise this app. Only continue if you started this sign-in yourself.</p>
+      <% end %>
+      <p>Once you approve, you go back to <span data-test-id="oauth-sends-back-to"><%= @oauth.redirect_site %></span>.</p>
+      <p>Read the maps and stories of the teams you tick, as you.</p>
+      <% Array(@oauth_errors).each do |error| %>
+        <p class="flash flash-error" role="alert" data-test-id="oauth-error"><%= error %></p>
+      <% end %>
+      <fieldset class="oauth-teams">
+        <legend>Teams</legend>
+        <% @oauth_teams.each do |team| %>
+          <label><input type="checkbox" name="team_ids[]" value="<%= team.id %>" data-test-id="oauth-team" data-name="<%= team.name %>" checked> <%= team.name %></label>
+        <% end %>
+      </fieldset>
+      <button type="submit" name="decision" value="approve" class="btn" data-test-id="oauth-approve">Approve</button>
+      <button type="submit" name="decision" value="deny" class="btn btn-secondary" data-test-id="oauth-deny">Deny</button>
+    </form>
+  </div>
+</body>
+</html>

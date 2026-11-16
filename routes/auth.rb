@@ -64,13 +64,13 @@ class Mainline
 
         accept_invite(person, email, session)
 
-        regenerate_session(preserve_keys: ['signup_plan'])
+        regenerate_session(preserve_keys: %w[signup_plan oauth_return])
         session['person_id'] = person.id
         session['oauth_token'] = auth_hash.credentials&.token
         session['oauth_provider'] = provider
         flash['notice'] = "Signed in as #{person.name}"
         has_team = TeamMembership.where(person_id: person.id, left_at: nil).any?
-        r.redirect(has_team ? '/teams' : '/teams/new')
+        r.redirect(after_sign_in(has_team))
       end
     end
   end

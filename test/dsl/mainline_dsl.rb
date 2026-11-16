@@ -36,6 +36,24 @@ module MainlineDSL
     driver.add_member(team, person, working: working)
   end
 
+  # The person signed in sets a password for signing in with their email.
+  def choose_password(password)
+    driver.submit_set_password(password: password)
+  end
+
+  def sign_out
+    driver.submit_logout
+  end
+
+  def sign_in_with_password(email:, password:)
+    driver.submit_email_login(email: email, password: password)
+  end
+
+  # Goes where the last page sent the browser.
+  def follow_on
+    driver.follow_redirect!
+  end
+
   # Someone is no longer on a team, as when its account holder archives them.
   def leaves_team(person, team)
     driver.leave_team(team, person)
