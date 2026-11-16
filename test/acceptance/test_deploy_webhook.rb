@@ -47,6 +47,18 @@ describe 'Deploy webhook' do
     assert_page_includes "#{ENV.fetch('BASE_URL')}/api/teams/#{@team.id}/deploys"
   end
 
+  it 'links to the deploy action on GitHub Marketplace' do
+    visit_webhook_settings
+
+    assert_page_includes 'href="https://github.com/marketplace/actions/report-a-deploy-to-mainline"'
+  end
+
+  it 'sets up GitHub Actions with the deploy action' do
+    visit_webhook_settings
+
+    assert_page_includes 'uses: mainline-dev/deploy@v1'
+  end
+
   it 'deploys active stories via webhook' do
     generate_webhook_token
 
