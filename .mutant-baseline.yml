@@ -101,3 +101,4 @@ classes:
   CreatePersonalToken: { mutations: 330, killed: 322, alive: 8 }
   PersonalTokens: { mutations: 165, killed: 162, alive: 3 }
   RevokeGrant: { mutations: 54, killed: 54, alive: 0 }
+  GithubInstall: { mutations: 296, killed: 275, alive: 21 }

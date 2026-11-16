@@ -4,27 +4,13 @@ class Mainline
   MONITOR_RECENT_WINDOW = CIMonitor::Dashboard::RECENT_WINDOW_HOURS
   MONITOR_DEFAULT_THRESHOLD = CIMonitor::Dashboard::DEFAULT_THRESHOLD_HOURS
   VALID_THRESHOLDS = CIMonitor::Dashboard::VALID_THRESHOLDS
-  CI_MONITOR_TOKEN_TTL = 3600
 
   def team_installations
     TeamInstallation.where(team_id: @team.id)
   end
 
-  def link_installation(inst)
-    existing = TeamInstallation.where(
-      team_id: @team.id, provider: 'github', installation_id: inst[:id]
-    ).first
-    return if existing
-
-    TeamInstallation.create(
-      team_id: @team.id, provider: 'github',
-      installation_id: inst[:id], org_name: inst[:account_login]
-    )
-  end
-
   def ci_monitor_oauth_redirect(req)
     client_id = ENV.fetch('CI_MONITOR_GITHUB_APP_CLIENT_ID')
-    session['monitor_install_team_id'] = @team.id
     redirect_uri = "#{ENV.fetch('BASE_URL')}/teams/#{@team.id}/monitor/oauth/callback"
     state = SignedState.generate(@team.id)
     req.redirect "https://github.com/login/oauth/authorize?client_id=#{client_id}" \
@@ -153,17 +139,10 @@ class Mainline
     end
 
     r.get 'install' do
-      if session['ci_monitor_token']
-        token_age = Time.now.to_i - session['ci_monitor_token_at'].to_i
-        if token_age > CI_MONITOR_TOKEN_TTL
-          session.delete('ci_monitor_token')
-          session.delete('ci_monitor_token_at')
-        end
-      end
-      if session['ci_monitor_token']
+      if (token = GithubInstall.token(session))
         begin
           app_id = ENV.fetch('CI_MONITOR_GITHUB_APP_ID').to_i
-          all_installations = CIMonitor::GithubAPI.user_installations(session['ci_monitor_token'])
+          all_installations = CIMonitor::GithubAPI.user_installations(token)
           matching = all_installations.select { |i| i[:app_id] == app_id }
           matching_ids = matching.map { |i| i[:id] }
           linked_ids = team_installations.select_map(:installation_id)
@@ -172,7 +151,7 @@ class Mainline
 
           unlinked = matching.reject { |i| linked_ids.include?(i[:id]) }
 
-          @install_state = SignedState.generate(@team.id)
+          @install_state = GithubInstall.start(session, @team.id)
 
           if unlinked.any?
             @unlinked_installations = unlinked
@@ -217,14 +196,9 @@ class Mainline
 
     r.post 'install' do
       installation_id = typecast_params.pos_int('installation_id')
-      account_login = typecast_params.nonempty_str('account_login')
-      if installation_id && session['ci_monitor_token']
-        app_id = ENV.fetch('CI_MONITOR_GITHUB_APP_ID').to_i
-        owned = CIMonitor::GithubAPI.user_installations(session['ci_monitor_token'])
-        if owned.any? { |i| i[:app_id] == app_id && i[:id] == installation_id }
-          link_installation({ id: installation_id, account_login: account_login })
-        end
-      end
+      token = GithubInstall.token(session)
+      installation = installation_id && token && GithubInstall.seen(token, installation_id)
+      GithubInstall.link(@team.id, installation) if installation
       r.redirect "/teams/#{@team.id}/monitor"
     end
 

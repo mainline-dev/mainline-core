@@ -36,6 +36,7 @@ requires:
   - ./lib/event_presenter
   - ./lib/feature_file
   - ./lib/flash_adapter
+  - ./lib/github_install
   - ./lib/import_instructions
   - ./lib/import_to_museum
   - ./lib/inventory

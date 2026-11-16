@@ -258,63 +258,104 @@ describe 'CI Monitor - GitHub App callback (top-level)' do
     @alice = add_person(name: 'Alice')
   end
 
-  it 'stores installation_id with org_name and redirects to monitor' do
-    stub_account = ->(_id) { 'acme-corp' }
-    response = CIMonitor::GithubAPI.stub(:installation_account, stub_account) {
-      github_app_callback(installation_id: 99999, state: @team.id)
-    }
+  # GitHub sends a person back here after they install the app, with the
+  # installation's number and the state the install link carried. The number
+  # can be anyone's, so it is linked only when GitHub says the person can see
+  # that installation, and only for the install this session started.
+  def app_id
+    ENV.fetch('CI_MONITOR_GITHUB_APP_ID').to_i
+  end
 
-    ti = TeamInstallation.where(team_id: @team.id, installation_id: 99999).first
+  def alices
+    [{ app_id: app_id, id: 11_111, account_login: 'alice-co' }]
+  end
 
-    refute_nil ti
-    assert_equal 'acme-corp', ti.org_name
-    assert_equal 302, response.status
+  def linked?(installation_id)
+    TeamInstallation.where(team_id: @team.id, installation_id: installation_id).any?
+  end
+
+  def start_install
+    visit_monitor_install(@team, ci_monitor_token: 'alice-token', stub_user_installations: alices)
+    install_link_state
+  end
+
+  it "refuses to link another organisation's installation, guessed by its number" do
+    state = start_install
+
+    CIMonitor::GithubAPI.stub(:installation_account, 'victim-org') do
+      github_app_callback(installation_id: 99_999, state: state, sign: false, user_sees: alices)
+    end
+
+    refute linked?(99_999)
+  end
+
+  it 'links an installation the person can see on GitHub, named as GitHub names it' do
+    state = start_install
+
+    response = github_app_callback(installation_id: 11_111, state: state, sign: false, user_sees: alices)
+
+    assert_equal 'alice-co', TeamInstallation.first(team_id: @team.id, installation_id: 11_111)&.org_name
     assert_includes response['Location'], "/teams/#{@team.id}/monitor"
   end
 
-  it 'does not duplicate existing installation' do
-    connect_github_installation(11111)
+  it 'refuses a callback whose state this session did not start, even for an installation the person can see' do
+    start_install
 
-    github_app_callback(installation_id: 11111, state: @team.id)
+    CIMonitor::GithubAPI.stub(:installation_account, 'alice-co') do
+      github_app_callback(installation_id: 11_111, state: @team.id, user_sees: alices)
+    end
 
-    assert_equal 1, TeamInstallation.where(team_id: @team.id, installation_id: 11111).count
+    refute linked?(11_111)
   end
 
-  it 'rejects missing installation_id' do
-    github_app_callback(installation_id: nil, state: @team.id)
+  it 'refuses a callback that comes back with no state, even after the GitHub sign-in this session went through' do
+    visit_monitor_install(@team)
+    start_install
+
+    CIMonitor::GithubAPI.stub(:installation_account, 'alice-co') do
+      github_app_callback(installation_id: 11_111, state: nil, user_sees: alices)
+    end
+
+    refute linked?(11_111)
+  end
+
+  it 'sends a person whose GitHub sign-in has run out to sign in again before linking anything' do
+    state = start_install
+    expire_github_sign_in
+
+    response = CIMonitor::GithubAPI.stub(:installation_account, 'alice-co') {
+      github_app_callback(installation_id: 11_111, state: state, sign: false, user_sees: alices)
+    }
+
+    refute linked?(11_111)
+    assert_includes response['Location'], "/teams/#{@team.id}/monitor/install"
+  end
+
+  it 'links nothing while the CI Monitor is off' do
+    state = start_install
+
+    with_ci_monitor_off do
+      github_app_callback(installation_id: 11_111, state: state, sign: false, user_sees: alices)
+    end
+
+    refute linked?(11_111)
+  end
+
+  it 'does not link an installation twice' do
+    connect_github_installation(11_111)
+    state = start_install
+
+    github_app_callback(installation_id: 11_111, state: state, sign: false, user_sees: alices)
+
+    assert_equal 1, TeamInstallation.where(team_id: @team.id, installation_id: 11_111).count
+  end
+
+  it 'links nothing without an installation number' do
+    state = start_install
+
+    github_app_callback(installation_id: nil, state: state, sign: false, user_sees: alices)
 
     assert_equal 0, TeamInstallation.where(team_id: @team.id).count
-  end
-
-  it 'rejects invalid team in state param' do
-    response = github_app_callback(installation_id: 99999, state: '00000000-0000-0000-0000-000000000000')
-
-    assert_equal 302, response.status
-    assert_includes response['Location'], '/teams'
-  end
-
-  it 'rejects tampered state signature' do
-    response = github_app_callback(installation_id: 99999, state: @team.id, sign: false)
-
-    assert_equal 302, response.status
-    assert_includes response['Location'], '/teams'
-  end
-
-  it 'falls back to session team_id when GitHub drops state param' do
-    ENV['CI_MONITOR_GITHUB_APP_SLUG'] = 'test-app'
-    ENV['CI_MONITOR_GITHUB_APP_CLIENT_ID'] = 'test-client-id'
-    ENV['CI_MONITOR_GITHUB_APP_CLIENT_SECRET'] = 'test-client-secret'
-    visit_monitor_install(@team)
-
-    response = CIMonitor::GithubAPI.stub(:installation_account, nil) {
-      github_app_callback(installation_id: 99999, state: nil)
-    }
-
-    ti = TeamInstallation.where(team_id: @team.id, installation_id: 99999).first
-
-    refute_nil ti
-    assert_equal 302, response.status
-    assert_includes response['Location'], "/teams/#{@team.id}/monitor"
   end
 end
 

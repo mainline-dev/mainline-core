@@ -66,12 +66,22 @@ module CIMonitorDriver
     last_response
   end
 
-  def github_app_callback(installation_id:, state: nil, sign: true)
+  def github_app_callback(installation_id:, state: nil, sign: true, user_sees: [])
     params = {}
     params['installation_id'] = installation_id.to_s if installation_id
     params['state'] = sign ? SignedState.generate(state.to_s) : state.to_s if state
-    get '/github/callback', params
+    CIMonitor::GithubAPI.stub(:user_installations, ->(_token) { user_sees }) { get '/github/callback', params }
     last_response
+  end
+
+  def install_link_state
+    link = Nokogiri::HTML(last_response.body).css('a[href*="/installations/new"]').first
+    CGI.parse(URI(link['href']).query)['state'].first
+  end
+
+  def expire_github_sign_in(person)
+    post '/_test_login', { 'person_id' => person.id, 'ci_monitor_token' => 'alice-token',
+                           'ci_monitor_token_at' => (Time.now - 3601).to_i.to_s }
   end
 
   def add_monitored_repo(team, provider_repo_id:, repo_name:, default_branch:, installation_id: nil)

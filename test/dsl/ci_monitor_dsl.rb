@@ -47,8 +47,20 @@ module CIMonitorDSL
     driver.visit_monitor_oauth_callback(team, code: code, state: state, stub_token: stub_token)
   end
 
-  def github_app_callback(installation_id:, state:, sign: true)
-    driver.github_app_callback(installation_id: installation_id, state: state, sign: sign)
+  # GitHub sending the person back after an install. user_sees is what
+  # GitHub's user installations list says they can see at that moment.
+  def github_app_callback(installation_id:, state:, sign: true, user_sees: [])
+    driver.github_app_callback(installation_id: installation_id, state: state, sign: sign, user_sees: user_sees)
+  end
+
+  # The state the install picker's link to GitHub carries.
+  def install_link_state
+    driver.install_link_state
+  end
+
+  # The person's GitHub sign-in for the CI Monitor runs out.
+  def expire_github_sign_in
+    driver.expire_github_sign_in(@_login_person)
   end
 
   def add_monitored_repo(team = @team, provider_repo_id:, repo_name:, default_branch:, installation_id: nil)

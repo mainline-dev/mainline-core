@@ -14,7 +14,6 @@
     <form method="post" action="/teams/<%= @team.id %>/monitor/install" class="monitor-installation-option">
       <%== csrf_tag("/teams/#{@team.id}/monitor/install") %>
       <input type="hidden" name="installation_id" value="<%= inst[:id] %>" />
-      <input type="hidden" name="account_login" value="<%= inst[:account_login] %>" />
       <button type="submit" class="btn monitor-installation-btn"><%= inst[:account_login] %></button>
     </form>
   <% end %>
