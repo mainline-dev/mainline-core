@@ -444,6 +444,15 @@ describe 'MCP server' do
     end
   end
 
+  it 'tells a client that every tool needs a sign-in that may read' do
+    generate_mcp_token
+    mcp_initialize
+
+    sign_in = { 'securitySchemes' => [{ 'type' => 'oauth2', 'scopes' => ['mainline:read'] }] }
+
+    mcp_list_tools.each { |tool| assert_equal sign_in, tool['_meta'], tool['name'] }
+  end
+
   it 'records an agent_read event for every get_story fetch' do
     generate_mcp_token
     mcp_initialize

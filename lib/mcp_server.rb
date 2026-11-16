@@ -5,6 +5,8 @@ require_relative 'core_events'
 require_relative 'feature_file'
 require_relative 'import_instructions'
 require_relative 'mcp_data'
+require_relative 'mcp_refusals'
+require_relative 'oauth_metadata'
 require_relative 'set_team_context'
 require_relative 'step_stubs'
 require_relative 'story_id'
@@ -14,11 +16,9 @@ module MainlineMCP
   # answer each time, and reaches nothing outside Mainline. A read of a story
   # is logged, which is how the card knows a coding agent has read it.
   READ_ONLY = { read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false }.freeze
-  NO_STORY = 'No story with that ID. Use an ID from get_map, or the 8-character ID on the card.'
-  NO_MAP = 'No map with that ID. Use an ID from list_maps.'
-  NO_TEAM = 'No team with that ID among those this coding agent can read. list_maps names them.'
-  AMBIGUOUS = 'More than one story starts with that ID. Use the full ID from get_map.'
-  CODING_AGENTS_PAGE = "#{ENV.fetch('BASE_URL')}/profile/coding-agents".freeze
+  # Every tool needs a sign-in that may read, which is how ChatGPT knows to
+  # offer its connect button.
+  SIGN_IN = { securitySchemes: [{ type: 'oauth2', scopes: [OAuthMetadata::SCOPE] }] }.freeze
 
   def self.build_server
     instructions = 'Read-only access to a Mainline story map. ' \
@@ -48,6 +48,7 @@ module MainlineMCP
       name:         'list_maps',
       title:        'List maps',
       annotations:  READ_ONLY,
+      meta:         SIGN_IN,
       description:  'List the maps of the teams this coding agent can read, each with its team. ' \
                     "Give a team's ID for that team's maps only.",
       input_schema: {
@@ -62,6 +63,7 @@ module MainlineMCP
       name:         'get_map',
       title:        'Get map',
       annotations:  READ_ONLY,
+      meta:         SIGN_IN,
       description:  'Get full map hierarchy: activities, steps, stories, personas, release slices',
       input_schema: {
         type:       'object',
@@ -76,6 +78,7 @@ module MainlineMCP
       name:         'get_story',
       title:        'Get story',
       annotations:  READ_ONLY,
+      meta:         SIGN_IN,
       description:  'Get story detail: description, scenarios, deploy history, assignments.',
       input_schema: {
         type:       'object',
@@ -90,6 +93,7 @@ module MainlineMCP
       name:         'get_feature_file',
       title:        'Get feature file',
       annotations:  READ_ONLY,
+      meta:         SIGN_IN,
       description:  "Get a story's scenarios as a Gherkin .feature file, tagged with the story and scenario IDs. " \
                     'With a language, also pending step definitions for it.',
       input_schema: {
@@ -108,6 +112,7 @@ module MainlineMCP
       name:         'get_import_format',
       title:        'Get import format',
       annotations:  READ_ONLY,
+      meta:         SIGN_IN,
       description:  'Get the instructions and JSON Schema for a Mainline import file: stories proposed from a ' \
                     'specification, for a person to upload and review. Lists the activities and steps of the team ' \
                     'the file is for; give team_id when this coding agent reads several teams. ' \
@@ -131,7 +136,7 @@ module MainlineMCP
     team_ids = access.readable_team_ids
     if team_id
       status, placed = access.place(team_id)
-      return refusal(status, placed, NO_TEAM) unless status == :open
+      return refusal(status, placed, McpRefusals::NO_TEAM) unless status == :open
 
       team_ids = [placed]
     end
@@ -156,7 +161,7 @@ module MainlineMCP
     team_ids = access.readable_team_ids
     if team_id
       status, placed = access.place(team_id)
-      return refusal(status, placed, NO_TEAM) unless status == :open
+      return refusal(status, placed, McpRefusals::NO_TEAM) unless status == :open
 
       team_ids = [team_id]
     end
@@ -174,7 +179,7 @@ module MainlineMCP
 
   def self.call_get_map(map_id)
     status, team_id = access.map(map_id)
-    return refusal(status, team_id, NO_MAP) unless status == :open
+    return refusal(status, team_id, McpRefusals::NO_MAP) unless status == :open
 
     SetTeamContext.call(team_id)
     json = McpData.map(Map[map_id])
@@ -205,25 +210,14 @@ module MainlineMCP
   # in its own team; or the refusal when the request may not read it.
   def self.readable_story(story_id)
     status, team_id, id = access.story(story_id)
-    return refusal(status, team_id, NO_STORY) unless status == :open
+    return refusal(status, team_id, McpRefusals::NO_STORY) unless status == :open
 
     SetTeamContext.call(team_id)
     yield Story[id]
   end
 
-  # Why a map or story can't be read. Only the person's own teams, and the
-  # teams given, are named; anything else gets the answer for nothing there.
   def self.refusal(status, team_id, not_found)
-    name = (Team[team_id]&.name if team_id)
-    error_response(
-      case status
-      when :withheld then "That is on #{name}, a team you did not give this coding agent. " \
-                          "To let it read #{name}, give it that team on the Coding agents page: #{CODING_AGENTS_PAGE}"
-      when :suspended then "#{name} is suspended, so its maps and stories can't be read."
-      when :ambiguous then AMBIGUOUS
-      else not_found
-      end
-    )
+    error_response(McpRefusals.text(status, team_id, not_found))
   end
 
   # Reading a story, in any form, records the read, who was on the story and,
