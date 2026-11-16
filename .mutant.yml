@@ -21,6 +21,7 @@ requires:
   - ./lib/create_persona
   - ./lib/create_story
   - ./lib/create_task
+  - ./lib/csrf_check
   - ./lib/cumulative_flow
   - ./lib/data_export
   - ./lib/delete_team

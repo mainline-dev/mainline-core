@@ -400,6 +400,22 @@ class HttpDriver
     last_response
   end
 
+  def with_csrf_checked
+    CsrfCheck.in_tests = true
+    yield
+  ensure
+    CsrfCheck.in_tests = false
+  end
+
+  # Tests raise the app's errors, so a refusal arrives as the check's own error
+  # rather than the page a person would see.
+  def refused_without_security_token?(&)
+    with_csrf_checked(&)
+    false
+  rescue Roda::RodaPlugins::RouteCsrf::InvalidToken
+    true
+  end
+
   def htmx_get_story_card(map, story)
     get "/maps/#{map.id}/stories/#{story.id}/card", {}, { 'HTTP_HX_REQUEST' => 'true' }
     last_response

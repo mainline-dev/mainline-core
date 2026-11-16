@@ -62,6 +62,7 @@ require_relative 'lib/step_stubs'
 require_relative 'lib/signup_timer'
 require_relative 'lib/event_presenter'
 require_relative 'lib/cumulative_flow'
+require_relative 'lib/csrf_check'
 require_relative 'lib/throughput_scatter'
 require_relative 'lib/lead_time'
 require_relative 'lib/send_invite_email'
@@ -286,10 +287,7 @@ class Mainline < Roda
     path = r.path_info
     r.redirect(path.chomp('/'), 301) if path.length > 1 && path.end_with?('/')
 
-    unless ENV['RACK_ENV'] == 'test' || self.class.seeding? ||
-           r.path_info.start_with?('/auth/', '/api/', '/mcp/', '/webhooks/', '/.well-known/')
-      check_csrf!
-    end
+    check_csrf! if CsrfCheck.on? && !self.class.seeding? && !CsrfCheck.skips?(r.path_info)
 
     @csp_nonce = SecureRandom.hex(16)
     content_security_policy.script_src :self, [:nonce, @csp_nonce]

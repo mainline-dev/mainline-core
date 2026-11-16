@@ -668,6 +668,16 @@ module MainlineDSL
     driver.first_steps_done
   end
 
+  # Runs the block with the CSRF check on, as it is outside tests.
+  def with_csrf_checked(&)
+    driver.with_csrf_checked(&)
+  end
+
+  # Whether the CSRF check, turned on, refuses what the block posts.
+  def refused_without_security_token?(&)
+    driver.refused_without_security_token?(&)
+  end
+
   def make_account_holder(person)
     driver.make_account_holder(@team, person)
   end

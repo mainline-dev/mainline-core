@@ -24,7 +24,7 @@ module MutationBaseline
   LIB = %w[
     Activation AddScenario AddToStory AgentReads ArchivePersona ArchiveStory AssignPerson
     BusinessDays BypassRLS CIMonitor::BranchAge CIMonitor::Status CIMonitorSetup
-    CreateActivity CreatePersona CreateStory CreateTask CumulativeFlow
+    CreateActivity CreatePersona CreateStory CreateTask CsrfCheck CumulativeFlow
     DataExport DeleteTeam DiscardMuseumItem EditActivity EditPersona EditTask
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FirstRun FlashAdapter
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime

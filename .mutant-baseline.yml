@@ -94,3 +94,4 @@ classes:
   AgentReads: { mutations: 47, killed: 45, alive: 2 }
   StoryId: { mutations: 64, killed: 64, alive: 0 }
   MachinePaths: { mutations: 26, killed: 26, alive: 0 }
+  CsrfCheck: { mutations: 55, killed: 54, alive: 1 }
