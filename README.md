@@ -124,4 +124,4 @@ Copyright (C) 2026 Kipple Pty Ltd.
 
 GNU Affero General Public License v3.0. See [LICENSE](LICENSE).
 
-Mainline™ is a trademark of Kipple Pty Ltd. The licence covers the code, not the name.
+Mainline® is a registered trade mark of Kipple Pty Ltd. The AGPL covers this code, not the name: a fork must use a different name.

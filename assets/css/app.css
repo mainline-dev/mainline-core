@@ -2449,6 +2449,13 @@ select {
     color: var(--text-tertiary);
 }
 
+.app-footer {
+    color: var(--text-tertiary);
+    font-size: 0.75rem;
+    text-align: center;
+    padding: 2rem 1rem 1.5rem;
+}
+
 .manage-row {
     margin-top: 0.75rem;
 }
