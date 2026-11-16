@@ -79,11 +79,19 @@ module EventPresenter
     "#{event.before_state['mode'] || 'unknown'} to #{event.after_state['mode'] || 'unknown'}"
   end
 
-  def self.describe_agent_read(event, _lookup, _include_name)
-    return 'read by coding agent before reads were logged' if event.after_state['backfilled']
+  def self.describe_agent_read(event, lookup, _include_name)
+    state = event.after_state
+    return 'read by coding agent before reads were logged' if state['backfilled']
+    return describe_read_for(state, lookup) if state['person_id']
 
-    ua = event.after_state['user_agent']
+    ua = state['user_agent']
     ua ? "read by coding agent (#{ua})" : 'read by coding agent'
+  end
+
+  # A read through a personal token or a sign-in: whose agent, and how.
+  def self.describe_read_for(state, lookup)
+    read = "read by coding agent for #{resolve(lookup, :people, state['person_id']) || 'someone'}"
+    state['client'] ? "#{read} (#{state['client']})" : read
   end
 
   def self.describe_split_out(event, _lookup, _include_name)
@@ -209,5 +217,5 @@ module EventPresenter
 
   private_class_method(*DESCRIBERS.values, :slice_name, :edit_task_change, :edit_title_change,
     :edit_name_change, :edit_decoupling_change, :decoupling_strategy_change, :decoupling_label_change,
-    :edit_description_change, :association_changes, :resolve, :in_words)
+    :edit_description_change, :association_changes, :resolve, :in_words, :describe_read_for)
 end

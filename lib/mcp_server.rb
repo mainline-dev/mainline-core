@@ -109,10 +109,14 @@ module MainlineMCP
       title:        'Get import format',
       annotations:  READ_ONLY,
       description:  'Get the instructions and JSON Schema for a Mainline import file: stories proposed from a ' \
-                    "specification, for a person to upload and review. Lists the team's activities and steps. " \
+                    'specification, for a person to upload and review. Lists the activities and steps of the team ' \
+                    'the file is for; give team_id when this coding agent reads several teams. ' \
                     'Reads only; nothing is marked or changed.',
-      input_schema: { type: 'object', properties: {} }
-    ) { MCP::Tool::Response.new([{ type: 'text', text: ImportInstructions.for(team_id: MainlineMCP.import_team_id) }]) }
+      input_schema: {
+        type:       'object',
+        properties: { team_id: { type: 'string', description: 'UUID of the team the file is for' } }
+      }
+    ) { |team_id: nil| MainlineMCP.call_get_import_format(team_id) }
   end
 
   # Who the request reads as, and which teams it may read.
@@ -120,10 +124,30 @@ module MainlineMCP
     Thread.current[:mcp_access]
   end
 
-  # The team whose activities and steps the import format lists: the only
-  # team the request reads, if it reads one.
-  def self.import_team_id
-    access.team_ids.first if access.team_ids.one?
+  # The import format, with the activities and steps of the team asked for,
+  # or of the only team the request reads. With several teams and none asked
+  # for, the format alone, and the teams it can be asked for.
+  def self.call_get_import_format(team_id = nil)
+    team_ids = access.readable_team_ids
+    if team_id
+      status, placed = access.place(team_id)
+      return refusal(status, placed, NO_TEAM) unless status == :open
+
+      team_ids = [placed]
+    end
+    text = team_ids.one? ? import_format_for(team_ids.first) : "#{ImportInstructions.for(team_id: nil)}\n#{teams_to_ask_for(team_ids)}"
+    MCP::Tool::Response.new([{ type: 'text', text: text }])
+  end
+
+  def self.import_format_for(team_id)
+    SetTeamContext.call(team_id)
+    ImportInstructions.for(team_id: team_id)
+  end
+
+  def self.teams_to_ask_for(team_ids)
+    teams = Team.where(id: team_ids).order(:name).map { |team| "#{team.name} (#{team.id})" }
+    "This coding agent reads several teams. For one team's activities and steps, ask again with its team_id: " \
+      "#{teams.join(', ')}."
   end
 
   # The maps of every team the request may read, or of one of them, each with
@@ -161,6 +185,7 @@ module MainlineMCP
     readable_story(story_id) do |story|
       record_agent_read(story)
       json = McpData.story(story)
+      json[:assigned_to_you] = StoryAssignment.where(story_id: story.id, person_id: access.person_id).any? if access.person_id
       MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
     end
   end
@@ -201,8 +226,9 @@ module MainlineMCP
     )
   end
 
-  # Reading a story, in any form, records the read and who was on the story,
-  # and writes nothing else: the AGENT chip is worked out from these reads.
+  # Reading a story, in any form, records the read, who was on the story and,
+  # through a personal token or a sign-in, whose agent read it and how. It
+  # writes nothing else: the AGENT chip is worked out from these reads.
   def self.record_agent_read(story)
     RecordEvent.call(
       actor_id:    McpActor.id_for(story.team_id),
@@ -210,7 +236,9 @@ module MainlineMCP
       action:      AgentReads::ACTION,
       after_state: {
         user_agent: Thread.current[:mcp_user_agent],
-        person_ids: StoryAssignment.where(story_id: story.id).select_map(:person_id)
+        person_ids: StoryAssignment.where(story_id: story.id).select_map(:person_id),
+        person_id:  access.person_id,
+        client:     access.client
       }.compact
     )
   end

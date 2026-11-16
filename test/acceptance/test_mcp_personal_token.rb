@@ -28,7 +28,8 @@ describe 'A personal token at /mcp' do
   def story_on(team, title)
     on_team(team) do
       create_map(name: "#{team.name} map")
-      task = create_task('Pay', under_activity: create_activity('Check out', for_personas: [create_persona('Shopper')]))
+      activity = create_activity("#{team.name} checkout", for_personas: [create_persona('Shopper')])
+      task = create_task('Pay', under_activity: activity)
       create_story(title, under_task: task)
     end
   end
@@ -179,5 +180,54 @@ describe 'A personal token at /mcp' do
     call_mcp('list_maps', token: token)
 
     refute_nil personal_tokens_listed.first[:last_used]
+  end
+
+  it "records a read as its person's, through a personal token" do
+    call_mcp('get_story', token: token_for(@mobile), arguments: { story_id: @app.id })
+
+    visit_story_history(@app)
+
+    assert(story_history.any? { |entry| entry.include?('Alice') && entry.include?('personal token') })
+  end
+
+  it 'tells the agent whether its person is on the story' do
+    token = token_for(@team, @mobile)
+    assign_person(@app, person: @alice)
+
+    on = mcp_json(call_mcp('get_story', token: token, arguments: { story_id: @app.id }))
+    off = mcp_json(call_mcp('get_story', token: token, arguments: { story_id: @card.id }))
+
+    assert_equal [true, false], [on['assigned_to_you'], off['assigned_to_you']]
+  end
+
+  it 'gives the import format with the activities and steps of its one team' do
+    text, = mcp_tool_text(call_mcp('get_import_format', token: token_for(@mobile)))
+
+    assert_includes text, 'Mobile checkout'
+  end
+
+  it 'gives the import format alone, naming the teams it can be asked for, when it reads several' do
+    text, refused = mcp_tool_text(call_mcp('get_import_format', token: token_for(@team, @mobile)))
+
+    refute refused
+    refute_includes text, 'checkout'
+    assert_includes text, @mobile.id
+    assert_includes text, @team.id
+  end
+
+  it 'gives the activities and steps of the team asked for' do
+    token = token_for(@team, @mobile)
+
+    text, = mcp_tool_text(call_mcp('get_import_format', token: token, arguments: { team_id: @mobile.id }))
+
+    assert_includes text, 'Mobile checkout'
+    refute_includes text, 'Payments checkout'
+  end
+
+  it "says so when asked for the import format of one of the person's teams it was not given" do
+    text, refused = mcp_tool_text(call_mcp('get_import_format', token: token_for(@team), arguments: { team_id: @mobile.id }))
+
+    assert refused
+    assert_includes text, 'Mobile'
   end
 end

@@ -45,6 +45,19 @@ describe EventPresenter do
     assert_equal 'read by coding agent before reads were logged', EventPresenter.describe(event, lookup)
   end
 
+  it 'describes a read for a person, through the client they connected' do
+    event = build_event(action: 'agent_read',
+      after_state: { 'person_id' => 'p0', 'client' => 'personal token', 'user_agent' => 'claude-code/2.0' })
+
+    assert_equal 'read by coding agent for Alice (personal token)', EventPresenter.describe(event, lookup(people: people('Alice')))
+  end
+
+  it 'describes a read for someone it can no longer name, with no client recorded' do
+    event = build_event(action: 'agent_read', after_state: { 'person_id' => 'gone' })
+
+    assert_equal 'read by coding agent for someone', EventPresenter.describe(event, lookup)
+  end
+
   it 'describes agent_read without user agent' do
     event = build_event(action: 'agent_read')
 

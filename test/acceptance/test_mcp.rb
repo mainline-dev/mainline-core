@@ -293,6 +293,15 @@ describe 'MCP server' do
     refute_includes text, 'Their story'
   end
 
+  it "get_story says nothing of whether the agent's person is on the story, since a team token has no person" do
+    generate_mcp_token
+    mcp_initialize
+
+    text, = mcp_tool_text(mcp_call_tool('get_story', arguments: { 'story_id' => @story.id }))
+
+    refute JSON.parse(text).key?('assigned_to_you')
+  end
+
   it 'get_story does not expose deploy webhook URL' do
     generate_mcp_token
     mcp_initialize
