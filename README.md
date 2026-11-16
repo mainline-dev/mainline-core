@@ -1,6 +1,6 @@
 # Mainline
 
-Open-source project management for teams working with coding agents. Coding agents write fast. Two people see every story before it is released, and your team decides what correct means. Works the same without agents.
+Open-source project management for teams working with coding agents. Coding agents write fast. By default, two people see every story before it is released, and your team decides what correct means. Works the same without agents.
 
 Mainline is project tooling for teams that practise continuous integration and continuous delivery. Work lives on a user story map instead of a backlog: activities across the top, releases sliced down in priority order. Each person has one active story at a time, enforced by the system. A team can raise its limit, and the change is an event everyone sees. Deploy and release are separate events with separate buttons, so nothing is called done until users have it. A story is released once two people have seen it, by working on it together or in a walkthrough. There are no story points, no sprints and no individual metrics. Every change is an immutable event and the whole team sees the same views: the map, flow, teamwork and inventory. The CI Monitor shows how long each branch has lived on every connected GitHub repo.
 
