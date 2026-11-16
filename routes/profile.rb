@@ -109,7 +109,7 @@ class Mainline
     r.on 'coding-agents' do
       r.is do
         r.get do
-          load_coding_agents
+          load_coding_agents(typecast_params.str('team'))
           view 'profile/coding_agents'
         end
       end
@@ -172,10 +172,13 @@ class Mainline
     end
   end
 
-  # The teams a token may cover, the person's tokens, and the form's default
-  # expiry, 90 days ahead.
-  def load_coding_agents
+  # The teams a token may cover, which of them start ticked (only the team the
+  # page was opened for, when it is one of them), the person's tokens, and the
+  # form's default expiry, 90 days ahead.
+  def load_coding_agents(for_team_id = nil)
     @token_teams = Team.where(id: MapAccess.team_ids_for(@current_person.id)).order(:name).all
+    offered = @token_teams.map(&:id)
+    @ticked_team_ids = offered.include?(for_team_id) ? [for_team_id] : offered
     @personal_tokens = PersonalTokens.of(@current_person)
     @default_expiry = Date.today + 90
   end

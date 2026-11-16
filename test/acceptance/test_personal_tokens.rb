@@ -22,6 +22,14 @@ describe 'Personal tokens' do
     assert_equal({ 'Mobile' => true, 'Payments' => true }, token_teams_offered)
   end
 
+  it 'ticks only the team the form was opened for' do
+    assert_equal({ 'Mobile' => true, 'Payments' => false }, token_teams_offered(for_team: @mobile))
+  end
+
+  it 'ticks every team when the form is opened for a team whose maps the person cannot open' do
+    assert_equal({ 'Mobile' => true, 'Payments' => true }, token_teams_offered(for_team: @ops))
+  end
+
   it 'shows a new token once, then lists it by name with its teams, its expiry and no use yet' do
     expires_on = Date.today + 30
 

@@ -45,7 +45,8 @@
       <div class="checkbox-group">
         <% @token_teams.each do |team| %>
           <label>
-            <input type="checkbox" name="team_ids[]" value="<%= team.id %>" checked
+            <input type="checkbox" name="team_ids[]" value="<%= team.id %>"
+                   <%= 'checked' if @ticked_team_ids.include?(team.id) %>
                    data-test-id="token-team" data-team-name="<%= team.name %>">
             <%= team.name %>
           </label>

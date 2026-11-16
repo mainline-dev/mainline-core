@@ -683,9 +683,10 @@ module MainlineDSL
     driver.visit_coding_agents
   end
 
-  # The teams the new-token form offers, by name, and whether each is ticked.
-  def token_teams_offered
-    driver.token_teams_offered
+  # The teams the new-token form offers, by name, and whether each is ticked,
+  # when it is opened for one team or for none.
+  def token_teams_offered(for_team: nil)
+    driver.token_teams_offered(for_team&.id)
   end
 
   # Makes a personal token on the Coding agents page. The token, as the page

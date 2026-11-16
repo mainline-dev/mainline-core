@@ -400,13 +400,13 @@ class HttpDriver
     last_response
   end
 
-  def visit_coding_agents
-    get '/profile/coding-agents'
+  def visit_coding_agents(team_id = nil)
+    get '/profile/coding-agents', team_id ? { 'team' => team_id } : {}
     last_response
   end
 
-  def token_teams_offered
-    page = Nokogiri::HTML(visit_coding_agents.body)
+  def token_teams_offered(team_id)
+    page = Nokogiri::HTML(visit_coding_agents(team_id).body)
     page.css('[data-test-id="token-team"]').to_h { |box| [box['data-team-name'], box.key?('checked')] }
   end
 
