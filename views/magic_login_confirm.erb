@@ -12,8 +12,6 @@
 <%== render('site/_nav') %>
   <div class="hero">
     <div class="login-brand">Main<em>line</em></div>
-    <p class="login-tagline">Where Agile theatre goes to die.</p>
-    <div class="login-rule"></div>
     <h2 class="login-heading">Click to sign in</h2>
     <form method="post" action="/magic-login/<%= @magic_token %>" data-test-id="magic-login-confirm">
       <%== csrf_tag("/magic-login/#{@magic_token}") %>
