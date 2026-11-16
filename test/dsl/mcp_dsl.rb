@@ -18,6 +18,19 @@ module McpDSL
     last_response
   end
 
+  # A request to /mcp from a coding agent that has not signed in.
+  def ask_mcp(method: 'POST')
+    headers = { 'HTTP_ACCEPT' => 'application/json, text/event-stream', 'HTTP_HOST' => ENV.fetch('MAINLINE_HOST') }
+    if method == 'GET'
+      get('/mcp', {}, headers)
+    else
+      body = { jsonrpc: '2.0', id: 1, method: 'initialize',
+               params: { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'test', version: '1.0' } } }
+      post('/mcp', JSON.generate(body), headers.merge('CONTENT_TYPE' => 'application/json'))
+    end
+    last_response
+  end
+
   def mcp_initialize(team_id: @team.id, token: nil)
     token ||= @mcp_token
     post(

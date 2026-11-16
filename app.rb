@@ -84,6 +84,7 @@ require_relative 'lib/ci_monitor'
 require_relative 'lib/rate_limiter'
 require_relative 'lib/login_link_throttle'
 require_relative 'lib/mcp_actor'
+require_relative 'lib/mcp_sign_in'
 require_relative 'lib/sign_in_providers'
 require_relative 'lib/signups'
 require_relative 'lib/mcp_server'
@@ -273,7 +274,7 @@ class Mainline < Roda
   ]
   PUBLIC_PREFIXES = public_prefixes.freeze
 
-  public_exact = %w[/robots.txt]
+  public_exact = %w[/robots.txt /mcp]
   PUBLIC_EXACT = public_exact.freeze
 
   def self.public_path?(path, _method)
@@ -320,6 +321,15 @@ class Mainline < Roda
       response.status = 200
       response['Content-Type'] = 'text/plain'
       next 'OK'
+    end
+
+    # The address coding agents connect to. Until it accepts tokens, every
+    # request is asked to sign in, before any database work (McpSignIn).
+    r.is 'mcp' do
+      response.status = 401
+      response['WWW-Authenticate'] = McpSignIn::CHALLENGE
+      response['Content-Type'] = 'text/plain'
+      McpSignIn::BODY
     end
 
     r.on '.well-known' do

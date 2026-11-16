@@ -28,6 +28,26 @@ module Records
     BypassRLS.call { RecordEvent.call(actor_id: McpActor.id_for(story.team_id), entity: story, action: 'agent_read') }
   end
 
+  # Counts what Sequel logs, which is one line per query.
+  class QueryCounter
+    attr_reader :count
+
+    def initialize
+      @count = 0
+    end
+
+    %i[debug info warn error].each { |level| define_method(level) { |*| @count += 1 } }
+  end
+
+  def database_queries_during
+    counter = QueryCounter.new
+    DB.loggers << counter
+    yield
+    counter.count
+  ensure
+    DB.loggers.delete(counter)
+  end
+
   def writes_during(team)
     before = records_of(team)
     yield

@@ -673,6 +673,11 @@ module MainlineDSL
     driver.with_csrf_checked(&)
   end
 
+  # How many queries the app sends the database while the block runs.
+  def database_queries_during(&)
+    driver.database_queries_during(&)
+  end
+
   # Whether the CSRF check, turned on, refuses what the block posts.
   def refused_without_security_token?(&)
     driver.refused_without_security_token?(&)
