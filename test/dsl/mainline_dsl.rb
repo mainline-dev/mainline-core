@@ -36,6 +36,11 @@ module MainlineDSL
     driver.add_member(team, person, working: working)
   end
 
+  # Someone is no longer on a team, as when its account holder archives them.
+  def leaves_team(person, team)
+    driver.leave_team(team, person)
+  end
+
   def add_person(name:, email: nil)
     email ||= "#{name.downcase.gsub(/\s+/, '.')}@test.mainline"
     person = driver.add_person(@team, name: name, email: email)
@@ -82,6 +87,16 @@ module MainlineDSL
 
   def create_map(name: 'Product Map')
     @map = driver.create_map(@team, name: name)
+  end
+
+  # Runs the steps in the block on another team the people here are also on,
+  # as though it were the team of the test.
+  def on_team(team)
+    home = @team
+    @team = team
+    yield
+  ensure
+    @team = home
   end
 
   def create_persona(name, description: '')
@@ -723,6 +738,11 @@ module MainlineDSL
   # A personal token someone else made for themselves, by its grant's ID.
   def personal_token_of(person, team:)
     driver.personal_token_of(person, team)
+  end
+
+  # A token in a personal token's shape, checksum and all, that nobody made.
+  def personal_token_nobody_made
+    driver.personal_token_nobody_made
   end
 
   # Whether the personal token with this grant ID has not been revoked.

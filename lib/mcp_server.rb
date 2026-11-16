@@ -4,6 +4,8 @@ require 'mcp'
 require_relative 'core_events'
 require_relative 'feature_file'
 require_relative 'import_instructions'
+require_relative 'mcp_data'
+require_relative 'set_team_context'
 require_relative 'step_stubs'
 require_relative 'story_id'
 
@@ -12,7 +14,11 @@ module MainlineMCP
   # answer each time, and reaches nothing outside Mainline. A read of a story
   # is logged, which is how the card knows a coding agent has read it.
   READ_ONLY = { read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false }.freeze
-  NO_STORY = 'No story with that ID in this team. Use an ID from get_map, or the 8-character ID on the card.'
+  NO_STORY = 'No story with that ID. Use an ID from get_map, or the 8-character ID on the card.'
+  NO_MAP = 'No map with that ID. Use an ID from list_maps.'
+  NO_TEAM = 'No team with that ID among those this coding agent can read. list_maps names them.'
+  AMBIGUOUS = 'More than one story starts with that ID. Use the full ID from get_map.'
+  CODING_AGENTS_PAGE = "#{ENV.fetch('BASE_URL')}/profile/coding-agents".freeze
 
   def self.build_server
     instructions = 'Read-only access to a Mainline story map. ' \
@@ -42,9 +48,13 @@ module MainlineMCP
       name:         'list_maps',
       title:        'List maps',
       annotations:  READ_ONLY,
-      description:  'List all maps for this team',
-      input_schema: { type: 'object', properties: {} }
-    ) { MainlineMCP.call_list_maps }
+      description:  'List the maps of the teams this coding agent can read, each with its team. ' \
+                    "Give a team's ID for that team's maps only.",
+      input_schema: {
+        type:       'object',
+        properties: { team_id: { type: 'string', description: 'UUID of one team' } }
+      }
+    ) { |team_id: nil| MainlineMCP.call_list_maps(team_id) }
   end
 
   def self.define_get_map(server)
@@ -102,60 +112,100 @@ module MainlineMCP
                     "specification, for a person to upload and review. Lists the team's activities and steps. " \
                     'Reads only; nothing is marked or changed.',
       input_schema: { type: 'object', properties: {} }
-    ) { MCP::Tool::Response.new([{ type: 'text', text: ImportInstructions.for(team_id: MainlineMCP.current_team_id) }]) }
+    ) { MCP::Tool::Response.new([{ type: 'text', text: ImportInstructions.for(team_id: MainlineMCP.import_team_id) }]) }
   end
 
-  def self.current_team_id
-    Thread.current[:mcp_team_id]
+  # Who the request reads as, and which teams it may read.
+  def self.access
+    Thread.current[:mcp_access]
   end
 
-  def self.call_list_maps
-    team_id = current_team_id
-    maps = Map.where(team_id: team_id, archived_at: nil).order(:position).all
-    json = maps.map { |m| { id: m.id, name: m.name, position: m.position } }
+  # The team whose activities and steps the import format lists: the only
+  # team the request reads, if it reads one.
+  def self.import_team_id
+    access.team_ids.first if access.team_ids.one?
+  end
+
+  # The maps of every team the request may read, or of one of them, each with
+  # its team.
+  def self.call_list_maps(team_id = nil)
+    team_ids = access.readable_team_ids
+    if team_id
+      status, placed = access.place(team_id)
+      return refusal(status, placed, NO_TEAM) unless status == :open
+
+      team_ids = [team_id]
+    end
+    names = Team.where(id: team_ids).to_hash(:id, :name)
+    json = team_ids.flat_map { |id|
+      maps_of(id).map { |m| { id: m.id, name: m.name, position: m.position, team: { id: id, name: names[id] } } }
+    }
     MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
   end
 
-  def self.call_get_map(map_id)
-    team_id = current_team_id
-    map = Map[map_id]
-    return error_response('Map not found') unless map
-    return error_response('Map not found') unless map.team_id == team_id
+  def self.maps_of(team_id)
+    SetTeamContext.call(team_id)
+    Map.where(team_id: team_id, archived_at: nil).order(:position).all
+  end
 
-    json = build_map_data(map)
+  def self.call_get_map(map_id)
+    status, team_id = access.map(map_id)
+    return refusal(status, team_id, NO_MAP) unless status == :open
+
+    SetTeamContext.call(team_id)
+    json = McpData.map(Map[map_id])
     MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
   end
 
   def self.call_get_story(story_id)
-    story = team_story(story_id)
-    return error_response(NO_STORY) unless story
-
-    record_agent_read(story)
-    json = build_story_data(story)
-    MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
+    readable_story(story_id) do |story|
+      record_agent_read(story)
+      json = McpData.story(story)
+      MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
+    end
   end
 
   def self.call_get_feature_file(story_id, language = nil)
-    story = team_story(story_id)
-    return error_response(NO_STORY) unless story
-    return error_response("Unknown language: #{language}") if language && !StepStubs::LANGUAGES.key?(language)
+    readable_story(story_id) do |story|
+      next error_response("Unknown language: #{language}") if language && !StepStubs::LANGUAGES.key?(language)
 
-    record_agent_read(story)
-    files = [FeatureFile.for(story)]
-    files << StepStubs.for(story, language) if language
-    MCP::Tool::Response.new(files.map { |text| { type: 'text', text: text } })
+      record_agent_read(story)
+      files = [FeatureFile.for(story)]
+      files << StepStubs.for(story, language) if language
+      MCP::Tool::Response.new(files.map { |text| { type: 'text', text: text } })
+    end
   end
 
-  # A story of this team, by its full ID or the short one on its card.
-  def self.team_story(story_id)
-    StoryId.matching(Story.where(team_id: current_team_id), story_id).first
+  # The story the ID names, by its full ID or the short one on its card, read
+  # in its own team; or the refusal when the request may not read it.
+  def self.readable_story(story_id)
+    status, team_id, id = access.story(story_id)
+    return refusal(status, team_id, NO_STORY) unless status == :open
+
+    SetTeamContext.call(team_id)
+    yield Story[id]
+  end
+
+  # Why a map or story can't be read. Only the person's own teams, and the
+  # teams given, are named; anything else gets the answer for nothing there.
+  def self.refusal(status, team_id, not_found)
+    name = (Team[team_id]&.name if team_id)
+    error_response(
+      case status
+      when :withheld then "That is on #{name}, a team you did not give this coding agent. " \
+                          "To let it read #{name}, give it that team on the Coding agents page: #{CODING_AGENTS_PAGE}"
+      when :suspended then "#{name} is suspended, so its maps and stories can't be read."
+      when :ambiguous then AMBIGUOUS
+      else not_found
+      end
+    )
   end
 
   # Reading a story, in any form, records the read and who was on the story,
   # and writes nothing else: the AGENT chip is worked out from these reads.
   def self.record_agent_read(story)
     RecordEvent.call(
-      actor_id:    McpActor.id_for(current_team_id),
+      actor_id:    McpActor.id_for(story.team_id),
       entity:      story,
       action:      AgentReads::ACTION,
       after_state: {
@@ -163,77 +213,6 @@ module MainlineMCP
         person_ids: StoryAssignment.where(story_id: story.id).select_map(:person_id)
       }.compact
     )
-  end
-
-  def self.build_map_data(map)
-    activities = Activity.where(map_id: map.id, archived_at: nil).order(:position).all
-    slices = ReleaseSlice.where(map_id: map.id, archived_at: nil).order(:position).all
-    personas = Persona.where(map_id: map.id, archived_at: nil).order(:position).all
-
-    {
-      id:             map.id,
-      name:           map.name,
-      activities:     activities.map { |act| build_activity_data(act) },
-      release_slices: slices.map { |s| { id: s.id, name: s.name, position: s.position } },
-      personas:       personas.map { |p| { id: p.id, name: p.name, description: p.description } }
-    }
-  end
-
-  def self.build_activity_data(activity)
-    tasks = Task.where(activity_id: activity.id, archived_at: nil).order(:position).all
-    {
-      id:       activity.id,
-      name:     activity.name,
-      position: activity.position,
-      steps:    tasks.map { |t| build_task_data(t) }
-    }
-  end
-
-  def self.build_task_data(task)
-    stories = Story.where(task_id: task.id, archived_at: nil).order(:position).all
-    {
-      id:       task.id,
-      name:     task.name,
-      position: task.position,
-      stories:  stories.map { |s| summarize_story(s) }
-    }
-  end
-
-  def self.summarize_story(story)
-    {
-      id:               story.id,
-      short_id:         story.id[0, 8].upcase,
-      title:            story.title,
-      status:           story.status,
-      position:         story.position,
-      release_slice_id: story.release_slice_id,
-      deploy_count:     story.deploy_count
-    }
-  end
-
-  def self.build_story_data(story)
-    {
-      id:                  story.id,
-      short_id:            story.id[0, 8].upcase,
-      title:               story.title,
-      description:         story.description,
-      status:              story.status,
-      position:            story.position,
-      release_slice_id:    story.release_slice_id,
-      deploy_count:        story.deploy_count,
-      first_deployed_at:   story.first_deployed_at&.iso8601,
-      last_deployed_at:    story.last_deployed_at&.iso8601,
-      decoupling_strategy: story.decoupling_strategy,
-      decoupling_label:    story.decoupling_label,
-      scenarios:           scenario_data(story),
-      assigned_count:      StoryAssignment.where(story_id: story.id).count
-    }
-  end
-
-  def self.scenario_data(story)
-    Scenario.where(story_id: story.id).order(:position).all.map { |s|
-      { name: s.display_name, given: s.given_text, when: s.when_text, then: s.then_text, done: !s.done_at.nil? }
-    }
   end
 
   def self.error_response(message)

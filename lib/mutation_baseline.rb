@@ -28,7 +28,7 @@ module MutationBaseline
     DataExport DeleteTeam DiscardMuseumItem EditActivity EditPersona EditTask
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FirstRun FlashAdapter GithubInstall
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
-    LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid MuseumList
+    LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid McpAccess MuseumList
     NeverPulled OAuthMetadata PairingMatrix PersonalToken PersonalTokens PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
     ReleaseBlock ReleaseNotes RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeGrant RevokeOauthToken SetTeamContext SignedState SignupTimer

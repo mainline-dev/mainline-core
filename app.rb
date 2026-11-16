@@ -91,6 +91,7 @@ require_relative 'lib/rate_limiter'
 require_relative 'lib/login_link_throttle'
 require_relative 'lib/mcp_actor'
 require_relative 'lib/mcp_sign_in'
+require_relative 'lib/mcp_access'
 require_relative 'lib/oauth_metadata'
 require_relative 'lib/sign_in_providers'
 require_relative 'lib/signups'
@@ -330,13 +331,16 @@ class Mainline < Roda
       next 'OK'
     end
 
-    # The address coding agents connect to. Until it accepts tokens, every
-    # request is asked to sign in, before any database work (McpSignIn).
-    r.is 'mcp' do
-      response.status = 401
-      response['WWW-Authenticate'] = McpSignIn::CHALLENGE
-      response['Content-Type'] = 'text/plain'
-      McpSignIn::BODY
+    # The address coding agents connect to. A request with no token is asked
+    # to sign in, before any database work (McpSignIn); one with a token is
+    # checked in routes/mcp.rb.
+    unless McpSignIn.token?(r.env)
+      r.is 'mcp' do
+        response.status = 401
+        response['WWW-Authenticate'] = McpSignIn::CHALLENGE
+        response['Content-Type'] = 'text/plain'
+        McpSignIn::BODY
+      end
     end
 
     r.on '.well-known' do

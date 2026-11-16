@@ -103,3 +103,4 @@ classes:
   RevokeGrant: { mutations: 54, killed: 54, alive: 0 }
   GithubInstall: { mutations: 296, killed: 275, alive: 21 }
   ReleaseBlock: { mutations: 257, killed: 251, alive: 6 }
+  McpAccess: { mutations: 511, killed: 510, alive: 1 }

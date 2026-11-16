@@ -29,12 +29,20 @@ module Records
     OauthAccessToken.first(token_hash: PersonalToken.digest(made.token)).grant_id
   end
 
+  def personal_token_nobody_made
+    PersonalToken.generate
+  end
+
   def personal_token_works?(grant_id)
     OauthGrant[grant_id].revoked_at.nil?
   end
 
   def add_member(team, person, working:)
     TeamMembership.create(team_id: team.id, person_id: person.id, working: working)
+  end
+
+  def leave_team(team, person)
+    TeamMembership.where(team_id: team.id, person_id: person.id, left_at: nil).update(left_at: Time.now)
   end
 
   def record_agent_read(story)

@@ -37,6 +37,32 @@ module McpDSL
     last_response
   end
 
+  # How /mcp answers a coding agent that connects with this token: a personal
+  # token, or an OAuth access token.
+  def connect_mcp(token:)
+    body = { jsonrpc: '2.0', id: 1, method: 'initialize',
+             params: { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'test', version: '1.0' } } }
+    post('/mcp', JSON.generate(body), signed_in_headers(token))
+    last_response
+  end
+
+  # A tool call to /mcp with this token.
+  def call_mcp(name, token:, arguments: {})
+    body = { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: name, arguments: arguments } }
+    post('/mcp', JSON.generate(body), signed_in_headers(token))
+    last_response
+  end
+
+  # A tool call's answer read as JSON, for the tools that answer in JSON.
+  def mcp_json(response)
+    JSON.parse(mcp_tool_text(response).first)
+  end
+
+  def signed_in_headers(token)
+    { 'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json',
+      'HTTP_AUTHORIZATION' => "Bearer #{token}", 'HTTP_HOST' => ENV.fetch('MAINLINE_HOST') }
+  end
+
   def mcp_initialize(team_id: @team.id, token: nil)
     token ||= @mcp_token
     post(
