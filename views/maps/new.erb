@@ -5,7 +5,7 @@
 <% end %>
 
 <div class="form-container">
-  <form method="post" action="/maps">
+  <form method="post" action="/maps" data-test-id="new-map-form">
     <%== csrf_tag('/maps') %>
 
     <label for="name">Name</label>

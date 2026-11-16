@@ -12,7 +12,8 @@ module FirstRun
 
     exhibits = MuseumItem.where(team_id: team.id)
     {
-      import:  exhibits.exclude(source: 'mainline').any?,
+      # A new map, or a Jira CSV or Mainline file in the museum, starts it.
+      map:     Map.where(team_id: team.id).any? || exhibits.any?,
       promote: exhibits.exclude(promoted_at: nil).any?,
       slice:   ReleaseSlice.where(team_id: team.id).any?,
       start:   stories.exclude(status: 'planned').any?,
