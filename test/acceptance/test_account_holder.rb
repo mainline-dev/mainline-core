@@ -44,6 +44,15 @@ describe 'Account holder separation' do
       assert_equal 302, resp.status
       assert_includes resp['Location'], '/account'
     end
+
+    it 'sends a member who observes the team from a map to the account page' do
+      login_as(add_observer(name: 'Olive'))
+
+      resp = driver.visit_map(@map)
+
+      assert_equal 302, resp.status
+      assert_includes resp['Location'], '/account'
+    end
   end
 
   describe 'invitations' do

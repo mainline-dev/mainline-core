@@ -47,6 +47,7 @@ requires:
   - ./lib/let_go_review
   - ./lib/machine_paths
   - ./lib/mainline_file
+  - ./lib/map_access
   - ./lib/map_grid
   - ./lib/museum_list
   - ./lib/never_pulled

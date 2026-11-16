@@ -145,7 +145,7 @@ class Mainline
       membership = TeamMembership.where(
         team_id: @current_team.id, person_id: @current_person.id, left_at: nil
       ).first
-      unless membership&.working
+      unless MapAccess.open_to?(membership)
         r.redirect "/teams/#{@current_team.id}/account"
         next
       end
