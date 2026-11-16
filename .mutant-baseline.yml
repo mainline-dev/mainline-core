@@ -4,7 +4,7 @@
 # share of its mutations more than 2 points below its share here. To
 # accept a new number for a class, measure it again:
 # scripts/mutation.sh AssignPerson
-measured_on: '2026-11-15'
+measured_on: '2026-11-16'
 classes:
   AssignPerson: { mutations: 1091, killed: 849, alive: 242 }
   BusinessDays: { mutations: 66, killed: 66, alive: 0 }

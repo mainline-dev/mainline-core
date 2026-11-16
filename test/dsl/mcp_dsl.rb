@@ -9,6 +9,15 @@ module McpDSL
     @mcp_token = driver.last_mcp_token
   end
 
+  # What a browser's address bar asks for.
+  BROWSER_ACCEPT = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+
+  # A page, as a browser asks for it, with any extra headers it sends.
+  def browse(path, headers: {})
+    get(path, {}, { 'HTTP_ACCEPT' => BROWSER_ACCEPT, 'HTTP_HOST' => ENV.fetch('MAINLINE_HOST') }.merge(headers))
+    last_response
+  end
+
   def mcp_initialize(team_id: @team.id, token: nil)
     token ||= @mcp_token
     post(
