@@ -12,8 +12,6 @@
 <%== render('site/_nav') %>
   <div class="hero">
     <div class="login-brand">Main<em>line</em></div>
-    <p class="login-tagline">Where Agile theatre goes to die.</p>
-    <div class="login-rule"></div>
     <h2 class="login-heading">Verify your email</h2>
     <form method="post" action="/verify-email/<%= @verify_token %>" data-test-id="verify-email-confirm">
       <%== csrf_tag("/verify-email/#{@verify_token}") %>
