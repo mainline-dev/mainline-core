@@ -342,6 +342,11 @@ class Mainline < Roda
         OAuthMetadata.protected_resource.to_json
       end
 
+      r.get 'oauth-authorization-server' do
+        response['Content-Type'] = 'application/json'
+        OAuthMetadata.authorization_server.to_json
+      end
+
       r.get 'mcp.json' do
         response['Content-Type'] = 'application/json'
         server = {

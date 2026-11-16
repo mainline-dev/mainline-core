@@ -96,4 +96,4 @@ classes:
   MachinePaths: { mutations: 26, killed: 26, alive: 0 }
   CsrfCheck: { mutations: 55, killed: 54, alive: 1 }
   MapAccess: { mutations: 59, killed: 59, alive: 0 }
-  OAuthMetadata: { mutations: 39, killed: 39, alive: 0 }
+  OAuthMetadata: { mutations: 113, killed: 113, alive: 0 }
