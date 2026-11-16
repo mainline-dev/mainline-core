@@ -104,3 +104,4 @@ classes:
   GithubInstall: { mutations: 296, killed: 275, alive: 21 }
   ReleaseBlock: { mutations: 257, killed: 251, alive: 6 }
   McpAccess: { mutations: 511, killed: 510, alive: 1 }
+  ClientMetadata: { mutations: 978, killed: 953, alive: 25 }
