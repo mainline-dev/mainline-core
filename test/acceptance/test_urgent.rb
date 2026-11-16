@@ -145,6 +145,13 @@ describe 'An urgent story released before its walkthrough' do
     assert_equal 'released', status_of(@patch)
   end
 
+  it 'offers Release on its card, where an ordinary story would need its walkthrough first' do
+    visit_story_card(@patch)
+
+    assert_shown('release-operators-can-rotate-the-payment-key')
+    refute_shown('release-needs-walkthrough')
+  end
+
   it 'waits on the Walkthroughs page to be walked afterwards' do
     release_story(@patch)
 

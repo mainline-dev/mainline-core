@@ -123,7 +123,7 @@
                 </form>
               <% elsif release_block == 'unverified-scenarios' %>
                 <a href="/maps/<%= map_id %>/stories/<%= story.id %>/edit" class="walk-link" data-test-id="release-needs-scenarios-done">Release needs its scenarios done</a>
-              <% elsif awaiting_walkthrough %>
+              <% elsif awaiting_walkthrough && !urgent %>
                 <a href="/teams/<%= story.team_id %>/teamwork/walkthroughs" class="walk-link" data-test-id="release-needs-walkthrough">Release needs a walkthrough</a>
               <% else %>
                 <button type="button" class="release-btn delete-confirm"
