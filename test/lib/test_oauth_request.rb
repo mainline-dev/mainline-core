@@ -8,6 +8,7 @@ describe OauthRequest do
   cover 'OauthRequest*'
 
   before do
+    ClientMetadata.forget
     @documents = ClientDocuments.new
     ClientMetadata.network = @documents
     @client = 'https://claude.ai/oauth/claude-code-client-metadata'

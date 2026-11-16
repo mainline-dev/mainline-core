@@ -72,6 +72,8 @@ describe ClientMetadata do
     ClientMetadata.fetch(client_id, network: @net, limiter: limiter, now: now)
   end
 
+  after { ClientMetadata.forget }
+
   before do
     ClientMetadata.forget
     @now = Time.now

@@ -42,6 +42,16 @@ class Mainline
       response.status = 400 if answer.error
       JSON.generate(answer.tokens || { error: answer.error })
     end
+
+    # The app signs itself out. Success has nothing to say.
+    r.post 'revoke' do
+      answer = OauthRevocation.call(r.params)
+      next '' unless answer.error
+
+      response.status = 400
+      response['Content-Type'] = 'application/json'
+      JSON.generate(error: answer.error)
+    end
   end
 
   def oauth_consent(person)

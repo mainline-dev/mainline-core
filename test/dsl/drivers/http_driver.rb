@@ -82,6 +82,12 @@ class HttpDriver
     answer.merge(status: last_response.status, cache_control: last_response['Cache-Control'])
   end
 
+  def revoke_token(fields)
+    post '/oauth/revoke', fields
+    answer = last_response.content_type.to_s.start_with?('application/json') ? JSON.parse(last_response.body) : {}
+    answer.merge(status: last_response.status)
+  end
+
   def sent_to_sign_in?
     last_response.redirect? && URI(last_response['Location']).path == '/login'
   end

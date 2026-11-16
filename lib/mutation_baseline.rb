@@ -29,8 +29,8 @@ module MutationBaseline
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FirstRun FlashAdapter GithubInstall
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
     LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid McpAccess MuseumList
-    NeverPulled OAuthMetadata OauthRequest OauthTokens PairingMatrix PersonalToken PersonalTokens PromoteMuseumItem RateLimiter
-    RecordEvent RecordWalkthrough
+    NeverPulled OAuthMetadata OauthRequest OauthRevocation OauthTokens PairingMatrix PersonalToken PersonalTokens
+    PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
     ReleaseBlock ReleaseNotes RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeGrant RevokeOauthToken SetTeamContext SignInGrant SignedState SignupTimer
     SoloLog SplitCandidate StartUrgentStory StepStubs StoryId StoryPicker ThroughputScatter TwoPersonRule

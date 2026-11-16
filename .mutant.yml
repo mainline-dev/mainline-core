@@ -64,6 +64,7 @@ requires:
   - ./lib/client_metadata
   - ./lib/mcp_access
   - ./lib/oauth_request
+  - ./lib/oauth_revocation
   - ./lib/oauth_tokens
   - ./lib/release_block
   - ./lib/release_notes

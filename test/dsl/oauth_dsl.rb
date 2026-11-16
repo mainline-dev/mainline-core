@@ -81,6 +81,12 @@ module OauthDsl
     driver.ask_for_token(fields)
   end
 
+  # The app sends /oauth/revoke one of its tokens. What it answers: any JSON,
+  # with the status as :status.
+  def revoke_token(token, client_id: CLAUDE_CODE)
+    driver.revoke_token('token' => token, 'client_id' => client_id)
+  end
+
   # The person revokes the last sign-in an app was given.
   def revoke_last_sign_in
     driver.revoke_last_sign_in
