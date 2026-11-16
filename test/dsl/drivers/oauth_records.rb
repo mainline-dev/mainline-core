@@ -24,6 +24,10 @@ module OauthRecords
     BypassRLS.call { Team.where(id: DB[:oauth_grant_teams].where(grant_id: grant.id).select(:team_id)).order(:name).select_map(:name) }
   end
 
+  def revoke_last_sign_in
+    OauthGrant.exclude(client_id: nil).order(:created_at).last.update(revoked_at: Time.now)
+  end
+
   def personal_token_nobody_made
     PersonalToken.generate
   end

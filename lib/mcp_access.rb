@@ -45,12 +45,13 @@ class McpAccess
     new(team_ids: given & open, person_id: person_id, client: 'personal token', grant_id: grant_id, own_team_ids: open)
   end
 
-  # The grant and person behind a token that has not expired, if the grant
-  # itself has neither expired nor been revoked.
+  # The grant and person behind a personal token that has not expired, if the
+  # grant itself has neither expired nor been revoked. An app's sign-in has
+  # its own access tokens; /mcp does not take those yet.
   def self.live_grant(digest, now)
     grants = Sequel[:oauth_grants]
     DB[:oauth_access_tokens].join(:oauth_grants, id: :grant_id)
-      .where(token_hash: digest, revoked_at: nil)
+      .where(token_hash: digest, revoked_at: nil, client_id: nil)
       .where(Sequel[:oauth_access_tokens][:expires_at] > now)
       .where(Sequel.|({ grants[:expires_at] => nil }, grants[:expires_at] > now))
       .get([grants[:id], :person_id])

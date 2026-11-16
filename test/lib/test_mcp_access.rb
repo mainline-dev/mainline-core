@@ -101,6 +101,13 @@ describe McpAccess do
       refute_nil McpAccess.for_token(token, now: @now)
     end
 
+    it "is nothing for an app's sign-in, until /mcp takes those" do
+      token = token_for(@payments)
+      grant_of(token).update(client_id: 'https://claude.ai/oauth/claude-code-client-metadata')
+
+      assert_nil McpAccess.for_token(token, now: @now)
+    end
+
     it 'records when it was used, on its own grant only' do
       token = token_for(@payments)
       other = token_for(@payments)

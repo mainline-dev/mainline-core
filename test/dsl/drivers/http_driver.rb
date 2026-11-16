@@ -76,6 +76,12 @@ class HttpDriver
     { to: "#{uri.scheme}://#{uri.host}#{port}#{uri.path}" }.merge(URI.decode_www_form(uri.query.to_s).to_h)
   end
 
+  def ask_for_token(fields)
+    post '/oauth/token', fields
+    answer = last_response.content_type.to_s.start_with?('application/json') ? JSON.parse(last_response.body) : {}
+    answer.merge(status: last_response.status, cache_control: last_response['Cache-Control'])
+  end
+
   def sent_to_sign_in?
     last_response.redirect? && URI(last_response['Location']).path == '/login'
   end

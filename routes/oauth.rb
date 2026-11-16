@@ -32,6 +32,16 @@ class Mainline
         oauth_consent(person)
       end
     end
+
+    # The app exchanges a code, or a refresh token, for its tokens. Nothing it
+    # is given may be kept by anything in between.
+    r.post 'token' do
+      answer = OauthTokens.call(r.params)
+      response['Content-Type'] = 'application/json'
+      response['Cache-Control'] = 'no-store'
+      response.status = 400 if answer.error
+      JSON.generate(answer.tokens || { error: answer.error })
+    end
   end
 
   def oauth_consent(person)
