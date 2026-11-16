@@ -400,6 +400,28 @@ class HttpDriver
     last_response
   end
 
+  def visit_coding_agents
+    get '/profile/coding-agents'
+    last_response
+  end
+
+  def token_teams_offered
+    page = Nokogiri::HTML(visit_coding_agents.body)
+    page.css('[data-test-id="token-team"]').to_h { |box| [box['data-team-name'], box.key?('checked')] }
+  end
+
+  def create_personal_token(name:, team_ids:, expires_on:)
+    post '/profile/coding-agents/tokens', { 'name' => name, 'team_ids' => team_ids, 'expires_on' => expires_on.iso8601 }
+    Nokogiri::HTML(last_response.body).at_css('[data-test-id="new-token"]')&.text&.strip
+  end
+
+  def personal_tokens_listed
+    Nokogiri::HTML(visit_coding_agents.body).css('[data-test-id="personal-token"]').map { |row|
+      { name: row['data-name'], teams: row['data-teams'].split(', '), expires_on: row['data-expires-on'],
+        last_used: row['data-last-used'].then { |used| used.empty? ? nil : used } }
+    }
+  end
+
   def with_csrf_checked
     CsrfCheck.in_tests = true
     yield

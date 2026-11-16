@@ -24,6 +24,10 @@ module Records
     person
   end
 
+  def add_member(team, person, working:)
+    TeamMembership.create(team_id: team.id, person_id: person.id, working: working)
+  end
+
   def record_agent_read(story)
     BypassRLS.call { RecordEvent.call(actor_id: McpActor.id_for(story.team_id), entity: story, action: 'agent_read') }
   end

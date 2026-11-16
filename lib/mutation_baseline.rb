@@ -24,12 +24,12 @@ module MutationBaseline
   LIB = %w[
     Activation AddScenario AddToStory AgentReads ArchivePersona ArchiveStory AssignPerson
     BusinessDays BypassRLS CIMonitor::BranchAge CIMonitor::Status CIMonitorSetup
-    CreateActivity CreatePersona CreateStory CreateTask CsrfCheck CumulativeFlow
+    CreateActivity CreatePersona CreatePersonalToken CreateStory CreateTask CsrfCheck CumulativeFlow
     DataExport DeleteTeam DiscardMuseumItem EditActivity EditPersona EditTask
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FirstRun FlashAdapter
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
     LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid MuseumList
-    NeverPulled OAuthMetadata PairingMatrix PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
+    NeverPulled OAuthMetadata PairingMatrix PersonalToken PersonalTokens PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
     ReleaseNotes RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeOauthToken SetTeamContext SignedState SignupTimer
     SoloLog SplitCandidate StartUrgentStory StepStubs StoryId StoryPicker ThroughputScatter TwoPersonRule

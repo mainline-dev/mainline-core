@@ -2,6 +2,7 @@
 
 require_relative '../model_spec_helper'
 require_relative '../../lib/delete_team'
+require_relative '../../lib/create_personal_token'
 
 describe DeleteTeam do
   cover 'DeleteTeam*'
@@ -17,6 +18,16 @@ describe DeleteTeam do
     DeleteTeam.call(team: @team)
 
     assert_nil Team[@team.id]
+  end
+
+  it "takes the team off its people's personal tokens" do
+    token = CreatePersonalToken.call(person: @person, name: 'laptop', team_ids: [@team.id], expires_on: Date.today + 30)
+    @membership.update(working: true)
+
+    DeleteTeam.call(team: @team)
+
+    assert_equal(0, BypassRLS.call { OauthGrantTeam.where(team_id: @team.id).count })
+    refute_nil token
   end
 
   it 'deletes memberships' do

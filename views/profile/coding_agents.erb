@@ -1,0 +1,62 @@
+<h1 class="page-title">Coding agents</h1>
+
+<div class="banner-info">A coding agent reads the maps and stories of the teams you give it, as you, and changes nothing.</div>
+
+<% if @new_token %>
+  <section class="section" data-test-id="new-token-box">
+    <h2 class="section-title">Your new token</h2>
+    <p class="lens-help">Copy it now. Mainline shows it only this once and keeps only a fingerprint of it.</p>
+    <code class="token" data-test-id="new-token"><%= @new_token %></code>
+  </section>
+<% end %>
+
+<section class="section">
+  <h2 class="section-title">Personal tokens</h2>
+  <p class="lens-help">For a coding agent that cannot sign in through a browser, such as one on a build runner.</p>
+
+  <% if @personal_tokens.empty? %>
+    <p class="lens-help" data-test-id="no-personal-tokens">You have no personal tokens.</p>
+  <% end %>
+  <% @personal_tokens.each do |token| %>
+    <div class="provider-row" data-test-id="personal-token" data-name="<%= token.name %>"
+         data-teams="<%= token.teams.join(', ') %>" data-expires-on="<%= token.expires_on.iso8601 %>"
+         data-last-used="<%= token.last_used_at&.getutc&.iso8601 %>">
+      <span class="provider-name"><%= token.name %></span>
+      <span class="muted">
+        <%= token.teams.join(', ') %> &middot; expires <%= token.expires_on.strftime('%-d %b %Y') %> &middot;
+        <%= token.last_used_at ? "last used #{token.last_used_at.strftime('%-d %b %Y')}" : 'never used' %>
+      </span>
+    </div>
+  <% end %>
+</section>
+
+<section class="section">
+  <h2 class="section-title">New personal token</h2>
+  <% if @token_errors&.any? %>
+    <ul class="errors" data-test-id="form-errors"><% @token_errors.each do |e| %><li><%= e %></li><% end %></ul>
+  <% end %>
+  <div class="form-container">
+    <form method="post" action="/profile/coding-agents/tokens" data-test-id="new-token-form">
+      <%== csrf_tag('/profile/coding-agents/tokens') %>
+      <label for="token-name">Name</label>
+      <input type="text" id="token-name" name="name" placeholder="e.g. build runner" maxlength="100" required>
+
+      <label>Teams</label>
+      <div class="checkbox-group">
+        <% @token_teams.each do |team| %>
+          <label>
+            <input type="checkbox" name="team_ids[]" value="<%= team.id %>" checked
+                   data-test-id="token-team" data-team-name="<%= team.name %>">
+            <%= team.name %>
+          </label>
+        <% end %>
+      </div>
+
+      <label for="token-expires">Works until</label>
+      <input type="date" id="token-expires" name="expires_on" value="<%= @default_expiry.iso8601 %>"
+             min="<%= (Date.today + 1).iso8601 %>" max="<%= Date.today.next_year.iso8601 %>" required>
+
+      <button type="submit" class="btn">Create token</button>
+    </form>
+  </div>
+</section>

@@ -97,3 +97,6 @@ classes:
   CsrfCheck: { mutations: 55, killed: 54, alive: 1 }
   MapAccess: { mutations: 59, killed: 59, alive: 0 }
   OAuthMetadata: { mutations: 113, killed: 113, alive: 0 }
+  PersonalToken: { mutations: 168, killed: 168, alive: 0 }
+  CreatePersonalToken: { mutations: 330, killed: 322, alive: 8 }
+  PersonalTokens: { mutations: 165, killed: 162, alive: 3 }

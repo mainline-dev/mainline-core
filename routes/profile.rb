@@ -104,6 +104,27 @@ class Mainline
       end
     end
 
+    # What the person has given coding agents: personal tokens now, and their
+    # OAuth sign-ins once clients can sign in.
+    r.on 'coding-agents' do
+      r.is do
+        r.get do
+          load_coding_agents
+          view 'profile/coding_agents'
+        end
+      end
+
+      r.post 'tokens' do
+        result = CreatePersonalToken.call(person: @current_person, name: typecast_params.str('name'),
+          team_ids: typecast_params.array(:str, 'team_ids') || [], expires_on: typecast_params.date('expires_on'))
+        @new_token = result.token
+        @token_errors = result.errors
+        response.status = 422 unless result.success?
+        load_coding_agents
+        view 'profile/coding_agents'
+      end
+    end
+
     r.on 'providers' do
       r.is do
         r.get do
@@ -149,5 +170,13 @@ class Mainline
         end
       end
     end
+  end
+
+  # The teams a token may cover, the person's tokens, and the form's default
+  # expiry, 90 days ahead.
+  def load_coding_agents
+    @token_teams = Team.where(id: MapAccess.team_ids_for(@current_person.id)).order(:name).all
+    @personal_tokens = PersonalTokens.of(@current_person)
+    @default_expiry = Date.today + 90
   end
 end

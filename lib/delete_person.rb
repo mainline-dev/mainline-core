@@ -8,7 +8,8 @@ module DeletePerson
     team_memberships:  :person_id,
     map_view_prefs:    :person_id,
     story_assignments: :person_id,
-    person_identities: :person_id
+    person_identities: :person_id,
+    oauth_grants:      :person_id
   }.freeze
 
   # Shared records keep their history; only the reference to the person is cleared.

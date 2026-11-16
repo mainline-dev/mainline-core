@@ -26,6 +26,16 @@ module MainlineDSL
     driver.suspend_team(team, message: message, link: link)
   end
 
+  # A second team, beside @team.
+  def another_team(name)
+    driver.create_team(name)
+  end
+
+  # Puts someone already on @team on another team too, working or observing.
+  def add_member(person, team, working: true)
+    driver.add_member(team, person, working: working)
+  end
+
   def add_person(name:, email: nil)
     email ||= "#{name.downcase.gsub(/\s+/, '.')}@test.mainline"
     person = driver.add_person(@team, name: name, email: email)
@@ -666,6 +676,27 @@ module MainlineDSL
   # The first steps the team page shows as done, in the order it lists them.
   def first_steps_done
     driver.first_steps_done
+  end
+
+  # The signed-in person's Coding agents page.
+  def visit_coding_agents
+    driver.visit_coding_agents
+  end
+
+  # The teams the new-token form offers, by name, and whether each is ticked.
+  def token_teams_offered
+    driver.token_teams_offered
+  end
+
+  # Makes a personal token on the Coding agents page. The token, as the page
+  # shows it once, or nil when the page refuses it.
+  def create_personal_token(name:, teams:, expires_on:)
+    driver.create_personal_token(name: name, team_ids: teams.map(&:id), expires_on: expires_on)
+  end
+
+  # The personal tokens the Coding agents page lists.
+  def personal_tokens_listed
+    driver.personal_tokens_listed
   end
 
   # Runs the block with the CSRF check on, as it is outside tests.

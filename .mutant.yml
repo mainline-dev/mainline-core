@@ -19,6 +19,7 @@ requires:
   - ./lib/ci_monitor_setup
   - ./lib/create_activity
   - ./lib/create_persona
+  - ./lib/create_personal_token
   - ./lib/create_story
   - ./lib/create_task
   - ./lib/csrf_check
@@ -53,6 +54,8 @@ requires:
   - ./lib/never_pulled
   - ./lib/oauth_metadata
   - ./lib/pairing_matrix
+  - ./lib/personal_token
+  - ./lib/personal_tokens
   - ./lib/promote_museum_item
   - ./lib/rate_limiter
   - ./lib/record_event
