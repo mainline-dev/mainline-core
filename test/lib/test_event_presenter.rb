@@ -93,6 +93,20 @@ describe EventPresenter do
     assert_equal 'marked as released before its walkthrough', EventPresenter.describe(event, lookup)
   end
 
+  it 'describes a release without scenarios, with the reason given' do
+    event = build_event(action: 'released',
+      after_state: { 'status' => 'released', 'without_scenarios' => true, 'reason' => 'A copy change' })
+
+    assert_equal 'marked as released without scenarios: A copy change', EventPresenter.describe(event, lookup)
+  end
+
+  it 'describes an urgent release before its walkthrough and without scenarios' do
+    event = build_event(action: 'released',
+      after_state: { 'status' => 'released', 'before_walkthrough' => true, 'without_scenarios' => true })
+
+    assert_equal 'marked as released before its walkthrough and without scenarios', EventPresenter.describe(event, lookup)
+  end
+
   it 'describes a kickoff' do
     assert_equal 'kickoff: agreed the scenarios', EventPresenter.describe(build_event(action: 'scenarios_agreed'), lookup)
   end

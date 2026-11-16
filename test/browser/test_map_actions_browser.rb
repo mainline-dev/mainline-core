@@ -67,6 +67,7 @@ describe 'Map card actions (browser)' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
 
     use_browser!
     driver.visit_map(@map)

@@ -215,6 +215,7 @@ describe 'Teamwork - Solo Log' do
     unassign_person(story, sa)
 
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_solo_log
@@ -230,6 +231,7 @@ describe 'Teamwork - Solo Log' do
     assign_person(story, person: @bob)
 
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_solo_log

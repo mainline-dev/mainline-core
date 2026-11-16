@@ -196,6 +196,20 @@ module MainlineDSL
     driver.submit_release(@map, story)
   end
 
+  # Release a story that has no scenarios, saying why it goes out without them.
+  def release_without_scenarios(story, reason:)
+    driver.submit_release(@map, story, reason: reason)
+  end
+
+  # A story is released only once it has a scenario and every one is done, so
+  # a test or seed that releases a story for some other reason writes one and
+  # marks it done first.
+  def pass_a_scenario(story)
+    create_scenario(story, given_text: 'the story is built', when_text: 'someone uses it',
+      then_text: 'it does what the story says')
+    mark_scenario_done(story, scenarios_on(story).last)
+  end
+
   def deploy_story(story)
     driver.submit_deploy_story(@map, story)
   end

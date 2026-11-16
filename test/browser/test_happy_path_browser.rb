@@ -19,6 +19,7 @@ describe 'Happy path smoke (browser)' do
     assign_person(@story_a, person: @alice)
     assign_person(@story_a, person: @bob)
     deploy_story(@story_a)
+    pass_a_scenario(@story_a)
     release_story(@story_a)
     assign_person(@story_b, person: @alice)
     assign_person(@story_b, person: @bob)

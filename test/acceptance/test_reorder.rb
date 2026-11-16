@@ -117,6 +117,7 @@ describe 'Move story to another task' do
     bob = add_person(name: 'Bob')
     assign_person(@story_a, person: bob)
     deploy_story(@story_a)
+    pass_a_scenario(@story_a)
     release_story(@story_a)
 
     resp = reorder_stories(@task_dest, story_ids: [@story_a.id])
@@ -140,6 +141,7 @@ describe 'Move story to another task' do
     bob = add_person(name: 'Bob')
     assign_person(@story_a, person: bob)
     deploy_story(@story_a)
+    pass_a_scenario(@story_a)
     release_story(@story_a)
 
     resp = reorder_stories(@task_src,

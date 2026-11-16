@@ -114,6 +114,7 @@ describe 'Story split' do
     assign_person(bare, person: @alice)
     assign_person(bare, person: @bob)
     deploy_story(bare)
+    pass_a_scenario(bare)
     release_story(bare)
 
     split_story(bare, title: 'Should not exist', scenario_ids: [])
@@ -201,6 +202,7 @@ describe 'Story split' do
     assign_person(bare, person: @alice)
     assign_person(bare, person: @bob)
     deploy_story(bare)
+    pass_a_scenario(bare)
     release_story(bare)
     Scenario.create(story_id: bare.id, given_text: 'g', when_text: 'w', then_text: 't', position: 1000)
 

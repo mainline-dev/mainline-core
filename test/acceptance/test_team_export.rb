@@ -148,6 +148,7 @@ describe 'Team export' do
       finished = create_story('Finished', under_task: @checkout)
       assign_person(finished, person: @alice)
       deploy_story(finished)
+      pass_a_scenario(finished)
       release_story(finished)
       assign_person(started, person: @alice)
 

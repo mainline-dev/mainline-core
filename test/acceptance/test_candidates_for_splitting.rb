@@ -36,6 +36,7 @@ describe 'Candidates for splitting' do
     activate_story(story)
     Timecop.travel(Time.now + (hours * 3600))
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
     story.refresh
     story
@@ -101,6 +102,7 @@ describe 'Candidates for splitting' do
     activate_story(story)
     Timecop.travel(Time.now + (72 * 3600))
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_map

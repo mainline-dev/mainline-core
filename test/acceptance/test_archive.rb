@@ -56,6 +56,7 @@ describe 'Archive a story' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
 
     visit_map
@@ -67,6 +68,7 @@ describe 'Archive a story' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
 
     archive_story(@story)

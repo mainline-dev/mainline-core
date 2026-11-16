@@ -26,6 +26,7 @@ describe 'Two people see every story before release' do
     assign_person(@story, person: @bob)
     deploy_story(@story)
 
+    pass_a_scenario(@story)
     release_story(@story)
 
     assert_predicate self, :released?
@@ -39,6 +40,7 @@ describe 'Two people see every story before release' do
 
     assert_refused_because('not-deployed')
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
 
     refute_predicate self, :released?
@@ -63,6 +65,7 @@ describe 'Two people see every story before release' do
     end
 
     it 'cannot be released without a walkthrough' do
+      pass_a_scenario(@story)
       release_story(@story)
 
       assert_refused_because('needs-walkthrough')
@@ -72,6 +75,7 @@ describe 'Two people see every story before release' do
     it 'releases once a walkthrough is recorded' do
       record_walkthrough(@story, attended_by: [@bob])
 
+      pass_a_scenario(@story)
       release_story(@story)
 
       assert_predicate self, :released?
@@ -80,6 +84,7 @@ describe 'Two people see every story before release' do
     it 'releases with no walkthrough once the team has turned the rule off' do
       update_settings(two_person_rule: '0', two_person_rule_reason: 'Reviewing another way for now')
 
+      pass_a_scenario(@story)
       release_story(@story)
 
       assert_predicate self, :released?
@@ -89,6 +94,7 @@ describe 'Two people see every story before release' do
       update_settings(two_person_rule: '0', two_person_rule_reason: '  ')
 
       assert_refused_because('reason-needed')
+      pass_a_scenario(@story)
       release_story(@story)
 
       refute_predicate self, :released?
@@ -115,6 +121,7 @@ describe 'Two people see every story before release' do
         assert_no_such_page { record_walkthrough(@story, attended_by: [@bob], through: team_of(@outsider)) }
 
         login_as(@alice)
+        pass_a_scenario(@story)
         release_story(@story)
 
         refute_predicate self, :released?
@@ -131,6 +138,7 @@ describe 'Two people see every story before release' do
       record_walkthrough(@story, attended_by: [@alice])
 
       assert_refused_because('attendee-on-story')
+      pass_a_scenario(@story)
       release_story(@story)
 
       refute_predicate self, :released?
@@ -243,6 +251,7 @@ describe 'The Walkthroughs page' do
       visit_walkthroughs
 
       assert deployed_since_walkthrough?(@story)
+      pass_a_scenario(@story)
       release_story(@story)
 
       assert_equal 'released', status_of(@story)
@@ -295,6 +304,7 @@ describe 'A team of one and the two-person rule' do
     assign_person(@story, person: @alice)
     deploy_story(@story)
 
+    pass_a_scenario(@story)
     release_story(@story)
 
     assert_equal 'released', status_of(@story)
@@ -409,6 +419,7 @@ describe 'The solo log and walkthroughs' do
 
   it 'says who a story shipped by one person was walked through with' do
     record_walkthrough(@story, attended_by: [@bob, @carol])
+    pass_a_scenario(@story)
     release_story(@story)
 
     visit_solo_log
@@ -428,6 +439,7 @@ describe 'The card of a story one person has deployed' do
     create_map
     activity = create_activity('Browse', for_personas: [create_persona('Shopper')])
     @story = create_story('Find things', under_task: create_task('Search', under_activity: activity))
+    pass_a_scenario(@story)
     assign_person(@story, person: @alice)
   end
 

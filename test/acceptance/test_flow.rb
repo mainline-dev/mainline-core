@@ -113,6 +113,7 @@ describe 'Flow - Throughput scatter' do
     assign_person(story, person: @alice)
     assign_person(story, person: @bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_throughput
@@ -142,6 +143,7 @@ describe 'Flow - Throughput scatter' do
     assign_person(story, person: @alice)
     assign_person(story, person: @bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_throughput(lens: 'both')
@@ -178,6 +180,7 @@ describe 'Flow - Map filter' do
     assign_person(story_a, person: @alice)
     assign_person(story_a, person: @bob)
     deploy_story(story_a)
+    pass_a_scenario(story_a)
     release_story(story_a)
 
     create_map(name: 'Maintenance')
@@ -189,6 +192,7 @@ describe 'Flow - Map filter' do
     assign_person(story_b, person: @alice)
     assign_person(story_b, person: @bob)
     deploy_story(story_b)
+    pass_a_scenario(story_b)
     release_story(story_b)
   end
 
@@ -278,6 +282,7 @@ describe 'Flow - Lead time histogram' do
     assign_person(story, person: @alice)
     assign_person(story, person: @bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_lead_time

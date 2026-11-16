@@ -43,6 +43,7 @@ describe 'Inventory' do
     assign_person(story, person: @alice)
     assign_person(story, person: @bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_inventory
@@ -74,6 +75,7 @@ describe 'Inventory' do
     deploy_story(story)
     edit_story(story, title: story.title, task_id: story.task_id,
       decoupling_strategy: 'flag', decoupling_label: 'FF_SEARCH')
+    pass_a_scenario(story)
     release_story(story)
 
     visit_inventory
@@ -88,6 +90,7 @@ describe 'Inventory' do
     assign_person(story, person: @alice)
     assign_person(story, person: @bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     visit_inventory
@@ -102,6 +105,7 @@ describe 'Inventory' do
     deploy_story(story)
     edit_story(story, title: story.title, task_id: story.task_id,
       decoupling_strategy: 'bba', decoupling_label: 'BBA_LAYER')
+    pass_a_scenario(story)
     release_story(story)
 
     visit_inventory

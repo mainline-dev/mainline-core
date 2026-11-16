@@ -76,6 +76,7 @@ describe 'Active filter' do
 
   it 'active filter hides released stories' do
     deploy_story(@active_story)
+    pass_a_scenario(@active_story)
     release_story(@active_story)
 
     @released_story = @active_story

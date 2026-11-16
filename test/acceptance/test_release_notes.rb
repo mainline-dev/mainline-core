@@ -28,9 +28,11 @@ describe 'Release notes' do
     assign_person(story, person: @bob)
   end
 
+  # Every scenario the story has is done; a story with none gets one first.
   def ship(story)
     start(story)
     deploy_story(story)
+    pass_a_scenario(story) if scenarios_on(story).empty?
     scenarios_on(story).each { |scenario| mark_scenario_done(story, scenario) }
     release_story(story)
   end

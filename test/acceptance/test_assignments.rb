@@ -95,6 +95,7 @@ describe 'Assignments' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
 
     carol = add_person(name: 'Carol', email: 'carol@acme.co')

@@ -123,6 +123,7 @@ describe 'Slice filter' do
     assign_person(@sliced_story, person: @alice)
     assign_person(@sliced_story, person: @bob)
     deploy_story(@sliced_story)
+    pass_a_scenario(@sliced_story)
     release_story(@sliced_story)
 
     driver.visit_map_with_params(@map, slice_filter: @slice.id, hide_released: '1')

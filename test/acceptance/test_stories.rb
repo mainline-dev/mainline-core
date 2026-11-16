@@ -218,6 +218,7 @@ describe 'Stories - Archive' do
     assign_person(story, person: @alice)
     assign_person(story, person: bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     archive_story(story)
@@ -318,6 +319,7 @@ describe 'Stories - Release' do
     assert_equal 'active', story.status
 
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     story.reload
@@ -333,6 +335,7 @@ describe 'Stories - Release' do
     assign_person(story, person: @bob)
 
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     assert_equal(0, BypassRLS.call { StoryAssignment.where(story_id: story.id).count })
@@ -343,6 +346,7 @@ describe 'Stories - Release' do
     story = create_story('Not started', under_task: @task)
 
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     story.reload
@@ -422,6 +426,7 @@ describe 'Stories - Released Readonly' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
     @story.reload
   end

@@ -92,6 +92,7 @@ describe 'Map structure' do
       story.refresh
 
       driver.submit_deploy_story(@map, story)
+      pass_a_scenario(story)
       resp = driver.htmx_release_story(@map, story)
 
       assert_equal 200, resp.status

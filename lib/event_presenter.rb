@@ -94,7 +94,12 @@ module EventPresenter
   end
 
   def self.describe_release(event, _lookup, _include_name)
-    event.after_state['before_walkthrough'] ? 'marked as released before its walkthrough' : 'marked as released'
+    state = event.after_state
+    how = []
+    how << 'before its walkthrough' if state['before_walkthrough']
+    how << 'without scenarios' if state['without_scenarios']
+    text = ['marked as released', how.join(' and ')].reject(&:empty?).join(' ')
+    state['reason'] ? "#{text}: #{state['reason']}" : text
   end
 
   def self.describe_walkthrough(event, lookup, _include_name)

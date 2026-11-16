@@ -22,6 +22,7 @@ describe 'Release a story' do
     assign_person(@story, person: @bob)
     deploy_story(@story)
 
+    pass_a_scenario(@story)
     release_story(@story)
 
     @story.refresh
@@ -37,6 +38,7 @@ describe 'Release a story' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
 
     visit_map
@@ -69,6 +71,7 @@ describe 'Release a story' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
 
     assign_person(@story, person: @alice)

@@ -369,8 +369,8 @@ class HttpDriver
     last_response
   end
 
-  def submit_release(map, story)
-    post "/maps/#{map.id}/stories/#{story.id}/release"
+  def submit_release(map, story, reason: nil)
+    post "/maps/#{map.id}/stories/#{story.id}/release", reason.nil? ? {} : { 'reason' => reason }
     last_response
   end
 

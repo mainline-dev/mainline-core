@@ -1,4 +1,4 @@
-<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:, awaiting_walkthrough:, urgent:, agent_assisted:) %>
+<%# locals: (story:, locked:, map_id:, story_notes:, deploy_count:, awaiting_walkthrough:, urgent:, agent_assisted:, release_block:) %>
 <%
   assign_count = story.story_assignments.length
   pairing_label, pairing_short = if story.status == 'released'
@@ -112,7 +112,18 @@
                       data-delete-target=".map-grid-container"
                       data-label="Deploy"
                       data-test-id="deploy-<%= story_slug %>">Deploy</button>
-              <% if awaiting_walkthrough %>
+              <% if release_block == 'no-scenarios' %>
+                <a href="/maps/<%= map_id %>/stories/<%= story.id %>/edit" class="walk-link" data-test-id="release-needs-scenario">Release needs a scenario</a>
+                <form method="post" action="/maps/<%= map_id %>/stories/<%= story.id %>/release" class="release-without-form"
+                      hx-post="/maps/<%= map_id %>/stories/<%= story.id %>/release" hx-target=".map-grid-container" hx-swap="outerHTML"
+                      data-test-id="release-without-scenarios">
+                  <%== csrf_tag('/maps/' + map_id + '/stories/' + story.id + '/release') %>
+                  <input type="text" name="reason" class="release-without-reason" placeholder="Why release without scenarios?" maxlength="200" required>
+                  <button type="submit" class="release-btn">Release without scenarios</button>
+                </form>
+              <% elsif release_block == 'unverified-scenarios' %>
+                <a href="/maps/<%= map_id %>/stories/<%= story.id %>/edit" class="walk-link" data-test-id="release-needs-scenarios-done">Release needs its scenarios done</a>
+              <% elsif awaiting_walkthrough %>
                 <a href="/teams/<%= story.team_id %>/teamwork/walkthroughs" class="walk-link" data-test-id="release-needs-walkthrough">Release needs a walkthrough</a>
               <% else %>
                 <button type="button" class="release-btn delete-confirm"

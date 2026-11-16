@@ -44,6 +44,7 @@ describe 'Smoke test: happy path end-to-end' do
 
     # Deploy + Release story_a
     deploy_story(story_a)
+    pass_a_scenario(story_a)
     release_story(story_a)
 
     assert_equal 'released', story_a.refresh.status

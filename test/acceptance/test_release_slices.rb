@@ -98,6 +98,7 @@ describe 'Release slices' do
     bob = add_person(name: 'Bob', email: 'bob@acme.co')
     assign_person(story, person: bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     move_story_to_slice(story, release_slice_id: slice.id)
@@ -218,6 +219,7 @@ describe 'Release slices' do
     bob = add_person(name: 'Bob', email: 'bob@acme.co')
     assign_person(released, person: bob)
     deploy_story(released)
+    pass_a_scenario(released)
     release_story(released)
     released.update(release_slice_id: slice.id)
 
@@ -241,6 +243,7 @@ describe 'Release slices' do
     bob = add_person(name: 'Bob', email: 'bob@acme.co')
     assign_person(story, person: bob)
     deploy_story(story)
+    pass_a_scenario(story)
     release_story(story)
 
     resp = reorder_stories(@task, story_ids: [story.id], release_slice_id: slice_b.id)

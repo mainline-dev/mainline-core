@@ -33,7 +33,9 @@ module DevSeedHelpers
   end
 
   def release(title)
-    release_story(find_story(title))
+    story = find_story(title)
+    pass_a_scenario(story)
+    release_story(story)
   end
 
   def leave_story(title, person_key)

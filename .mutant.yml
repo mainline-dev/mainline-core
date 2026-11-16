@@ -61,6 +61,7 @@ requires:
   - ./lib/rate_limiter
   - ./lib/record_event
   - ./lib/record_walkthrough
+  - ./lib/release_block
   - ./lib/release_notes
   - ./lib/remove_unverified_accounts
   - ./lib/reorder_activities

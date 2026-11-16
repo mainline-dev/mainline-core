@@ -65,6 +65,7 @@ class Mainline
     @awaiting_walkthrough = TwoPersonRule.awaiting(@current_team).to_set(&:id)
     @solo_allowed = AssignPerson.solo_allowed?(@current_team)
     load_urgent_story
+    @release_blocks = ReleaseBlock.blocks(active_stories, urgent: @urgent_story)
     load_card_history(active_ids)
   end
 

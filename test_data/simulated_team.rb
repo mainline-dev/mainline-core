@@ -154,6 +154,7 @@ class SimulatedTeam # rubocop:disable Metrics/ClassLength
 
     active.each do |item|
       if item[:deploy_day] && (day - item[:deploy_day]) >= pick_release_gap
+        pass_a_scenario(item[:story])
         release_story(item[:story])
         released_count += 1
       else
@@ -291,6 +292,7 @@ class SimulatedTeam # rubocop:disable Metrics/ClassLength
 
     to_release = [active.size - stale_target, 0].max
     active.first(to_release).each do |item|
+      pass_a_scenario(item[:story])
       release_story(item[:story])
     end
   end

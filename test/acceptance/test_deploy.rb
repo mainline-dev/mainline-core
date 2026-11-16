@@ -63,6 +63,7 @@ describe 'Deploy story' do
 
   it 'returns flash in HX-Trigger header on HTMX release' do
     deploy_story(@story)
+    pass_a_scenario(@story)
 
     resp = driver.htmx_release_story(@map, @story)
 
@@ -91,6 +92,7 @@ describe 'Deploy story' do
 
   it 'rejects deploy of a released story' do
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
     @story.refresh
 
@@ -133,6 +135,7 @@ describe 'A story card after a deploy' do
 
   it 'says nothing of a deploy once the story is released' do
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
     visit_story_card(@story)
 

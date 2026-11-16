@@ -99,7 +99,8 @@ class Mainline
         awaiting = TwoPersonRule.awaiting(@current_team).any? { |waiting| waiting.id == @story.id }
         locals = { story: @story, locked: locked, map_id: @map.id,
                    story_notes: notes[@story.id] || [], deploy_count: deploy_count, awaiting_walkthrough: awaiting,
-                   urgent: UrgentStory.urgent?(@story), agent_assisted: AgentReads.read?(@story.id) }
+                   urgent: UrgentStory.urgent?(@story), agent_assisted: AgentReads.read?(@story.id),
+                   release_block: ReleaseBlock.of(@story) }
         render('maps/stories/_card', locals: locals)
       end
 
@@ -232,11 +233,10 @@ class Mainline
 
       r.post 'release' do
         if @story.status == 'active' && @story.deploy_count.positive?
-          undone = Scenario.where(story_id: @story.id, done_at: nil).count
-          if undone.positive?
-            plural = undone == 1 ? 'scenario' : 'scenarios'
-            flash_msg.error("#{undone} #{plural} not yet verified. Mark them done or split them out before releasing.",
-              reason: 'unverified-scenarios')
+          reason = typecast_params.str('reason')
+          held = ReleaseBlock.refusal(@story, reason: reason)
+          if held
+            flash_msg.error(release_refusal(held), reason: held)
             next htmx_grid_or_redirect(r)
           end
           # An urgent story can be released before its walkthrough, and is walked afterwards.
@@ -245,6 +245,8 @@ class Mainline
             flash_msg.error(TwoPersonRule::REFUSAL, reason: TwoPersonRule::REASON)
             next htmx_grid_or_redirect(r)
           end
+          released = { status: 'released' }.merge(ReleaseBlock.recorded(@story, reason: reason))
+          released[TwoPersonRule::BEFORE_WALKTHROUGH] = true if before_walkthrough
           DB.transaction do
             StoryAssignment.where(story_id: @story.id).each do |sa|
               sa.destroy
@@ -260,7 +262,7 @@ class Mainline
               actor_id:    @current_actor.id,
               entity:      @story,
               action:      'released',
-              after_state: { status: 'released' }.merge(before_walkthrough ? { TwoPersonRule::BEFORE_WALKTHROUGH => true } : {})
+              after_state: released
             )
             SplitCandidate.invalidate_threshold!(@current_team.id)
           end
@@ -521,6 +523,16 @@ class Mainline
   end
 
   private
+
+  # What the page says when a story's scenarios hold back its release. A
+  # scenario not done is done, split out or deleted first.
+  def release_refusal(held)
+    return ReleaseBlock::REFUSALS.fetch(held) unless held == ReleaseBlock::UNVERIFIED
+
+    undone = Scenario.where(story_id: @story.id, done_at: nil).count
+    "#{undone} #{undone == 1 ? 'scenario' : 'scenarios'} not yet verified. " \
+      'Mark them done, split them out or delete them before releasing.'
+  end
 
   def load_assignable_people
     assigned_ids = StoryAssignment.where(story_id: @story.id).select_map(:person_id)

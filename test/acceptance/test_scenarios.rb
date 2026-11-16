@@ -224,6 +224,7 @@ describe 'Scenarios - Released Story' do
     assign_person(@story, person: @alice)
     assign_person(@story, person: @bob)
     deploy_story(@story)
+    pass_a_scenario(@story)
     release_story(@story)
     @story.reload
   end
@@ -232,7 +233,7 @@ describe 'Scenarios - Released Story' do
     create_scenario(@story,
       given_text: 'hacked', when_text: 'hacked', then_text: 'hacked')
 
-    assert_equal(0, BypassRLS.call { Scenario.where(story_id: @story.id).count })
+    assert_equal(1, BypassRLS.call { Scenario.where(story_id: @story.id).count })
   end
 
   it 'released story blocks scenario deletion' do
@@ -240,11 +241,11 @@ describe 'Scenarios - Released Story' do
       story_id: @story.id, given_text: 'original',
       when_text: 'original', then_text: 'original', position: 1000
     )
-    scenario = Scenario.where(story_id: @story.id).first
+    scenario = Scenario.where(story_id: @story.id, given_text: 'original').first
 
     delete_scenario(@story, scenario)
 
-    assert_equal 1, Scenario.where(story_id: @story.id).count
+    assert_equal 2, Scenario.where(story_id: @story.id).count
   end
 end
 
@@ -317,18 +318,5 @@ describe 'Scenario check-off' do
     @story.reload
 
     assert_equal 'released', @story.status
-  end
-
-  it 'releases a story that never had scenarios' do
-    bare = create_story('No criteria', under_task: @search)
-    assign_person(bare, person: @alice)
-    assign_person(bare, person: @bob)
-    deploy_story(bare)
-
-    release_story(bare)
-
-    bare.reload
-
-    assert_equal 'released', bare.status
   end
 end
