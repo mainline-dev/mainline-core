@@ -12,7 +12,10 @@ describe 'Signing in to the MCP server' do
   include MainlineDSL
   include McpDSL
 
-  before { MCP_RATE_LIMITER.reset }
+  before do
+    MCP_RATE_LIMITER.reset
+    turn_oauth_on
+  end
 
   def sign_in_challenge
     metadata = "#{ENV.fetch('BASE_URL')}/.well-known/oauth-protected-resource/mcp"

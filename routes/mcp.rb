@@ -75,7 +75,7 @@ class Mainline
     return mcp_too_many(6) if grant_id.nil? && !MCP_UNKNOWN_TOKEN_LIMITER.allow?(request.ip)
 
     response.status = 401
-    response['WWW-Authenticate'] = McpSignIn::INVALID_TOKEN
+    response['WWW-Authenticate'] = McpSignIn.invalid_token
     response['Content-Type'] = 'text/plain'
     McpSignIn::INVALID_BODY
   end

@@ -12,6 +12,10 @@ module OauthRecords
     @client_documents.publish(client_id, JSON.generate(client_id: client_id, client_name: name, redirect_uris: redirect_uris))
   end
 
+  def oauth_setting(value)
+    value ? ENV['OAUTH_ENABLED'] = value : ENV.delete('OAUTH_ENABLED')
+  end
+
   def forget_client_documents
     ClientMetadata.network = HttpsFetch
     ClientMetadata.forget

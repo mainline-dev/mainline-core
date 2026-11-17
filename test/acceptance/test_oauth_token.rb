@@ -14,6 +14,7 @@ describe 'Exchanging a sign-in for tokens' do
   include OauthDsl
 
   before do
+    turn_oauth_on
     setup_team(name: 'Payments')
     @alice = add_person(name: 'Alice')
     client_publishes(OauthDsl::CLAUDE_CODE, name: 'Claude Code', redirect_uris: ['http://localhost/callback'])

@@ -54,6 +54,26 @@ module MainlineDSL
     driver.follow_redirect!
   end
 
+  # Whether what the block asks for is not there. A 404 raises in tests.
+  def not_there?
+    yield
+    false
+  rescue RuntimeError => e
+    raise unless e.message.start_with?('404')
+
+    true
+  end
+
+  # Signing coding agents in with OAuth, on or off as OAUTH_ENABLED says.
+  # Off is how every test starts.
+  def turn_oauth_on
+    driver.oauth_setting('true')
+  end
+
+  def turn_oauth_off
+    driver.oauth_setting(nil)
+  end
+
   # Someone is no longer on a team, as when its account holder archives them.
   def leaves_team(person, team)
     driver.leave_team(team, person)

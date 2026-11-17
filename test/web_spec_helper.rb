@@ -195,6 +195,7 @@ class Minitest::HooksSpec
     LOGIN_EMAIL_LIMITER.reset
     LoginLinkThrottle.reset
     MCP_GRANT_LIMITER.reset
+    ENV.delete('OAUTH_ENABLED')
     MCP_UNKNOWN_TOKEN_LIMITER.reset
     disable_shared_connection!
     Capybara.reset_sessions!

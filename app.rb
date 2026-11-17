@@ -90,6 +90,7 @@ require_relative 'lib/ci_monitor'
 require_relative 'lib/rate_limiter'
 require_relative 'lib/login_link_throttle'
 require_relative 'lib/mcp_actor'
+require_relative 'lib/oauth_setting'
 require_relative 'lib/mcp_sign_in'
 require_relative 'lib/mcp_access'
 require_relative 'lib/oauth_request'
@@ -345,7 +346,7 @@ class Mainline < Roda
     unless McpSignIn.token?(r.env)
       r.is 'mcp' do
         response.status = 401
-        response['WWW-Authenticate'] = McpSignIn::CHALLENGE
+        response['WWW-Authenticate'] = McpSignIn.challenge
         response['Content-Type'] = 'text/plain'
         McpSignIn::BODY
       end
@@ -353,15 +354,19 @@ class Mainline < Roda
 
     r.on '.well-known' do
       # The MCP server as a protected resource, at the address /mcp's request
-      # to sign in links to and at the root of the well-known path.
-      r.get ['oauth-protected-resource/mcp', 'oauth-protected-resource'] do
-        response['Content-Type'] = 'application/json'
-        OAuthMetadata.protected_resource.to_json
-      end
+      # to sign in links to and at the root of the well-known path; and this
+      # install as the server that signs people in. Neither is there while
+      # OAuth is off.
+      if OauthSetting.on?
+        r.get ['oauth-protected-resource/mcp', 'oauth-protected-resource'] do
+          response['Content-Type'] = 'application/json'
+          OAuthMetadata.protected_resource.to_json
+        end
 
-      r.get 'oauth-authorization-server' do
-        response['Content-Type'] = 'application/json'
-        OAuthMetadata.authorization_server.to_json
+        r.get 'oauth-authorization-server' do
+          response['Content-Type'] = 'application/json'
+          OAuthMetadata.authorization_server.to_json
+        end
       end
 
       r.get 'mcp.json' do

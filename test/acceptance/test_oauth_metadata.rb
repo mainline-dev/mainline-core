@@ -12,6 +12,8 @@ describe 'How a coding agent finds out how to sign in' do
   include MainlineDSL
   include McpDSL
 
+  before { turn_oauth_on }
+
   def base_url
     ENV.fetch('BASE_URL')
   end

@@ -6,6 +6,8 @@ class Mainline
   # approves, for the teams they tick, or denies; either way the browser goes
   # back to the app. A request Mainline cannot answer that way gets a page.
   hash_branch('oauth') do |r|
+    next unless OauthSetting.on?
+
     r.is 'authorize' do
       outcome = OauthRequest.check(r.params)
       next oauth_refused(outcome.page) if outcome.page

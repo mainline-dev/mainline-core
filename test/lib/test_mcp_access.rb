@@ -101,13 +101,24 @@ describe McpAccess do
       refute_nil McpAccess.for_token(token, now: @now)
     end
 
-    it "reads an app's sign-in as its person, through the app's site" do
+    it "reads an app's sign-in as its person, through the app's site, while OAuth is on" do
       token = token_for(@payments)
       grant_of(token).update(client_id: 'https://claude.ai/oauth/claude-code-client-metadata')
+      ENV['OAUTH_ENABLED'] = 'true'
 
       access = McpAccess.for_token(token, now: @now)
 
       assert_equal [[@payments.id], @alice.id, 'claude.ai'], [access.team_ids, access.person_id, access.client]
+    ensure
+      ENV.delete('OAUTH_ENABLED')
+    end
+
+    it "reads no app's sign-in while OAuth is off, and still a personal token" do
+      app = token_for(@payments)
+      grant_of(app).update(client_id: 'https://claude.ai/oauth/claude-code-client-metadata')
+
+      assert_nil McpAccess.for_token(app, now: @now)
+      refute_nil McpAccess.for_token(token_for(@payments), now: @now)
     end
 
     it 'gives its grant, for counting calls against' do

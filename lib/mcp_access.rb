@@ -3,6 +3,7 @@
 require 'uri'
 require_relative 'bypass_rls'
 require_relative 'map_access'
+require_relative 'oauth_setting'
 require_relative 'personal_token'
 require_relative 'story_id'
 
@@ -56,10 +57,12 @@ class McpAccess
 
   # The grant, person and app behind a token that has not expired, if the
   # grant itself has neither expired nor been revoked. A personal token's
-  # grant has no app.
+  # grant has no app; an app's is read only while OAuth is on.
   def self.live_grant(digest, now)
     grants = Sequel[:oauth_grants]
-    DB[:oauth_access_tokens].join(:oauth_grants, id: :grant_id)
+    tokens = DB[:oauth_access_tokens].join(:oauth_grants, id: :grant_id)
+    tokens = tokens.where(client_id: nil) unless OauthSetting.on?
+    tokens
       .where(token_hash: digest, revoked_at: nil)
       .where(Sequel[:oauth_access_tokens][:expires_at] > now)
       .where(Sequel.|({ grants[:expires_at] => nil }, grants[:expires_at] > now))

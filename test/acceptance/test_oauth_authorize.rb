@@ -15,6 +15,7 @@ describe 'Signing in a coding agent' do
   include OauthDsl
 
   before do
+    turn_oauth_on
     setup_team(name: 'Payments')
     @alice = add_person(name: 'Alice')
     @mobile = another_team('Mobile')

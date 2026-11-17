@@ -14,6 +14,7 @@ describe "An app's access token at /mcp" do
   include OauthDsl
 
   before do
+    turn_oauth_on
     MCP_RATE_LIMITER.reset
     setup_team(name: 'Payments')
     @alice = add_person(name: 'Alice')
