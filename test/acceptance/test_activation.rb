@@ -80,10 +80,23 @@ describe 'The next thing to connect' do
     bring_in_the_backlog
     connect_github
     generate_webhook_token
-    generate_mcp_token
+    create_personal_token(name: 'laptop', teams: [@team], expires_on: Date.today + 30)
 
     visit_team_page
 
     refute_shown('ladder')
+  end
+
+  it 'leads the coding agent step to a personal token for this team' do
+    release_a_story
+    bring_in_the_backlog
+    connect_github
+    generate_webhook_token
+    add_member(@alice, another_team('Mobile'))
+
+    visit_team_page
+    follow_link('ladder-action')
+
+    assert_equal({ 'Mobile' => false, 'Test Team' => true }, token_teams_shown)
   end
 end

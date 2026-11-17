@@ -33,7 +33,7 @@
             <a href="/teams/<%= @current_team.id %>/members">Members</a>
             <a href="/settings">Settings</a>
             <a href="/teams/<%= @current_team.id %>/webhook">Deploy webhook</a>
-            <a href="/teams/<%= @current_team.id %>/mcp_token">MCP server</a>
+            <a href="/profile/coding-agents?team=<%= @current_team.id %>" data-test-id="nav-coding-agents">Coding agents</a>
             <a href="/teams/<%= @current_team.id %>/export">Export</a>
             <% if @is_creator %>
               <a href="/teams/<%= @current_team.id %>/account">Account</a>

@@ -756,6 +756,11 @@ module MainlineDSL
     driver.token_teams_offered(for_team&.id)
   end
 
+  # The same, on the Coding agents page last shown, however it was reached.
+  def token_teams_shown
+    driver.token_teams_shown
+  end
+
   # Makes a personal token on the Coding agents page. The token, as the page
   # shows it once, or nil when the page refuses it.
   def create_personal_token(name:, teams:, expires_on:)
@@ -1044,7 +1049,12 @@ module MainlineDSL
   end
 
   def follow_museum_link(test_id)
-    driver.follow_museum_link(test_id)
+    driver.follow_link(test_id)
+  end
+
+  # Follows the link with this test ID on the page last shown.
+  def follow_link(test_id)
+    driver.follow_link(test_id)
   end
 
   def museum_ledger_shown

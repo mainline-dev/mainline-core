@@ -26,6 +26,13 @@ describe 'Personal tokens' do
     assert_equal({ 'Mobile' => true, 'Payments' => false }, token_teams_offered(for_team: @mobile))
   end
 
+  it "is reached from the team menu, with that team's box ticked" do
+    visit_team_page
+    follow_link('nav-coding-agents')
+
+    assert_equal({ 'Mobile' => false, 'Payments' => true }, token_teams_shown)
+  end
+
   it 'ticks every team when the form is opened for a team whose maps the person cannot open' do
     assert_equal({ 'Mobile' => true, 'Payments' => true }, token_teams_offered(for_team: @ops))
   end

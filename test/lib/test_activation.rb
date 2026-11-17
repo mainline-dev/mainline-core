@@ -2,6 +2,7 @@
 
 require_relative '../model_spec_helper'
 require_relative '../../lib/activation'
+require_relative '../../lib/create_personal_token'
 
 describe Activation do
   cover 'Activation*'
@@ -9,6 +10,13 @@ describe Activation do
   before do
     @team = Team.create(name: 'Test')
     SetTeamContext.call(@team.id)
+  end
+
+  # A personal token for the team, made by someone on it.
+  def give_a_coding_agent(team)
+    person = Person.create(name: 'Alice', email: 'alice@test.mainline')
+    TeamMembership.create(team_id: team.id, person_id: person.id, working: true)
+    CreatePersonalToken.call(person: person, name: 'laptop', team_ids: [team.id], expires_on: Date.today + 30)
   end
 
   def on(ci_monitor: true)
@@ -45,10 +53,16 @@ describe Activation do
     assert_equal [:webhook], on
   end
 
-  it 'counts the coding agent once the team has an MCP token' do
-    @team.update(mcp_token: 'digest')
+  it 'counts the coding agent once someone gives a coding agent the team' do
+    give_a_coding_agent(@team)
 
     assert_equal [:agent], on
+  end
+
+  it 'leaves the coding agent out for a token that gives only another team' do
+    give_a_coding_agent(Team.create(name: 'Other'))
+
+    assert_empty on
   end
 
   it 'leaves GitHub out on an install without the CI Monitor' do

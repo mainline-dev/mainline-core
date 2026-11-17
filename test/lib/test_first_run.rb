@@ -2,6 +2,8 @@
 
 require_relative '../model_spec_helper'
 require_relative '../../lib/first_run'
+require_relative '../../lib/create_personal_token'
+require_relative '../../lib/revoke_grant'
 
 describe FirstRun do
   cover 'FirstRun*'
@@ -12,6 +14,13 @@ describe FirstRun do
     # Far from the real date, so the steps go by the time they are given.
     @now = Time.utc(2030, 6, 1, 12)
     @person = Person.create(name: 'Alice', email: 'alice@test.mainline')
+  end
+
+  # A personal token for the team, made by someone on it. Its grant's ID.
+  def give_a_coding_agent(team)
+    TeamMembership.create(team_id: team.id, person_id: @person.id, working: true)
+    CreatePersonalToken.call(person: @person, name: 'laptop', team_ids: [team.id], expires_on: Date.today + 30)
+    OauthGrant.where(person_id: @person.id).get(:id)
   end
 
   # A map starts the map, so only the tests that need one make it.
@@ -85,10 +94,22 @@ describe FirstRun do
     assert_equal [:map], done
   end
 
-  it 'ticks the coding agent once the team has an MCP token' do
-    @team.update(mcp_token: 'digest')
+  it 'ticks the coding agent once someone gives a coding agent the team' do
+    give_a_coding_agent(@team)
 
     assert_equal [:agent], done
+  end
+
+  it 'keeps the coding agent ticked once that token is revoked' do
+    RevokeGrant.call(person: @person, grant_id: give_a_coding_agent(@team))
+
+    assert_equal [:agent], done
+  end
+
+  it 'leaves the coding agent unticked for a token that gives only another team' do
+    give_a_coding_agent(Team.create(name: 'Other'))
+
+    assert_empty done
   end
 
   it 'ticks checking back once the museum can say how much was never pulled' do

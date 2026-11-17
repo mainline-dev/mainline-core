@@ -6,10 +6,10 @@
       museum:  ["import your Jira backlog to see what's real.", 'Import a Jira CSV', "/teams/#{@team.id}/museum/import"],
       github:  ['connect GitHub to see how long each branch lives.', 'Connect GitHub', "/teams/#{@team.id}/monitor"],
       webhook: ['add the deploy webhook so your pipeline reports deploys.', 'Set up the webhook', "/teams/#{@team.id}/webhook"],
-      agent:   ['connect your coding agent so it reads one story at a time.', 'Get an MCP token', "/teams/#{@team.id}/mcp_token"]
+      agent:   ['connect your coding agent so it reads one story at a time.', 'Get an MCP token', "/profile/coding-agents?team=#{@team.id}"]
     }
     on = %w[Map flow inventory] + @ladder.select { |_, connected| connected }.keys.map { |key| names.fetch(key) }
     text, action, path = nexts.fetch(next_key)
   %>
-  <p class="ladder" data-test-id="ladder" data-next="<%= next_key %>"><%= on[0..-2].join(', ') %> and <%= on.last %> on. <b>Next:</b> <%= text %> <a href="<%= path %>" class="ladder-action"><%= action %></a></p>
+  <p class="ladder" data-test-id="ladder" data-next="<%= next_key %>"><%= on[0..-2].join(', ') %> and <%= on.last %> on. <b>Next:</b> <%= text %> <a href="<%= path %>" class="ladder-action" data-test-id="ladder-action"><%= action %></a></p>
 <% end %>

@@ -17,7 +17,8 @@ module FirstRun
       promote: exhibits.exclude(promoted_at: nil).any?,
       slice:   ReleaseSlice.where(team_id: team.id).any?,
       start:   stories.exclude(status: 'planned').any?,
-      agent:   !team.mcp_token.nil?,
+      # Someone has given a coding agent the team, at any time.
+      agent:   DB[:oauth_grant_teams].where(team_id: team.id).any?,
       figure:  !NeverPulled.percent(team.id, now: now).nil?
     }
   end

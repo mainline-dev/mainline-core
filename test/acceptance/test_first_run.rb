@@ -96,13 +96,22 @@ describe 'First steps on the team page' do
     assert_equal %w[map slice start], first_steps_done
   end
 
-  it 'ticks off the coding agent once the team has an MCP token' do
-    make_account_holder(@alice)
-    generate_mcp_token
+  it 'ticks off the coding agent once anyone on the team makes a personal token for it' do
+    login_as(@bob)
+    create_personal_token(name: 'laptop', teams: [@team], expires_on: Date.today + 30)
 
     visit_team_page
 
     assert_equal %w[agent], first_steps_done
+  end
+
+  it 'leads the coding agent step to a personal token for this team' do
+    add_member(@alice, another_team('Mobile'))
+
+    visit_team_page
+    follow_link('first-run-coding-agent')
+
+    assert_equal({ 'Mobile' => false, 'Test Team' => true }, token_teams_shown)
   end
 
   it 'ticks off checking back once the museum can say how much was never pulled' do

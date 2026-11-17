@@ -463,7 +463,12 @@ class HttpDriver
   end
 
   def token_teams_offered(team_id)
-    page = Nokogiri::HTML(visit_coding_agents(team_id).body)
+    visit_coding_agents(team_id)
+    token_teams_shown
+  end
+
+  def token_teams_shown
+    page = Nokogiri::HTML(last_response.body)
     page.css('[data-test-id="token-team"]').to_h { |box| [box['data-team-name'], box.key?('checked')] }
   end
 
@@ -1087,7 +1092,7 @@ class HttpDriver
     last_response
   end
 
-  def follow_museum_link(test_id)
+  def follow_link(test_id)
     tag = last_response.body[/<a [^>]*data-test-id="#{test_id}"[^>]*>/]
     get CGI.unescapeHTML(tag[/href="([^"]+)"/, 1])
     last_response
