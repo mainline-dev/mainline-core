@@ -4,11 +4,7 @@ class Mainline
   hash_branch('maps', 'stories') do |r|
     r.get 'new' do
       @story = Story.new
-      @tasks = Task
-        .where(map_id: @map.id, archived_at: nil)
-        .eager(:activity)
-        .all
-        .sort_by { |t| [t.activity.position, t.position] }
+      load_story_tasks
       @selected_task_id = typecast_params.str('task_id')
       template_idx = TeamConstraint.for_team(@current_team.id, 'default_story_template', default: 0)
       @default_template = %w[connextra card behaviour][template_idx] || 'connextra'
@@ -35,11 +31,7 @@ class Mainline
 
         unless @errors.empty?
           @story = Story.new
-          @tasks = Task
-            .where(map_id: @map.id, archived_at: nil)
-            .eager(:activity)
-            .all
-            .sort_by { |t| [t.activity.position, t.position] }
+          load_story_tasks
           @selected_task_id = task_id
           next view('new')
         end
@@ -196,12 +188,14 @@ class Mainline
 
   private
 
+  # The steps a story can go under, in map order: by activity, then by step.
+  def load_story_tasks
+    @tasks = Task.where(map_id: @map.id, archived_at: nil).eager(:activity).all
+      .sort_by { |task| [task.activity.position, task.position] }
+  end
+
   def load_edit_form_data
-    @tasks = Task
-      .where(map_id: @map.id, archived_at: nil)
-      .eager(:activity)
-      .all
-      .sort_by { |t| [t.activity.position, t.position] }
+    load_story_tasks
     @release_slices = ReleaseSlice.where(map_id: @map.id, archived_at: nil).order(:position).all
   end
 
