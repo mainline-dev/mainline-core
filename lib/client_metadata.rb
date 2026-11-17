@@ -76,7 +76,8 @@ module ClientMetadata
 
   # The address, if it is one a document may be fetched from: HTTPS, on the
   # standard port, with a path and no dot segments, no credentials and no
-  # fragment.
+  # fragment. A missing value, or a field sent twice, which arrives as a list,
+  # is refused too: URI.parse raises InvalidURIError for anything not a string.
   def self.fetchable(url)
     uri = URI.parse(url)
     return unless uri.is_a?(URI::HTTPS) && uri.port == 443 && uri.userinfo.nil? && uri.fragment.nil?
@@ -142,7 +143,8 @@ module ClientMetadata
 
   # Whether a sign-in may send the person back to this address: one the
   # document lists, exactly, except that a loopback address may be on any
-  # port; and anything but a loopback address on the client ID's own site.
+  # port; and anything but a loopback address on the client ID's own site. A
+  # missing address, or one sent twice, is refused as a malformed one is.
   def self.redirect_allowed?(document, redirect_uri)
     given = URI.parse(redirect_uri)
     listed = document.fetch('redirect_uris').any? { |uri| same_redirect?(uri, redirect_uri, given) }
