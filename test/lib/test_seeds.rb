@@ -13,8 +13,10 @@ require_relative '../subprocess_helper'
 # Each run gets an empty database of its own, migrated as a fresh install's
 # is, and the database goes once the run is over.
 describe 'The seeds' do
+  # Named after this suite's own test database, so mainline's suite and the
+  # core's, which share one database server, can run at the same time.
   def scratch
-    'mainline_seed_check'
+    "#{ENV.fetch('TEST_DATABASE_URL')[%r{/([^/?]+)\z}, 1]}_seeds"
   end
 
   # The test database's address, pointing at the scratch database instead.
