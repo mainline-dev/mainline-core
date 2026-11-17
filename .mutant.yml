@@ -31,6 +31,7 @@ requires:
   - ./lib/edit_activity
   - ./lib/edit_persona
   - ./lib/edit_scenario
+  - ./lib/edit_story
   - ./lib/edit_task
   - ./lib/encrypted_email
   - ./lib/first_run

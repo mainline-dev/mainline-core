@@ -115,3 +115,4 @@ classes:
   RemoveScenario: { mutations: 61, killed: 60, alive: 1 }
   MarkScenario: { mutations: 126, killed: 125, alive: 1 }
   EditScenario: { mutations: 128, killed: 127, alive: 1 }
+  EditStory: { mutations: 376, killed: 372, alive: 4 }

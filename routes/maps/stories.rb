@@ -117,71 +117,23 @@ class Mainline
 
       r.is do
         r.post do
-          decoupling_strategy = typecast_params.str('decoupling_strategy')
-          decoupling_label = typecast_params.str('decoupling_label')
-
-          if @story.status == 'released'
-            strategy = decoupling_strategy.to_s.empty? ? nil : decoupling_strategy
-            label = strategy && !decoupling_label.to_s.empty? ? decoupling_label[0, 50] : nil
-            DB.transaction do
-              before = {
-                decoupling_strategy: @story.decoupling_strategy,
-                decoupling_label:    @story.decoupling_label
-              }
-              @story.update(decoupling_strategy: strategy, decoupling_label: label)
-              RecordEvent.call(
-                actor_id:     @current_actor.id,
-                entity:       @story,
-                action:       'edited',
-                before_state: before,
-                after_state:  { decoupling_strategy: strategy, decoupling_label: label }
-              )
-            end
-            next edit_form_response(r)
-          end
-
           title = typecast_params.nonempty_str('title')
           task_id = typecast_params.nonempty_str('task_id')
           release_slice_id = typecast_params.str('release_slice_id')
+          result = EditStory.call(story: @story, actor: @current_actor, title: title, task_id: task_id,
+            release_slice_id: release_slice_id, decoupling_strategy: typecast_params.str('decoupling_strategy'),
+            decoupling_label: typecast_params.str('decoupling_label'))
+          next edit_form_response(r) if result.success?
 
-          @errors = []
-          @errors << 'Title is required' unless title
-          @errors << 'Title must be 200 characters or fewer' if title && title.length > 200
-          @errors << 'Step is required' unless task_id
-
-          unless @errors.empty?
-            @subnav_active = 'edit'
-            @title = title || @story.title
-            load_edit_form_data
-            load_story_history
-            @selected_task_id = task_id
-            @selected_release_slice_id = release_slice_id
-            @scenarios = @story.scenarios
-            next htmx?(r) ? render('maps/stories/_edit_form') : view('edit')
-          end
-
-          strategy = decoupling_strategy.to_s.empty? ? nil : decoupling_strategy
-          label = decoupling_label[0, 50] if strategy && !decoupling_label.to_s.empty?
-
-          updates = { title: title, task_id: task_id }
-          updates[:position] = (Story.where(task_id: task_id, archived_at: nil).max(:position) || 0) + 1000 if task_id != @story.task_id
-          updates[:release_slice_id] = release_slice_id.to_s.empty? ? nil : release_slice_id
-          updates[:decoupling_strategy] = strategy
-          updates[:decoupling_label] = label
-          DB.transaction do
-            before = { title: @story.title, task_id: @story.task_id, release_slice_id: @story.release_slice_id,
-                        decoupling_strategy: @story.decoupling_strategy, decoupling_label: @story.decoupling_label }
-            @story.update(updates)
-            RecordEvent.call(
-              actor_id:     @current_actor.id,
-              entity:       @story,
-              action:       'edited',
-              before_state: before,
-              after_state:  updates
-            )
-          end
-
-          edit_form_response(r)
+          @errors = result.errors
+          @subnav_active = 'edit'
+          @title = title || @story.title
+          load_edit_form_data
+          load_story_history
+          @selected_task_id = task_id
+          @selected_release_slice_id = release_slice_id
+          @scenarios = @story.scenarios
+          htmx?(r) ? render('maps/stories/_edit_form') : view('edit')
         end
       end
 
