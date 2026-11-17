@@ -26,6 +26,7 @@ requires:
   - ./lib/cumulative_flow
   - ./lib/data_export
   - ./lib/delete_team
+  - ./lib/deploy_story
   - ./lib/discard_museum_item
   - ./lib/edit_activity
   - ./lib/edit_persona

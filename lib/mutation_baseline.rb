@@ -25,7 +25,7 @@ module MutationBaseline
     Activation AddScenario AddToStory AgentReads ArchivePersona ArchiveStory AssignPerson
     BusinessDays BypassRLS CIMonitor::BranchAge ClientMetadata CIMonitor::Status CIMonitorSetup
     CreateActivity CreatePersona CreatePersonalToken CreateStory CreateTask CsrfCheck CumulativeFlow
-    DataExport DeleteTeam DiscardMuseumItem EditActivity EditPersona EditTask
+    DataExport DeleteTeam DeployStory DiscardMuseumItem EditActivity EditPersona EditTask
     EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FirstRun FlashAdapter GithubInstall
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
     LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid McpAccess MuseumList

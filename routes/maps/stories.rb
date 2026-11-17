@@ -198,26 +198,9 @@ class Mainline
       end
 
       r.post 'deploy' do
-        unless @story.status == 'active'
-          flash_msg.error('Only active stories can be deployed')
-          next htmx_grid_or_redirect(r)
-        end
-
-        now = Time.now
-        DB.transaction do
-          updates = { deploy_count: Sequel.lit('deploy_count + 1'), last_deployed_at: now }
-          updates[:first_deployed_at] = now if @story.deploy_count.zero?
-          DB[:stories].where(id: @story.id).update(updates)
-          RecordEvent.call(
-            actor_id:    @current_actor.id,
-            entity:      @story,
-            action:      'deployed',
-            after_state: { deploy_count: @story.deploy_count + 1 }
-          )
-        end
-
-        flash_msg.notice("Story '#{@story.title}' marked as deployed")
-        next htmx_grid_or_redirect(r)
+        result = DeployStory.call(story: @story, actor: @current_actor, now: Time.now)
+        result.success? ? flash_msg.notice("Story '#{@story.title}' marked as deployed") : flash_msg.error(result.error)
+        htmx_grid_or_redirect(r)
       end
 
       r.post 'urgent' do
