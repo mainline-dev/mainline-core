@@ -68,6 +68,16 @@ describe OauthTokens do
       assert_nil exchange(code: @other_code).error
     end
 
+    it 'refuses a code another request redeemed after this one looked it up, and mints nothing more' do
+      looked_up = DB[:oauth_codes].first(code_hash: Digest::SHA256.hexdigest(@code))
+      exchange
+
+      answer = OauthTokens.stub(:find_code, looked_up) { exchange }
+
+      assert_equal 'invalid_grant', answer.error
+      assert_equal 1, DB[:oauth_access_tokens].where(grant_id: grant.id).count
+    end
+
     it 'takes a code until its minute is up' do
       assert_nil exchange(now: @now + 59).error
     end
@@ -110,6 +120,17 @@ describe OauthTokens do
       refute_equal @tokens[:access_token], fresh[:access_token]
       refute_equal @tokens[:refresh_token], fresh[:refresh_token]
       refute_nil kept(:oauth_refresh_tokens, @tokens[:refresh_token])[:used_at]
+    end
+
+    it 'refuses a refresh token another request used after this one looked it up, and mints nothing more' do
+      looked_up = DB[:oauth_refresh_tokens].first(token_hash: Digest::SHA256.hexdigest(@tokens[:refresh_token]))
+      refresh(@tokens[:refresh_token])
+      minted = DB[:oauth_access_tokens].count
+
+      answer = OauthTokens.stub(:find_refresh, looked_up) { refresh(@tokens[:refresh_token]) }
+
+      assert_equal 'invalid_grant', answer.error
+      assert_equal minted, DB[:oauth_access_tokens].count
     end
 
     it 'spends only the refresh token used' do

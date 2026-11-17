@@ -32,26 +32,39 @@ module OauthTokens
   def self.exchange(params, now)
     return Answer.new(nil, 'invalid_request') unless EXCHANGE.all? { |part| given?(params[part]) }
 
-    code = DB[:oauth_codes].first(code_hash: digest(params.fetch('code')))
+    code = find_code(digest(params.fetch('code')))
     return Answer.new(nil, 'invalid_grant') unless code && live?(code.fetch(:grant_id))
-    return spent(code.fetch(:grant_id), now) if code.fetch(:used_at)
     return Answer.new(nil, 'invalid_grant') unless code.fetch(:expires_at) > now && bound?(code, params)
+    return spent(code.fetch(:grant_id), now) unless claimed?(DB[:oauth_codes], code.fetch(:id), now)
 
-    DB[:oauth_codes].where(id: code.fetch(:id)).update(used_at: now)
     issue(code.fetch(:grant_id), now)
   end
 
   def self.refresh(params, now)
     return Answer.new(nil, 'invalid_request') unless given?(params['refresh_token']) && given?(params['client_id'])
 
-    token = DB[:oauth_refresh_tokens].first(token_hash: digest(params.fetch('refresh_token')))
+    token = find_refresh(digest(params.fetch('refresh_token')))
     grant = token && DB[:oauth_grants].first(id: token.fetch(:grant_id), revoked_at: nil)
     return Answer.new(nil, 'invalid_grant') unless grant && grant.fetch(:client_id) == params.fetch('client_id')
-    return spent(grant.fetch(:id), now) if token.fetch(:used_at)
     return Answer.new(nil, 'invalid_grant') unless token.fetch(:expires_at) > now
+    return spent(grant.fetch(:id), now) unless claimed?(DB[:oauth_refresh_tokens], token.fetch(:id), now)
 
-    DB[:oauth_refresh_tokens].where(id: token.fetch(:id)).update(used_at: now)
     issue(grant.fetch(:id), now)
+  end
+
+  def self.find_code(digest)
+    DB[:oauth_codes].first(code_hash: digest)
+  end
+
+  def self.find_refresh(digest)
+    DB[:oauth_refresh_tokens].first(token_hash: digest)
+  end
+
+  # Marks a code or refresh token used, in one update that only an unused one
+  # passes. Of two requests that looked it up at the same moment, only one
+  # changes the row; the other is refused as a second use.
+  def self.claimed?(table, id, now)
+    table.where(id: id, used_at: nil).update(used_at: now) == 1
   end
 
   def self.given?(value)
@@ -88,5 +101,5 @@ module OauthTokens
     Digest::SHA256.hexdigest(token)
   end
 
-  private_class_method :exchange, :refresh, :given?, :live?, :bound?, :spent, :issue, :digest
+  private_class_method :exchange, :refresh, :find_code, :find_refresh, :claimed?, :given?, :live?, :bound?, :spent, :issue, :digest
 end
