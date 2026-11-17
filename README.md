@@ -14,7 +14,7 @@ Everything a team has can be downloaded again as one zip, by any member: the sto
 
 Documentation and practice guides: https://mainline.dev/docs
 
-Mainline was developed privately before this public release. The hosted service at https://mainline.dev runs this same code.
+Mainline has been in development since April 2026 in a private repository. This repository publishes the open-source core, exported from it since 7 November 2026. The hosted service at https://mainline.dev runs this same code.
 
 ## Quick start
 
