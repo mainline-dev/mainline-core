@@ -8,9 +8,9 @@ require_relative 'personal_token'
 require_relative 'story_id'
 
 # Who an MCP request reads as, and which teams it may read. A personal token
-# reads the teams its person ticked and can still open, as that person. The
-# old /mcp/<team id> reads its one team, as nobody. No team is chosen for the
-# request: each tool asks where a map or story is before reading it.
+# reads the teams its person ticked and can still open, as that person, and so
+# does an app's sign-in. No team is chosen for the request: each tool asks
+# where a map or story is before reading it.
 #
 # A team is open (given, and not suspended), suspended (given, and
 # suspended), withheld (one of the person's own teams they did not give) or
@@ -28,10 +28,6 @@ class McpAccess
     @client = client
     @grant_id = grant_id
     @own_team_ids = own_team_ids
-  end
-
-  def self.for_team(team)
-    new(team_ids: [team.id])
   end
 
   # What a personal token reads, or nil for anything that is not a live one.

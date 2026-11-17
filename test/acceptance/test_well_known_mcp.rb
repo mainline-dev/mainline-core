@@ -6,7 +6,7 @@ require_relative '../dsl/mainline_dsl'
 describe '.well-known/mcp.json' do
   include MainlineDSL
 
-  it 'returns MCP server discovery JSON' do
+  it 'returns MCP server discovery JSON, pointing at /mcp' do
     anon = HttpDriver.new
     resp = anon.get '/.well-known/mcp.json'
 
@@ -16,7 +16,7 @@ describe '.well-known/mcp.json' do
     body = JSON.parse(resp.body)
     server = body.dig('mcpServers', 'mainline')
 
-    assert_equal "#{ENV.fetch('BASE_URL')}/mcp/{team_id}", server['url']
+    assert_equal "#{ENV.fetch('BASE_URL')}/mcp", server['url']
     assert_equal 'bearer', server.dig('authentication', 'type')
   end
 end

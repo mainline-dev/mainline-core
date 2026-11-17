@@ -541,7 +541,7 @@ class HttpDriver
     last_response
   end
 
-  def visit_mcp_token_settings(team)
+  def visit_old_team_token_page(team)
     get "/teams/#{team.id}/mcp_token"
     last_response
   end
@@ -552,13 +552,7 @@ class HttpDriver
     last_response
   end
 
-  attr_reader :last_webhook_token, :last_mcp_token
-
-  def submit_generate_mcp_token(team)
-    post "/teams/#{team.id}/mcp_token"
-    @last_mcp_token = last_response.body[/class="token">([^<]+)</, 1]
-    last_response
-  end
+  attr_reader :last_webhook_token
 
   def submit_login_link_request(email:)
     post '/forgot-password', { 'email' => email }

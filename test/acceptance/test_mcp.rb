@@ -9,7 +9,6 @@ describe 'MCP server' do
   include McpDSL
 
   before do
-    MCP_RATE_LIMITER.reset
     setup_team
     @alice = add_person(name: 'Alice')
     @team.update(creator_id: @alice.id)
@@ -38,6 +37,13 @@ describe 'MCP server' do
     response = connect_mcp_client(host: 'evil.example.com', token: @mcp_token)
 
     assert_equal 403, response.status
+  end
+
+  it 'has no address for one team alone, and no team token page' do
+    connect_coding_agent
+
+    assert(not_there? { ask_the_old_team_address })
+    assert(not_there? { visit_the_old_team_token_page })
   end
 
   it 'initializes MCP session' do

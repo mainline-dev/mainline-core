@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative '../lib/mcp_access'
-require_relative '../lib/mcp_auth'
 require_relative '../lib/mcp_server'
 
 MCP_TRANSPORT = MCP::Server::Transports::StreamableHTTPTransport.new(
@@ -27,26 +26,6 @@ class Mainline
 
       access.used(now)
       serve_mcp(r, access)
-    end
-
-    r.on String do |team_id|
-      unless team_id.match?(McpAccess::UUID)
-        next mcp_refusal(400, 'Replace YOUR_TEAM_ID with your actual team ID (a UUID from team settings)')
-      end
-
-      team = Team[team_id]
-      next mcp_refusal(404, "Team not found. Check the ID in your team settings, or sign up at #{ENV.fetch('BASE_URL')}/signup") unless team
-
-      unless McpAuth.valid?(team, mcp_token(r))
-        next mcp_refusal(429, 'too many requests') unless MCP_RATE_LIMITER.allow?(request.ip)
-
-        next mcp_refusal(401, 'unauthorized')
-      end
-
-      next mcp_refusal(403, 'team inactive') if team.suspended?
-
-      SetTeamContext.call(team.id)
-      serve_mcp(r, McpAccess.for_team(team))
     end
   end
 

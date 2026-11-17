@@ -15,7 +15,6 @@ describe "An app's access token at /mcp" do
 
   before do
     turn_oauth_on
-    MCP_RATE_LIMITER.reset
     setup_team(name: 'Payments')
     @alice = add_person(name: 'Alice')
     @mobile = another_team('Mobile')

@@ -364,10 +364,6 @@ module MainlineDSL
     driver.visit_webhook_settings(@team)
   end
 
-  def visit_mcp_token_settings
-    driver.visit_mcp_token_settings(@team)
-  end
-
   def generate_webhook_token
     driver.submit_generate_webhook_token(@team)
     @team.refresh
@@ -815,11 +811,6 @@ module MainlineDSL
 
   def make_account_holder(person)
     driver.make_account_holder(@team, person)
-  end
-
-  # As the account holder does it on the MCP token page.
-  def generate_mcp_token
-    driver.submit_generate_mcp_token(@team)
   end
 
   # Moves the clock on, for scenarios about time passing.

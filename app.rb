@@ -138,7 +138,6 @@ MUSEUM_UPLOAD_RATE_LIMITER = RateLimiter.new(capacity: 20, refill_rate: 20.0 / 3
 TEAM_EXPORT_RATE_LIMITER = RateLimiter.new(capacity: 10, refill_rate: 10.0 / 3600)
 LOGIN_GLOBAL_LIMITER = SharedRateLimiter.new(name: 'login_global', capacity: 60, refill_rate: 1.0)
 LOGIN_EMAIL_LIMITER = SharedRateLimiter.new(name: 'login_email', capacity: 5, refill_rate: 5.0 / 900)
-MCP_RATE_LIMITER = SharedRateLimiter.new(name: 'mcp', capacity: 10, refill_rate: 10.0 / 3600)
 # /mcp counts a token Mainline issued against its grant, live or not, and a
 # token matching nothing against the address it came from.
 MCP_GRANT_LIMITER = SharedRateLimiter.new(name: 'mcp_grant', capacity: 120, refill_rate: 120.0 / 60)
@@ -372,8 +371,8 @@ class Mainline < Roda
       r.get 'mcp.json' do
         response['Content-Type'] = 'application/json'
         server = {
-          url:            "#{ENV.fetch('BASE_URL')}/mcp/{team_id}",
-          description:    'Replace {team_id} with your team UUID from team settings',
+          url:            "#{ENV.fetch('BASE_URL')}/mcp",
+          description:    'Use a personal token from Profile, then Coding agents',
           authentication: { type: 'bearer' }
         }
         { mcpServers: { mainline: server } }.to_json

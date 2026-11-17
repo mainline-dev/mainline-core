@@ -14,7 +14,6 @@ describe 'Limits at /mcp' do
   include McpDSL
 
   before do
-    MCP_RATE_LIMITER.reset
     setup_team(name: 'Payments')
     @alice = add_person(name: 'Alice')
   end

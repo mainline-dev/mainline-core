@@ -19,7 +19,6 @@ describe 'Security tokens' do
     activity = create_activity('Browse', for_personas: [create_persona('User')])
     @story = create_story('Show results', under_task: create_task('Search', under_activity: activity))
     DEPLOY_AUTH_RATE_LIMITER.reset
-    MCP_RATE_LIMITER.reset
   end
 
   it 'refuses a form a person posts without its security token' do

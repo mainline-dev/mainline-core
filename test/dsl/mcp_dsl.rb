@@ -9,25 +9,18 @@ module McpDSL
     @mcp_token = create_personal_token(name: 'coding agent', teams: [@team], expires_on: Date.today + 30)
   end
 
-  # Retired with team tokens: the one token a team's account holder makes on
-  # its MCP page, for the old address, /mcp/<team id>.
-  def generate_mcp_token
-    driver.submit_generate_mcp_token(@team)
-    @team.refresh
-    @mcp_token = driver.last_mcp_token
-  end
-
-  def team_token_initialize(team_id: @team.id, token: @mcp_token)
+  # What an agent set up for the old address of one team alone,
+  # /mcp/<team id>, is answered now.
+  def ask_the_old_team_address
     body = { jsonrpc: '2.0', id: 1, method: 'initialize',
              params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test', version: '1.0' } } }
-    post("/mcp/#{team_id}", JSON.generate(body), signed_in_headers(token))
+    post("/mcp/#{@team.id}", JSON.generate(body), signed_in_headers(@mcp_token))
     last_response
   end
 
-  def team_token_call_tool(name, arguments: {})
-    body = { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: name, arguments: arguments } }
-    post("/mcp/#{@team.id}", JSON.generate(body), signed_in_headers(@mcp_token))
-    last_response
+  # Where a team's token page was, at /teams/<team id>/mcp_token.
+  def visit_the_old_team_token_page
+    driver.visit_old_team_token_page(@team)
   end
 
   # What a browser's address bar asks for.

@@ -15,7 +15,6 @@ describe 'Signing coding agents in, as a setting' do
   include OauthDsl
 
   before do
-    MCP_RATE_LIMITER.reset
     setup_team(name: 'Payments')
     @alice = add_person(name: 'Alice')
   end

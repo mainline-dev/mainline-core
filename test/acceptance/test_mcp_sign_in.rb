@@ -13,7 +13,6 @@ describe 'Signing in to the MCP server' do
   include McpDSL
 
   before do
-    MCP_RATE_LIMITER.reset
     turn_oauth_on
   end
 

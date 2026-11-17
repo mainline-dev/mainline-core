@@ -231,15 +231,4 @@ describe McpAccess do
       assert_equal [:unknown, nil], @access.map(nil)
     end
   end
-
-  describe 'a team token' do
-    it 'reads its one team, as nobody' do
-      access = McpAccess.for_team(@payments)
-
-      assert_equal [@payments.id], access.team_ids
-      assert_nil access.person_id
-      assert_equal [:unknown, nil], access.place(@mobile.id)
-      assert_nil access.used(@now)
-    end
-  end
 end
