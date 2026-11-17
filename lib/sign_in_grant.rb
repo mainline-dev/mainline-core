@@ -41,8 +41,10 @@ module SignInGrant
   end
 
   def self.store(person, request, team_ids, code, now)
+    # A recognised app keeps the name it gives itself; any other is known by
+    # its site, as the consent page names it.
     grant = OauthGrant.create(person_id: person.id, client_id: request.client_id, scope: OAuthMetadata::SCOPE,
-      resource: request.resource)
+      resource: request.resource, name: (request.name if request.recognised))
     BypassRLS.call { team_ids.each { |team_id| DB[:oauth_grant_teams].insert(grant_id: grant.id, team_id: team_id) } }
     DB[:oauth_codes].insert(grant_id: grant.id, code_hash: Digest::SHA256.hexdigest(code), client_id: request.client_id,
       redirect_uri: request.redirect_uri, code_challenge: request.challenge, resource: request.resource,

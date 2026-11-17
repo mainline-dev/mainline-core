@@ -64,4 +64,62 @@ describe PersonalTokens do
 
     assert_empty PersonalTokens.of(@alice)
   end
+
+  describe 'apps signed in' do
+    before { @now = Time.utc(2030, 3, 10, 12) }
+
+    # An app's sign-in for these teams, as signing in and swapping the code
+    # leave it: a grant with a refresh token that runs out then.
+    def signed_in(person, teams, name: 'Claude Code', client_id: 'https://claude.ai/oauth/claude-code-client-metadata',
+                  made: @now, runs_out: @now + 86_400)
+      grant = OauthGrant.create(person_id: person.id, client_id: client_id, name: name, scope: 'mainline:read',
+        resource: "#{ENV.fetch('BASE_URL')}/mcp")
+      grant.update(created_at: made)
+      BypassRLS.call { teams.each { |team| DB[:oauth_grant_teams].insert(grant_id: grant.id, team_id: team.id) } }
+      DB[:oauth_refresh_tokens].insert(grant_id: grant.id, token_hash: SecureRandom.hex(32), expires_at: runs_out)
+      grant
+    end
+
+    it "lists a person's working sign-ins, newest first, with the app, its teams, and when signed in and last used" do
+      claude = signed_in(@alice, [@payments], made: Time.utc(2030, 3, 1))
+      codex = signed_in(@alice, [@mobile, @payments], name: 'Codex', client_id: 'https://chatgpt.com/oauth/codex/client.json',
+        made: Time.utc(2030, 3, 5))
+      codex.update(last_used_at: Time.utc(2030, 3, 9))
+
+      listed = PersonalTokens.apps_of(@alice, now: @now)
+      rows = listed.map { |app| app.to_h.except(:id) }
+
+      assert_equal [codex.id, claude.id], listed.map(&:id)
+      assert_equal [{ app: 'Codex', teams: %w[Mobile Payments], signed_in_at: Time.utc(2030, 3, 5), last_used_at: Time.utc(2030, 3, 9) },
+                    { app: 'Claude Code', teams: ['Payments'], signed_in_at: Time.utc(2030, 3, 1), last_used_at: nil }], rows
+    end
+
+    it 'lists a sign-in whose teams are all gone with no teams' do
+      signed_in(@alice, [])
+
+      assert_equal [[]], PersonalTokens.apps_of(@alice, now: @now).map(&:teams)
+    end
+
+    it "leaves out revoked and lapsed sign-ins, personal tokens and other people's" do
+      signed_in(@alice, [@payments]).update(revoked_at: @now)
+      signed_in(@alice, [@payments], runs_out: @now - 1)
+      create(@alice, 'build runner', [@payments])
+      signed_in(@bob, [@payments])
+
+      assert_empty PersonalTokens.apps_of(@alice, now: @now)
+    end
+
+    it 'lists a sign-in only while it holds a refresh token not yet spent' do
+      grant = signed_in(@alice, [@payments])
+      DB[:oauth_refresh_tokens].where(grant_id: grant.id).update(used_at: @now)
+
+      assert_empty PersonalTokens.apps_of(@alice, now: @now)
+    end
+
+    it "names a sign-in made before names were kept by its app's site" do
+      signed_in(@alice, [@payments], name: nil)
+
+      assert_equal ['claude.ai'], PersonalTokens.apps_of(@alice, now: @now).map(&:app)
+    end
+  end
 end

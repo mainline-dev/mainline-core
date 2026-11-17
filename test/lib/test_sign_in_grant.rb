@@ -46,6 +46,21 @@ describe SignInGrant do
     assert_equal([@mobile.id], BypassRLS.call { DB[:oauth_grant_teams].where(grant_id: grant.id).select_map(:team_id) })
   end
 
+  it 'names the grant after the app, as the consent page names it' do
+    sign_in(@mobile)
+
+    assert_equal 'Claude Code', grant.name
+  end
+
+  it 'leaves an app it does not recognise unnamed, to be known by its site' do
+    @request = OauthRequest::Request.new(**@request.to_h, client_id: 'https://agent.example/client.json', name: 'Claude',
+      recognised: false)
+
+    sign_in(@mobile)
+
+    assert_nil grant.name
+  end
+
   it 'gives a code for the grant, kept only as a digest, for a minute, bound to what was asked' do
     code = sign_in(@payments).code
     row = code_row(code)

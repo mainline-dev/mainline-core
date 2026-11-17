@@ -493,6 +493,18 @@ class HttpDriver
     last_response
   end
 
+  def app_sign_ins_listed
+    Nokogiri::HTML(visit_coding_agents.body).css('[data-test-id="app-sign-in"]').map { |row|
+      { id: row['data-id'], app: row['data-app'], teams: row['data-teams'].split(', '), signed_in: row['data-signed-in'],
+        last_used: row['data-last-used'].then { |used| used.empty? ? nil : used } }
+    }
+  end
+
+  def revoke_app_sign_in(app)
+    row = Nokogiri::HTML(visit_coding_agents.body).css('[data-test-id="app-sign-in"]').find { |r| r['data-app'] == app }
+    revoke_personal_token_by_id(row['data-id'])
+  end
+
   def personal_tokens_listed
     Nokogiri::HTML(visit_coding_agents.body).css('[data-test-id="personal-token"]').map { |row|
       { name: row['data-name'], teams: row['data-teams'].split(', '), expires_on: row['data-expires-on'],

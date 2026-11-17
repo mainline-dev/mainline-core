@@ -10,6 +10,28 @@
   </section>
 <% end %>
 
+<% if @app_sign_ins.any? %>
+  <section class="section" data-test-id="app-sign-ins">
+    <h2 class="section-title">Apps signed in</h2>
+    <p class="lens-help">Coding agents you signed in through their app, such as Claude Code or Codex.</p>
+    <% @app_sign_ins.each do |app| %>
+      <div class="provider-row" data-test-id="app-sign-in" data-id="<%= app.id %>" data-app="<%= app.app %>"
+           data-teams="<%= app.teams.join(', ') %>" data-signed-in="<%= app.signed_in_at.getutc.to_date.iso8601 %>"
+           data-last-used="<%= app.last_used_at&.getutc&.to_date&.iso8601 %>">
+        <span class="provider-name"><%= app.app %></span>
+        <span class="muted">
+          <%= app.teams.join(', ') %> &middot; signed in <%= app.signed_in_at.strftime('%-d %b %Y') %> &middot;
+          <%= app.last_used_at ? "last used #{app.last_used_at.strftime('%-d %b %Y')}" : 'never used' %>
+        </span>
+        <form method="post" action="/profile/coding-agents/tokens/<%= app.id %>/revoke" class="inline-form">
+          <%== csrf_tag("/profile/coding-agents/tokens/#{app.id}/revoke") %>
+          <button type="submit" class="btn btn-danger btn-sm" data-test-id="revoke-sign-in">Revoke</button>
+        </form>
+      </div>
+    <% end %>
+  </section>
+<% end %>
+
 <section class="section">
   <h2 class="section-title">Personal tokens</h2>
   <p class="lens-help">For a coding agent that cannot sign in through a browser, such as one on a build runner.</p>

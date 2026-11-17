@@ -125,7 +125,7 @@ class Mainline
       end
 
       r.post 'tokens', String, 'revoke' do |grant_id|
-        flash['notice'] = 'Token revoked' if RevokeGrant.call(person: @current_person, grant_id: grant_id)
+        flash['notice'] = 'Revoked' if RevokeGrant.call(person: @current_person, grant_id: grant_id)
         r.redirect '/profile/coding-agents'
       end
     end
@@ -178,13 +178,14 @@ class Mainline
   end
 
   # The teams a token may cover, which of them start ticked (only the team the
-  # page was opened for, when it is one of them), the person's tokens, and the
-  # form's default expiry, 90 days ahead.
+  # page was opened for, when it is one of them), the person's tokens and the
+  # apps they signed in, and the form's default expiry, 90 days ahead.
   def load_coding_agents(for_team_id = nil)
     @token_teams = Team.where(id: MapAccess.team_ids_for(@current_person.id)).order(:name).all
     offered = @token_teams.map(&:id)
     @ticked_team_ids = offered.include?(for_team_id) ? [for_team_id] : offered
     @personal_tokens = PersonalTokens.of(@current_person)
+    @app_sign_ins = PersonalTokens.apps_of(@current_person, now: Time.now)
     @default_expiry = Date.today + 90
   end
 end

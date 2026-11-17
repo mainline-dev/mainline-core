@@ -93,6 +93,29 @@ module OauthDsl
     driver.revoke_token('token' => token, 'client_id' => client_id)
   end
 
+  # An app signs in as the person signed in, who approves it as the consent
+  # page offers, and swaps its code for tokens. The tokens.
+  def sign_in_an_app
+    start_sign_in
+    approve_sign_in
+    exchange_code(sent_back['code'])
+  end
+
+  # The apps signed in, as the person's Coding agents page lists them: the
+  # app, its teams by name, and the days it signed in and was last used.
+  def app_sign_ins_listed
+    driver.app_sign_ins_listed.map { |row| row.except(:id) }
+  end
+
+  def app_sign_in_ids
+    driver.app_sign_ins_listed.map { |row| row[:id] }
+  end
+
+  # Revokes the listed sign-in of the app with this name, with its button.
+  def revoke_app_sign_in(app)
+    driver.revoke_app_sign_in(app)
+  end
+
   # The person revokes the last sign-in an app was given.
   def revoke_last_sign_in
     driver.revoke_last_sign_in
