@@ -107,5 +107,5 @@ classes:
   ClientMetadata: { mutations: 978, killed: 953, alive: 25 }
   OauthRequest: { mutations: 421, killed: 410, alive: 11 }
   SignInGrant: { mutations: 232, killed: 226, alive: 6 }
-  OauthTokens: { mutations: 802, killed: 798, alive: 4 }
-  OauthRevocation: { mutations: 203, killed: 199, alive: 4 }
+  OauthTokens: { mutations: 811, killed: 806, alive: 5 }
+  OauthRevocation: { mutations: 212, killed: 207, alive: 5 }

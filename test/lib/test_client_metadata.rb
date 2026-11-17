@@ -103,6 +103,7 @@ describe ClientMetadata do
       ['http://claude.ai/oauth/doc', 'https://claude.ai:8443/oauth/doc', 'https://claude.ai',
        'https://claude.ai/', 'https://claude.ai/oauth/doc#part', 'https://user@claude.ai/oauth/doc',
        'https://claude.ai/oauth/../doc', 'https://claude.ai/./oauth/doc', 'http://claude.ai:443/oauth/doc', nil,
+       [ClientMetadataDoubles::CLAUDE_CODE], { 'client' => ClientMetadataDoubles::CLAUDE_CODE }, 7,
        'not a url', ''].each do |client_id|
         assert_equal :invalid_client_id, fetch(client_id).error, client_id
       end
@@ -308,9 +309,11 @@ describe ClientMetadata do
       refute ClientMetadata.redirect_allowed?(doc('https://evil.example/callback'), 'https://evil.example/callback')
     end
 
-    it 'refuses one that is not an address' do
+    it 'refuses one that is not an address, or not one value' do
       refute ClientMetadata.redirect_allowed?(doc('http://localhost/callback'), 'not a url')
       refute ClientMetadata.redirect_allowed?(doc('http://localhost/callback'), nil)
+      refute ClientMetadata.redirect_allowed?(doc('http://localhost/callback'), ['http://localhost/callback'])
+      refute ClientMetadata.redirect_allowed?(doc('http://localhost/callback'), { 'to' => 'http://localhost/callback' })
     end
   end
 
@@ -320,5 +323,6 @@ describe ClientMetadata do
     refute ClientMetadata.recognised?('https://claude.ai.evil.example/doc')
     refute ClientMetadata.recognised?('https://evil.example/claude.ai')
     refute ClientMetadata.recognised?('not a url')
+    refute ClientMetadata.recognised?([ClientMetadataDoubles::CLAUDE_CODE])
   end
 end

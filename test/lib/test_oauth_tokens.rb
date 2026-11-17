@@ -107,6 +107,8 @@ describe OauthTokens do
       %w[code code_verifier client_id redirect_uri resource].each do |part|
         assert_equal 'invalid_request', exchange(part => '').error, part
         assert_equal 'invalid_request', exchange(part => nil).error, part
+        assert_equal 'invalid_request', exchange(part => ['x']).error, part
+        assert_equal 'invalid_request', exchange(part => { 'x' => 'y' }).error, part
       end
     end
   end
@@ -171,6 +173,8 @@ describe OauthTokens do
       assert_equal 'invalid_request', refresh(nil).error
       assert_equal 'invalid_request', refresh(@tokens[:refresh_token], client_id: nil).error
       assert_equal 'invalid_request', refresh(@tokens[:refresh_token], client_id: '').error
+      assert_equal 'invalid_request', refresh([@tokens[:refresh_token]]).error
+      assert_equal 'invalid_request', refresh(@tokens[:refresh_token], client_id: [@request.client_id]).error
     end
   end
 

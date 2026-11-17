@@ -113,6 +113,16 @@ describe 'Signing in a coding agent' do
     assert_predicate self, :sign_in_refused_on_page?
   end
 
+  it 'shows a page, and sends nothing back, for an app or an address given more than once' do
+    start_sign_in(client_id: [OauthDsl::CLAUDE_CODE, OauthDsl::CLAUDE_CODE])
+
+    assert_predicate self, :sign_in_refused_on_page?
+
+    start_sign_in(redirect_uri: ['http://localhost:53682/callback'])
+
+    assert_predicate self, :sign_in_refused_on_page?
+  end
+
   it 'shows a page, and sends nothing back, for an address the app does not list' do
     start_sign_in(redirect_uri: 'https://claude.ai/somewhere-else')
 

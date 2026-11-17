@@ -67,8 +67,9 @@ module OauthTokens
     table.where(id: id, used_at: nil).update(used_at: now) == 1
   end
 
+  # One value, and not an empty one: a field sent twice arrives as a list.
   def self.given?(value)
-    !value.to_s.empty?
+    value.is_a?(String) && !value.empty?
   end
 
   def self.live?(grant_id)

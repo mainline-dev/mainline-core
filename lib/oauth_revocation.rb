@@ -13,7 +13,7 @@ module OauthRevocation
 
   def self.call(params, now: Time.now)
     token, client_id = params.values_at('token', 'client_id')
-    return Answer.new('invalid_request') if token.to_s.empty? || client_id.to_s.empty?
+    return Answer.new('invalid_request') unless [token, client_id].all? { |value| value.is_a?(String) && !value.empty? }
 
     grant = grant_of(Digest::SHA256.hexdigest(token))
     return Answer.new unless grant

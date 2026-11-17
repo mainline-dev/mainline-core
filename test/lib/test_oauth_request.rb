@@ -68,6 +68,16 @@ describe OauthRequest do
       refute_nil outcome.page
     end
 
+    it 'names its app, or the address to go back to, other than once' do
+      [{ client_id: nil }, { client_id: [@client] }, { client_id: { 'id' => @client } },
+       { redirect_uri: nil }, { redirect_uri: ['http://localhost:4000/callback'] }].each do |change|
+        outcome = OauthRequest.check(params(**change))
+
+        assert_nil outcome.back, change.inspect
+        refute_nil outcome.page, change.inspect
+      end
+    end
+
     it 'asks to send the person back to an address the app does not list' do
       outcome = OauthRequest.check(params(redirect_uri: 'http://localhost:4000/elsewhere'))
 

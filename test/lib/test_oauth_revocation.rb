@@ -88,7 +88,8 @@ describe OauthRevocation do
   end
 
   it 'needs a token and the app' do
-    [['', client], [nil, client], [@mine[:refresh_token], ''], [@mine[:refresh_token], nil]].each do |token, client_id|
+    [['', client], [nil, client], [@mine[:refresh_token], ''], [@mine[:refresh_token], nil],
+     [[@mine[:refresh_token]], client], [@mine[:refresh_token], [client]]].each do |token, client_id|
       assert_equal 'invalid_request', OauthRevocation.call({ 'token' => token, 'client_id' => client_id }.compact, now: @now).error
     end
   end

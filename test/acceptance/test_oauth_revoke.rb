@@ -51,6 +51,7 @@ describe 'An app signing itself out' do
   it 'needs a token and the app' do
     assert_equal 'invalid_request', revoke_token('')['error']
     assert_equal 'invalid_request', revoke_token(@tokens['refresh_token'], client_id: '')['error']
+    assert_equal [400, 'invalid_request'], revoke_token([@tokens['refresh_token']]).values_at(:status, 'error')
   end
 
   it 'is not refused by the check on forms' do

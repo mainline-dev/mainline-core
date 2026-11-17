@@ -102,6 +102,7 @@ describe 'Exchanging a sign-in for tokens' do
     assert_equal 'unsupported_grant_type', ask_for_token('grant_type' => 'client_credentials')['error']
     assert_equal 'invalid_request', ask_for_token('grant_type' => 'authorization_code')['error']
     assert_equal 'invalid_request', ask_for_token({})['error']
+    assert_equal [400, 'invalid_request'], exchange_code([@code]).values_at(:status, 'error')
   end
 
   it 'is not refused by the check on forms' do
