@@ -34,7 +34,7 @@ module MutationBaseline
     ReleaseBlock ReleaseNotes ReleaseStory RemoveScenario RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeGrant RevokeOauthToken SetTeamContext SignInGrant SignedState SignupTimer
     SoloLog SplitCandidate StartUrgentStory StepStubs StoryId StoryPicker ThroughputScatter TwoPersonRule
-    UnpromoteMuseumItem UrgentStory Walkthroughs
+    UnassignPerson UnpromoteMuseumItem UrgentStory Walkthroughs
   ].freeze
   hosted_classes = []
   HOSTED_CLASSES = hosted_classes.freeze

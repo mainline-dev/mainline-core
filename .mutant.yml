@@ -96,6 +96,7 @@ requires:
   - ./lib/two_person_rule
   - ./lib/urgent_story
   - ./lib/walkthroughs
+  - ./lib/unassign_person
   - ./lib/unpromote_museum_item
 
 environment_variables:

@@ -225,34 +225,10 @@ class Mainline
           next unless assignment && assignment.story_id == @story.id
 
           r.post 'unassign' do
-            if @story.status == 'released'
-              flash['error'] = 'Cannot modify a released story'
+            result = UnassignPerson.call(story: @story, assignment: assignment, actor: @current_actor)
+            unless result.success?
+              flash['error'] = result.error
               next r.redirect "/maps/#{@map.id}"
-            end
-
-            person_id = assignment.person_id
-
-            DB.transaction do
-              assignment.destroy
-              RecordEvent.call(
-                actor_id:     @current_actor.id,
-                entity:       @story,
-                action:       'person_unassigned',
-                before_state: { person_id: person_id }
-              )
-
-              remaining = StoryAssignment.where(story_id: @story.id).count
-              if remaining.zero? && @story.status == 'active'
-                @story.update(status: 'planned')
-                RecordEvent.call(
-                  actor_id:    @current_actor.id,
-                  entity:      @story,
-                  action:      'deactivated',
-                  after_state: { reason: 'no_assignees' }
-                )
-              elsif @story.status == 'active'
-                AssignPerson.record_collaboration_change(@story, @current_actor.id, remaining + 1, remaining)
-              end
             end
 
             flash_msg.notice('Person unassigned')
