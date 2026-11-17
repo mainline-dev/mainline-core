@@ -41,6 +41,27 @@ describe RecordWalkthrough do
     RecordWalkthrough.call(story: @story, actor: by.actor, attendee_ids: attendees.map(&:id))
   end
 
+  it 'records nothing when nobody attended' do
+    result = record([])
+
+    refute_predicate result, :success?
+    assert_equal 'no-attendees', result.reason
+    assert_empty walkthroughs
+  end
+
+  it 'records nothing when someone listed as attending does not work on the team' do
+    outsider = Person.create(name: 'Dana', email: 'dana@test.mainline')
+    observer = Person.create(name: 'Erin', email: 'erin@test.mainline')
+    TeamMembership.create(team_id: @team.id, person_id: observer.id, working: false)
+    gone = Person.create(name: 'Finn', email: 'finn@test.mainline')
+    TeamMembership.create(team_id: @team.id, person_id: gone.id, left_at: Time.now)
+
+    reasons = [outsider, observer, gone].map { |person| record([@bob, person]).reason }
+
+    assert_equal ['attendee-not-on-team'], reasons.uniq
+    assert_empty walkthroughs
+  end
+
   it 'records who attended, on the story, in the name of whoever wrote it down' do
     result = record([@bob, @carol], by: @carol)
 

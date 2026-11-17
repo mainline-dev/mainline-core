@@ -32,6 +32,35 @@ describe 'Two people see every story before release' do
     assert_predicate self, :released?
   end
 
+  it 'records no walkthrough that nobody attended, so the story still waits for one' do
+    update_settings(allow_solo_activation: '1')
+    assign_person(@story, person: @alice)
+    deploy_story(@story)
+
+    record_walkthrough(@story, attended_by: [])
+
+    assert_refused_because('no-attendees')
+    pass_a_scenario(@story)
+    release_story(@story)
+
+    refute_predicate self, :released?
+  end
+
+  it 'records no walkthrough attended only by someone from another team' do
+    update_settings(allow_solo_activation: '1')
+    assign_person(@story, person: @alice)
+    deploy_story(@story)
+    outsider = on_team(another_team('Mobile')) { add_person(name: 'Dana') }
+
+    record_walkthrough(@story, attended_by: [outsider])
+
+    assert_refused_because('attendee-not-on-team')
+    pass_a_scenario(@story)
+    release_story(@story)
+
+    refute_predicate self, :released?
+  end
+
   it 'records no walkthrough for a story that has not been deployed' do
     update_settings(allow_solo_activation: '1')
     assign_person(@story, person: @alice)
