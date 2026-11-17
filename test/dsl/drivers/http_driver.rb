@@ -41,6 +41,10 @@ class HttpDriver
     last_response
   end
 
+  def form_action_sources
+    last_response.headers['Content-Security-Policy'].to_s[/form-action ([^;]*)/, 1].to_s.split
+  end
+
   def visit_authorize(params)
     get '/oauth/authorize', params
     last_response

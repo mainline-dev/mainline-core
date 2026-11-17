@@ -60,6 +60,9 @@ class Mainline
     @oauth_teams = Team.where(id: MapAccess.team_ids_for(person.id)).order(:name).all
     return oauth_refused("You aren't working on a team yet, so there is nothing a coding agent could read.") if @oauth_teams.empty?
 
+    # The answer is a form whose reply sends the browser on to the app, and
+    # the browser lets a form go only where form-action lists.
+    content_security_policy.add_form_action(@oauth.return_origin)
     view 'oauth/consent', layout: false
   end
 

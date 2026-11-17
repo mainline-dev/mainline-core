@@ -54,6 +54,15 @@ describe OauthRequest do
       assert_equal ['agent.example', false, 'agent.example'], [other.shown_name, other.recognised, other.redirect_site]
     end
 
+    it 'knows the origin the answer goes back to, with its port unless it is the usual one' do
+      publish('https://agent.example/client.json', 'Agent', ['https://agent.example/callback'])
+      other = OauthRequest.check(params(client_id: 'https://agent.example/client.json',
+        redirect_uri: 'https://agent.example/callback')).request
+
+      assert_equal 'http://localhost:4000', OauthRequest.check(params).request.return_origin
+      assert_equal 'https://agent.example', other.return_origin
+    end
+
     it 'takes a request for offline access as well, or for no scope at all' do
       refute_nil OauthRequest.check(params(scope: 'mainline:read offline_access')).request
       refute_nil OauthRequest.check(params(scope: nil)).request

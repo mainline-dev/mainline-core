@@ -32,6 +32,12 @@ module OauthDsl
   # What the consent page shows: the app, whether it is recognised or comes
   # with a warning, the site the person goes back to, and each team offered,
   # by name, ticked or not. Nil when no consent page is shown.
+  # Where the consent page's answer may be sent on to, as its
+  # Content-Security-Policy lists the places a form may go.
+  def answer_may_go_to
+    driver.form_action_sources
+  end
+
   def consent_shown
     driver.consent_shown
   end

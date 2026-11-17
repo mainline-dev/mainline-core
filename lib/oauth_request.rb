@@ -25,6 +25,14 @@ module OauthRequest
     def redirect_site
       URI(redirect_uri).host
     end
+
+    # Where the person's answer is sent on to: the scheme, host and port of
+    # the address the app goes back to, the port only when it is unusual.
+    def return_origin
+      uri = URI(redirect_uri)
+      port = ":#{uri.port}" unless uri.port == uri.default_port
+      "#{uri.scheme}://#{uri.host}#{port}"
+    end
   end
 
   Outcome = Struct.new(:request, :page, :back)

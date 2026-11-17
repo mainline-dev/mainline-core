@@ -45,6 +45,12 @@ describe 'Signing in a coding agent' do
     assert_equal 'agent.example', consent[:sends_back_to]
   end
 
+  it "lets the person's answer go on to the app's own address, as the browser checks it" do
+    start_sign_in
+
+    assert_includes answer_may_go_to, 'http://localhost:53682'
+  end
+
   it 'sends the person back with a code once they approve, naming Mainline as the issuer' do
     start_sign_in(state: 'abc123')
 
