@@ -9,9 +9,18 @@
   <%== public_head_tags %>
 </head>
 <body class="landing">
-<%== render('site/_nav') %>
+<header class="landing-header">
+  <div class="landing-header-inner">
+    <span class="landing-wordmark">Main<em>line</em></span>
+  </div>
+</header>
   <div class="hero">
-    <h2 class="login-heading">Connect a coding agent</h2>
+    <h2 class="oauth-heading">Connect <em data-test-id="oauth-client"><%= @oauth.shown_name %></em></h2>
+    <% if @oauth.recognised %>
+      <p class="oauth-recognised" data-test-id="oauth-recognised">Mainline recognises this app</p>
+    <% else %>
+      <p class="flash flash-warning flash-inline oauth-warning" role="alert" data-test-id="oauth-warning">Mainline doesn't recognise this app. Only continue if you started this sign-in yourself.</p>
+    <% end %>
     <form method="post" action="/oauth/authorize" class="oauth-consent" data-test-id="oauth-consent">
       <%== csrf_tag('/oauth/authorize') %>
       <% { 'response_type' => 'code', 'client_id' => @oauth.client_id, 'redirect_uri' => @oauth.redirect_uri,
@@ -19,26 +28,32 @@
            'resource' => @oauth.resource }.compact.each do |name, value| %>
         <input type="hidden" name="<%= name %>" value="<%= value %>">
       <% end %>
-      <p class="oauth-client">
-        <strong data-test-id="oauth-client"><%= @oauth.shown_name %></strong>
-        <% if @oauth.recognised %><span class="oauth-recognised" data-test-id="oauth-recognised">Recognised</span><% end %>
-      </p>
-      <% unless @oauth.recognised %>
-        <p class="flash flash-error" role="alert" data-test-id="oauth-warning">Mainline doesn't recognise this app. Only continue if you started this sign-in yourself.</p>
-      <% end %>
-      <p>Once you approve, you go back to <span data-test-id="oauth-sends-back-to"><%= @oauth.redirect_site %></span>.</p>
-      <p>Read the maps and stories of the teams you tick, as you.</p>
+      <p class="oauth-account">Signed in as <strong data-test-id="oauth-account"><%= @oauth_person.name %></strong></p>
+      <ul class="oauth-scope">
+        <li>It can read the maps and stories of the teams you tick, as you.</li>
+        <li class="oauth-cannot">It cannot change anything.</li>
+      </ul>
       <% Array(@oauth_errors).each do |error| %>
-        <p class="flash flash-error" role="alert" data-test-id="oauth-error"><%= error %></p>
+        <p class="flash flash-error flash-inline oauth-error" role="alert" data-test-id="oauth-error"><%= error %></p>
       <% end %>
-      <fieldset class="oauth-teams">
-        <legend>Teams</legend>
+      <fieldset class="oauth-teams checkbox-group">
+        <legend>Teams it can read</legend>
         <% @oauth_teams.each do |team| %>
-          <label><input type="checkbox" name="team_ids[]" value="<%= team.id %>" data-test-id="oauth-team" data-name="<%= team.name %>" checked> <%= team.name %></label>
+          <label><input type="checkbox" name="team_ids[]" value="<%= team.id %>" class="form-checkbox" data-test-id="oauth-team" data-name="<%= team.name %>" checked> <%= team.name %></label>
         <% end %>
       </fieldset>
-      <button type="submit" name="decision" value="approve" class="btn" data-test-id="oauth-approve">Approve</button>
-      <button type="submit" name="decision" value="deny" class="btn btn-secondary" data-test-id="oauth-deny">Deny</button>
+      <div class="oauth-actions">
+        <button type="submit" name="decision" value="approve" class="btn" data-test-id="oauth-approve">Approve</button>
+        <button type="submit" name="decision" value="deny" class="btn btn-secondary" data-test-id="oauth-deny">Deny</button>
+      </div>
+      <p class="oauth-after">
+        <% if ClientMetadata::LOOPBACK_HOSTS.include?(@oauth.redirect_site) %>
+          Once you approve, you go back to <span data-test-id="oauth-sends-back-to" data-own-computer>the app on your own computer</span>.
+        <% else %>
+          Once you approve, you go back to <strong data-test-id="oauth-sends-back-to"><%= @oauth.redirect_site %></strong>.
+        <% end %>
+        The sign-in ends after <%= OauthTokens::REFRESH_LIFETIME / 86_400 %> days without use.
+      </p>
     </form>
   </div>
 </body>

@@ -43,6 +43,13 @@ describe 'Signing in a coding agent' do
 
     assert_equal ['agent.example', false, true], [consent[:client], consent[:recognised], consent[:warning]]
     assert_equal 'agent.example', consent[:sends_back_to]
+    refute consent[:own_computer]
+  end
+
+  it 'names the account signing in, and an app on the same computer as going back there' do
+    start_sign_in
+
+    assert_equal ['Alice', true], consent_shown.values_at(:account, :own_computer)
   end
 
   it "lets the person's answer go on to the app's own address, as the browser checks it" do

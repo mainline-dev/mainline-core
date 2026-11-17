@@ -57,6 +57,7 @@ class Mainline
   end
 
   def oauth_consent(person)
+    @oauth_person = person
     @oauth_teams = Team.where(id: MapAccess.team_ids_for(person.id)).order(:name).all
     return oauth_refused("You aren't working on a team yet, so there is nothing a coding agent could read.") if @oauth_teams.empty?
 

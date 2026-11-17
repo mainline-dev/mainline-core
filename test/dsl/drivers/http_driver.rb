@@ -55,8 +55,10 @@ class HttpDriver
     return unless page.at_css('[data-test-id="oauth-consent"]')
 
     shown = ->(id) { !page.at_css(%([data-test-id="#{id}"])).nil? }
+    back = page.at_css('[data-test-id="oauth-sends-back-to"]')
     { client: page.at_css('[data-test-id="oauth-client"]')&.text&.strip, recognised: shown.call('oauth-recognised'),
-      warning: shown.call('oauth-warning'), sends_back_to: page.at_css('[data-test-id="oauth-sends-back-to"]')&.text&.strip,
+      warning: shown.call('oauth-warning'), sends_back_to: back&.text&.strip, own_computer: back&.key?('data-own-computer'),
+      account: page.at_css('[data-test-id="oauth-account"]')&.text&.strip,
       teams: page.css('[data-test-id="oauth-team"]').to_h { |box| [box['data-name'], box.key?('checked')] } }
   end
 
