@@ -138,6 +138,10 @@ TEAM_EXPORT_RATE_LIMITER = RateLimiter.new(capacity: 10, refill_rate: 10.0 / 360
 LOGIN_GLOBAL_LIMITER = SharedRateLimiter.new(name: 'login_global', capacity: 60, refill_rate: 1.0)
 LOGIN_EMAIL_LIMITER = SharedRateLimiter.new(name: 'login_email', capacity: 5, refill_rate: 5.0 / 900)
 MCP_RATE_LIMITER = SharedRateLimiter.new(name: 'mcp', capacity: 10, refill_rate: 10.0 / 3600)
+# /mcp counts a token Mainline issued against its grant, live or not, and a
+# token matching nothing against the address it came from.
+MCP_GRANT_LIMITER = SharedRateLimiter.new(name: 'mcp_grant', capacity: 120, refill_rate: 120.0 / 60)
+MCP_UNKNOWN_TOKEN_LIMITER = SharedRateLimiter.new(name: 'mcp_unknown_token', capacity: 600, refill_rate: 600.0 / 3600)
 DEPLOY_AUTH_RATE_LIMITER = SharedRateLimiter.new(name: 'deploy_auth', capacity: 10, refill_rate: 0.05)
 
 class Mainline < Roda

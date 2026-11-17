@@ -39,11 +39,18 @@ module McpDSL
 
   # How /mcp answers a coding agent that connects with this token: a personal
   # token, or an OAuth access token.
-  def connect_mcp(token:)
+  def connect_mcp(token:, from: nil)
     body = { jsonrpc: '2.0', id: 1, method: 'initialize',
              params: { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 'test', version: '1.0' } } }
-    post('/mcp', JSON.generate(body), signed_in_headers(token))
+    headers = signed_in_headers(token)
+    headers['REMOTE_ADDR'] = from if from
+    post('/mcp', JSON.generate(body), headers)
     last_response
+  end
+
+  # A header of the last answer /mcp gave.
+  def last_answer_header(name)
+    last_response.headers[name]
   end
 
   # A tool call to /mcp with this token.

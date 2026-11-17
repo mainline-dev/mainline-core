@@ -11,12 +11,14 @@ MCP_TRANSPORT = MCP::Server::Transports::StreamableHTTPTransport.new(
 
 class Mainline
   hash_branch('mcp') do |r|
-    # A coding agent with a personal token. One with no token never gets
-    # here: app.rb asks it to sign in.
+    # A coding agent with a personal token, or an app's access token. One with
+    # no token never gets here: app.rb asks it to sign in.
     r.is do
       now = Time.now
-      access = McpAccess.for_token(mcp_token(r), now: now)
-      next mcp_invalid_token unless access
+      token = mcp_token(r)
+      access = McpAccess.for_token(token, now: now)
+      next mcp_invalid_token(McpAccess.grant_of(token)) unless access
+      next mcp_too_many(1) unless MCP_GRANT_LIMITER.allow?(access.grant_id)
 
       unless access.readable?
         next mcp_refusal(403, 'None of the teams this coding agent was given can be read now: ' \
@@ -52,17 +54,25 @@ class Mainline
     req.env['HTTP_AUTHORIZATION'].to_s[/\ABearer\s+(\S+)\z/i, 1]
   end
 
+  # Too many: try again once the limit lets another call through.
+  def mcp_too_many(seconds)
+    response['Retry-After'] = seconds.to_s
+    mcp_refusal(429, 'too many requests')
+  end
+
   def mcp_refusal(status, message)
     response.status = status
     response['Content-Type'] = 'application/json'
     JSON.generate(error: message)
   end
 
-  # A token that is not a live one, asked to sign in again. Failures are
-  # limited per address, as they were for team tokens, until the per-grant
-  # limits are decided.
-  def mcp_invalid_token
-    return mcp_refusal(429, 'too many requests') unless MCP_RATE_LIMITER.allow?(request.ip)
+  # A token that is not a live one, asked to sign in again. One Mainline
+  # issued counts against its own grant, so the many people who reach Mainline
+  # from one platform's addresses never use up each other's allowance; only a
+  # token matching nothing counts against the address it came from.
+  def mcp_invalid_token(grant_id)
+    return mcp_too_many(1) if grant_id && !MCP_GRANT_LIMITER.allow?(grant_id)
+    return mcp_too_many(6) if grant_id.nil? && !MCP_UNKNOWN_TOKEN_LIMITER.allow?(request.ip)
 
     response.status = 401
     response['WWW-Authenticate'] = McpSignIn::INVALID_TOKEN
