@@ -372,6 +372,10 @@ class HttpDriver
     last_response
   end
 
+  def story_template_chosen
+    Nokogiri::HTML(last_response.body).at_css('[data-test-id="story-template"] option[selected]')&.[]('value')
+  end
+
   def submit_create_story_from_template(map, attrs)
     params = {
       'task_id'  => attrs[:task_id],

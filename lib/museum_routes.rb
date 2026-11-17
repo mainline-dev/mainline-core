@@ -138,7 +138,7 @@ class Mainline
   def museum_start_template(item)
     return WRITTEN_OUT if item&.proposed?
 
-    STORY_TEMPLATES[TeamConstraint.for_team(@team.id, 'default_story_template', default: 0)] || STORY_TEMPLATES.first
+    team_story_template(@team)
   end
 
   # The title a promote form posts, built by its template the way the

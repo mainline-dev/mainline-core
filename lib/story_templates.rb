@@ -7,6 +7,11 @@
 class Mainline
   STORY_TEMPLATES = %w[connextra card behaviour].freeze
 
+  # The template a team's new stories start from, as its settings choose.
+  def team_story_template(team)
+    STORY_TEMPLATES[TeamConstraint.for_team(team.id, 'default_story_template', default: 0)] || STORY_TEMPLATES.first
+  end
+
   def template_title
     template = typecast_params.nonempty_str('template')
     title = case template

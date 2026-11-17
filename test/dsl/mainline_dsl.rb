@@ -486,6 +486,11 @@ module MainlineDSL
     driver.submit_create_story(@map, title: title, task_id: task_id, description: description)
   end
 
+  # The template the new-story form shown has selected, or nil.
+  def story_template_chosen
+    driver.story_template_chosen
+  end
+
   def submit_create_story_from_template(**attrs)
     driver.submit_create_story_from_template(@map, attrs)
   end

@@ -22,7 +22,7 @@
     </select>
 
     <label for="template">Template</label>
-    <select id="template" name="template">
+    <select id="template" name="template" data-test-id="story-template">
       <option value="connextra" <%= 'selected' if @default_template == 'connextra' %>>As a... I want to... so that...</option>
       <option value="card" <%= 'selected' if @default_template == 'card' %>>Persona does thing</option>
       <option value="behaviour" <%= 'selected' if @default_template == 'behaviour' %>>When... persona can...</option>

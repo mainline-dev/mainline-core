@@ -15,6 +15,21 @@ describe 'Story templates' do
     @task     = create_task('Sign up', under_activity: @activity)
   end
 
+  it 'comes back on the template the person chose when a field is missing' do
+    submit_create_story_from_template(task_id: @task.id, template: 'behaviour', context: 'viewing order history',
+      persona: 'Returning Customer')
+
+    assert_equal 'behaviour', story_template_chosen
+  end
+
+  it "comes back on the team's default template when none was chosen" do
+    update_settings(default_story_template: 'card')
+
+    submit_create_story_from_template(task_id: @task.id, template: nil)
+
+    assert_equal 'card', story_template_chosen
+  end
+
   it 'creates a story with connextra template' do
     submit_create_story_from_template(
       task_id:  @task.id,

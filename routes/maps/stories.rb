@@ -6,8 +6,7 @@ class Mainline
       @story = Story.new
       load_story_tasks
       @selected_task_id = typecast_params.str('task_id')
-      template_idx = TeamConstraint.for_team(@current_team.id, 'default_story_template', default: 0)
-      @default_template = %w[connextra card behaviour][template_idx] || 'connextra'
+      @default_template = team_story_template(@current_team)
       view 'new'
     end
 
@@ -33,6 +32,7 @@ class Mainline
           @story = Story.new
           load_story_tasks
           @selected_task_id = task_id
+          @default_template = STORY_TEMPLATES.include?(template) ? template : team_story_template(@current_team)
           next view('new')
         end
 
