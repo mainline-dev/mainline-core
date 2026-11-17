@@ -34,6 +34,7 @@ describe 'Limits at /mcp' do
   end
 
   it 'answers a token that matches nothing 600 times an hour from one address, then turns that address away' do
+    the_clock_stops
     statuses = Array.new(601) { connect_mcp(token: 'not-a-token', from: '203.0.113.7').status }
 
     assert_equal [401], statuses.first(600).uniq
@@ -43,6 +44,7 @@ describe 'Limits at /mcp' do
 
   it 'takes 120 calls a minute with a live token, then says when to try again' do
     live = token
+    the_clock_stops
 
     statuses = Array.new(121) { call_mcp('list_maps', token: live).status }
 
@@ -56,6 +58,7 @@ describe 'Limits at /mcp' do
     expiring = token('old runner', days: 1)
     days_pass(2)
     live = token('new runner')
+    the_clock_stops
 
     statuses = Array.new(121) { connect_mcp(token: expiring).status }
 

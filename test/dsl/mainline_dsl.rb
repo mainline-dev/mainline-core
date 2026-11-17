@@ -818,6 +818,12 @@ module MainlineDSL
     Timecop.travel(Time.now + (days * 86_400))
   end
 
+  # Holds the clock still, so whatever counts calls over time sees them all at
+  # one moment, however slowly they run. back_to_today starts it again.
+  def the_clock_stops
+    Timecop.freeze
+  end
+
   def back_to_today
     Timecop.return
   end
