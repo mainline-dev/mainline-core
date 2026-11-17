@@ -111,3 +111,4 @@ classes:
   OauthRevocation: { mutations: 212, killed: 207, alive: 5 }
   OauthSetting: { mutations: 20, killed: 18, alive: 2 }
   DeployStory: { mutations: 136, killed: 135, alive: 1 }
+  ReleaseStory: { mutations: 328, killed: 325, alive: 3 }

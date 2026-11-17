@@ -31,7 +31,7 @@ module MutationBaseline
     LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid McpAccess MuseumList
     NeverPulled OAuthMetadata OauthRequest OauthRevocation OauthSetting OauthTokens PairingMatrix PersonalToken PersonalTokens
     PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
-    ReleaseBlock ReleaseNotes RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
+    ReleaseBlock ReleaseNotes ReleaseStory RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeGrant RevokeOauthToken SetTeamContext SignInGrant SignedState SignupTimer
     SoloLog SplitCandidate StartUrgentStory StepStubs StoryId StoryPicker ThroughputScatter TwoPersonRule
     UnpromoteMuseumItem UrgentStory Walkthroughs

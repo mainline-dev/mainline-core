@@ -215,48 +215,12 @@ class Mainline
       end
 
       r.post 'release' do
-        if @story.status == 'active' && @story.deploy_count.positive?
-          reason = typecast_params.str('reason')
-          held = ReleaseBlock.refusal(@story, reason: reason)
-          if held
-            flash_msg.error(release_refusal(held), reason: held)
-            next htmx_grid_or_redirect(r)
-          end
-          # An urgent story can be released before its walkthrough, and is walked afterwards.
-          before_walkthrough = TwoPersonRule.blocks_release?(@story, @current_team)
-          if before_walkthrough && !UrgentStory.urgent?(@story)
-            flash_msg.error(TwoPersonRule::REFUSAL, reason: TwoPersonRule::REASON)
-            next htmx_grid_or_redirect(r)
-          end
-          released = { status: 'released' }.merge(ReleaseBlock.recorded(@story, reason: reason))
-          released[TwoPersonRule::BEFORE_WALKTHROUGH] = true if before_walkthrough
-          DB.transaction do
-            StoryAssignment.where(story_id: @story.id).each do |sa|
-              sa.destroy
-              RecordEvent.call(
-                actor_id:     @current_actor.id,
-                entity:       @story,
-                action:       'person_unassigned',
-                before_state: { person_id: sa.person_id, reason: 'released' }
-              )
-            end
-            @story.update(status: 'released', released_at: Time.now)
-            RecordEvent.call(
-              actor_id:    @current_actor.id,
-              entity:      @story,
-              action:      'released',
-              after_state: released
-            )
-            SplitCandidate.invalidate_threshold!(@current_team.id)
-          end
+        result = ReleaseStory.call(story: @story, team: @current_team, actor: @current_actor,
+          reason: typecast_params.str('reason'), now: Time.now)
+        if result.success?
           flash_msg.notice("Story '#{@story.title}' marked as released")
         else
-          msg = if @story.status == 'active'
-                  'Story must be deployed at least once before release'
-                else
-                  'Only active stories can be released'
-                end
-          flash_msg.error(msg)
+          flash_msg.error(result.error, reason: result.reason)
         end
         htmx_grid_or_redirect(r)
       end
@@ -506,16 +470,6 @@ class Mainline
   end
 
   private
-
-  # What the page says when a story's scenarios hold back its release. A
-  # scenario not done is done, split out or deleted first.
-  def release_refusal(held)
-    return ReleaseBlock::REFUSALS.fetch(held) unless held == ReleaseBlock::UNVERIFIED
-
-    undone = Scenario.where(story_id: @story.id, done_at: nil).count
-    "#{undone} #{undone == 1 ? 'scenario' : 'scenarios'} not yet verified. " \
-      'Mark them done, split them out or delete them before releasing.'
-  end
 
   def load_assignable_people
     assigned_ids = StoryAssignment.where(story_id: @story.id).select_map(:person_id)
