@@ -392,46 +392,21 @@ class Mainline
           next unless scenario && scenario.story_id == @story.id
 
           r.post 'delete' do
-            unless @story.status == 'released'
-              scenario.destroy
-              RecordEvent.call(
-                actor_id: @current_actor.id,
-                entity:   @story,
-                action:   'scenario_removed'
-              )
-            end
+            RemoveScenario.call(story: @story, scenario: scenario, actor: @current_actor)
             @scenarios = Scenario.where(story_id: @story.id).order(:position).all
             @scenario_errors = []
             with_preview(render('maps/stories/_scenarios'))
           end
 
           r.post 'done' do
-            if @story.status != 'released' && scenario.done_at.nil?
-              DB.transaction do
-                scenario.update(done_at: Time.now)
-                RecordEvent.call(
-                  actor_id: @current_actor.id,
-                  entity:   @story,
-                  action:   'scenario_done'
-                )
-              end
-            end
+            MarkScenario.done(story: @story, scenario: scenario, actor: @current_actor, now: Time.now)
             @scenarios = Scenario.where(story_id: @story.id).order(:position).all
             @scenario_errors = []
             with_preview(render('maps/stories/_scenarios'))
           end
 
           r.post 'undone' do
-            if @story.status != 'released' && scenario.done_at
-              DB.transaction do
-                scenario.update(done_at: nil)
-                RecordEvent.call(
-                  actor_id: @current_actor.id,
-                  entity:   @story,
-                  action:   'scenario_undone'
-                )
-              end
-            end
+            MarkScenario.undone(story: @story, scenario: scenario, actor: @current_actor)
             @scenarios = Scenario.where(story_id: @story.id).order(:position).all
             @scenario_errors = []
             with_preview(render('maps/stories/_scenarios'))
@@ -441,24 +416,11 @@ class Mainline
             r.post do
               next render('maps/stories/_scenarios') if @story.status == 'released'
 
-              name  = typecast_params.str('name').to_s.strip
-              given = typecast_params.str('given').to_s.strip
-              whn   = typecast_params.str('when').to_s.strip
-              thn   = typecast_params.str('then').to_s.strip
-
-              @scenario_errors = AddScenario.errors(name, given, whn, thn)
-
-              if @scenario_errors.empty?
-                DB.transaction do
-                  scenario.set(name: name, given_text: given, when_text: whn, then_text: thn)
-                  # Recorded only when the edit changes something, so a save
-                  # of the form as it stood is no change to the scenarios.
-                  if scenario.modified?
-                    scenario.save_changes
-                    RecordEvent.call(actor_id: @current_actor.id, entity: @story, action: 'scenario_edited')
-                  end
-                end
-              end
+              @scenario_errors = EditScenario.call(
+                story: @story, scenario: scenario, actor: @current_actor,
+                name: typecast_params.str('name').to_s.strip, given_text: typecast_params.str('given').to_s.strip,
+                when_text: typecast_params.str('when').to_s.strip, then_text: typecast_params.str('then').to_s.strip
+              ).errors
 
               @scenarios = Scenario.where(story_id: @story.id).order(:position).all
               with_preview(render('maps/stories/_scenarios'))

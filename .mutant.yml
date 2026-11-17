@@ -30,6 +30,7 @@ requires:
   - ./lib/discard_museum_item
   - ./lib/edit_activity
   - ./lib/edit_persona
+  - ./lib/edit_scenario
   - ./lib/edit_task
   - ./lib/encrypted_email
   - ./lib/first_run
@@ -52,6 +53,7 @@ requires:
   - ./lib/mainline_file
   - ./lib/map_access
   - ./lib/map_grid
+  - ./lib/mark_scenario
   - ./lib/museum_list
   - ./lib/never_pulled
   - ./lib/oauth_metadata
@@ -71,6 +73,7 @@ requires:
   - ./lib/release_block
   - ./lib/release_notes
   - ./lib/release_story
+  - ./lib/remove_scenario
   - ./lib/remove_unverified_accounts
   - ./lib/reorder_activities
   - ./lib/reorder_stories

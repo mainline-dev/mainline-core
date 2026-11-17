@@ -112,3 +112,6 @@ classes:
   OauthSetting: { mutations: 20, killed: 18, alive: 2 }
   DeployStory: { mutations: 136, killed: 135, alive: 1 }
   ReleaseStory: { mutations: 328, killed: 325, alive: 3 }
+  RemoveScenario: { mutations: 61, killed: 60, alive: 1 }
+  MarkScenario: { mutations: 126, killed: 125, alive: 1 }
+  EditScenario: { mutations: 128, killed: 127, alive: 1 }
