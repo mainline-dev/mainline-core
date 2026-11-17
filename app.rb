@@ -275,11 +275,13 @@ class Mainline < Roda
     plugin :autoload_hash_branches
     autoload_hash_branch_dir('./routes')
     autoload_hash_branch_dir('maps', './routes/maps')
+    autoload_hash_branch_dir('maps/stories', './routes/maps/stories')
     autoload_hash_branch_dir('teams', './routes/teams')
     autoload_hash_branch_dir('webhooks', './routes/webhooks')
   end
   Unreloader.autoload('routes', delete_hook: proc {|f| hash_branch(File.basename(f).delete_suffix('.rb'))}) {}
   Unreloader.autoload('routes/maps', delete_hook: proc {|f| hash_branch('maps', File.basename(f).delete_suffix('.rb'))}) {}
+  Unreloader.autoload('routes/maps/stories', delete_hook: proc {|f| hash_branch('maps/stories', File.basename(f).delete_suffix('.rb'))}) {}
   Unreloader.autoload('routes/teams', delete_hook: proc {|f| hash_branch('teams', File.basename(f).delete_suffix('.rb'))}) {}
   Unreloader.autoload('routes/webhooks', delete_hook: proc {|f| hash_branch('webhooks', File.basename(f).delete_suffix('.rb'))}) {}
 
