@@ -62,7 +62,9 @@ module OauthTokens
 
   # Marks a code or refresh token used, in one update that only an unused one
   # passes. Of two requests that looked it up at the same moment, only one
-  # changes the row; the other is refused as a second use.
+  # changes the row; the other is refused as a second use. The request's own
+  # transaction (app.rb) holds the claim and the new tokens together: if
+  # issuing them fails, the claim rolls back and the app can try again.
   def self.claimed?(table, id, now)
     table.where(id: id, used_at: nil).update(used_at: now) == 1
   end
