@@ -35,7 +35,7 @@ describe 'Security tokens' do
   end
 
   it 'lets a coding agent call the MCP server without one' do
-    generate_mcp_token
+    connect_coding_agent
 
     response = with_csrf_checked { mcp_initialize }
 

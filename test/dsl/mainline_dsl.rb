@@ -1309,8 +1309,8 @@ module MainlineDSL
     sent
   end
 
-  def connect_mcp_client(host:, token:, team: @team)
-    driver.connect_mcp_client(team, token: token, host: host)
+  def connect_mcp_client(host:, token:)
+    driver.connect_mcp_client(token: token, host: host)
   end
 
   def press_shortcut(*keys)

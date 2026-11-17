@@ -3,10 +3,31 @@
 # MCP client steps over HTTP. Needs a spec that includes Rack::Test (the web
 # spec helper) and a @team.
 module McpDSL
+  # A coding agent set up as a person sets one up: a personal token for the
+  # team, made by whoever is signed in.
+  def connect_coding_agent
+    @mcp_token = create_personal_token(name: 'coding agent', teams: [@team], expires_on: Date.today + 30)
+  end
+
+  # Retired with team tokens: the one token a team's account holder makes on
+  # its MCP page, for the old address, /mcp/<team id>.
   def generate_mcp_token
     driver.submit_generate_mcp_token(@team)
     @team.refresh
     @mcp_token = driver.last_mcp_token
+  end
+
+  def team_token_initialize(team_id: @team.id, token: @mcp_token)
+    body = { jsonrpc: '2.0', id: 1, method: 'initialize',
+             params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test', version: '1.0' } } }
+    post("/mcp/#{team_id}", JSON.generate(body), signed_in_headers(token))
+    last_response
+  end
+
+  def team_token_call_tool(name, arguments: {})
+    body = { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: name, arguments: arguments } }
+    post("/mcp/#{@team.id}", JSON.generate(body), signed_in_headers(@mcp_token))
+    last_response
   end
 
   # What a browser's address bar asks for.
@@ -70,10 +91,10 @@ module McpDSL
       'HTTP_AUTHORIZATION' => "Bearer #{token}", 'HTTP_HOST' => ENV.fetch('MAINLINE_HOST') }
   end
 
-  def mcp_initialize(team_id: @team.id, token: nil)
+  def mcp_initialize(token: nil)
     token ||= @mcp_token
     post(
-      "/mcp/#{team_id}",
+      '/mcp',
       JSON.generate({
         jsonrpc: '2.0', id: 1, method: 'initialize',
         params: { protocolVersion: '2025-03-26', capabilities: {},
@@ -94,10 +115,10 @@ module McpDSL
   end
 
   # The tools the server offers, as a client lists them.
-  def mcp_list_tools(team_id: @team.id, token: nil)
+  def mcp_list_tools(token: nil)
     token ||= @mcp_token
     post(
-      "/mcp/#{team_id}",
+      '/mcp',
       JSON.generate({ jsonrpc: '2.0', id: 3, method: 'tools/list' }),
       'CONTENT_TYPE'       => 'application/json',
       'HTTP_ACCEPT'        => 'application/json',
@@ -107,7 +128,7 @@ module McpDSL
     JSON.parse(last_response.body).dig('result', 'tools')
   end
 
-  def mcp_call_tool(name, arguments: {}, team_id: @team.id, token: nil, user_agent: nil)
+  def mcp_call_tool(name, arguments: {}, token: nil, user_agent: nil)
     token ||= @mcp_token
     headers = {
       'CONTENT_TYPE'       => 'application/json',
@@ -117,7 +138,7 @@ module McpDSL
     }
     headers['HTTP_USER_AGENT'] = user_agent if user_agent
     post(
-      "/mcp/#{team_id}",
+      '/mcp',
       JSON.generate({
         jsonrpc: '2.0', id: 2, method: 'tools/call',
         params: { name: name, arguments: arguments }

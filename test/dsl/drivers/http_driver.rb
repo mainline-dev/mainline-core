@@ -560,9 +560,9 @@ class HttpDriver
     last_response
   end
 
-  def connect_mcp_client(team, token:, host:)
+  def connect_mcp_client(token:, host:)
     post(
-      "/mcp/#{team.id}",
+      '/mcp',
       JSON.generate({
         jsonrpc: '2.0', id: 1, method: 'initialize',
         params: { protocolVersion: '2025-03-26', capabilities: {},

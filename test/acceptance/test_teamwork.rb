@@ -69,7 +69,7 @@ describe 'Teamwork - Pairing matrix' do
     @team.update(creator_id: @alice.id)
     story = create_story('Agent read', under_task: @task)
     assign_person(story, person: @alice)
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
     mcp_call_tool('get_story', arguments: { 'story_id' => story.id })
 

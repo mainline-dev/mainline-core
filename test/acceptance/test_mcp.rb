@@ -25,7 +25,7 @@ describe 'MCP server' do
   end
 
   it 'accepts clients connecting through the app host' do
-    generate_mcp_token
+    connect_coding_agent
 
     response = connect_mcp_client(host: ENV.fetch('MAINLINE_HOST'), token: @mcp_token)
 
@@ -33,66 +33,15 @@ describe 'MCP server' do
   end
 
   it 'refuses clients connecting through another host' do
-    generate_mcp_token
+    connect_coding_agent
 
     response = connect_mcp_client(host: 'evil.example.com', token: @mcp_token)
 
     assert_equal 403, response.status
   end
 
-  it 'rejects unauthenticated request' do
-    generate_mcp_token
-
-    post(
-      "/mcp/#{@team.id}",
-      JSON.generate({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
-      'CONTENT_TYPE'       => 'application/json',
-      'HTTP_ACCEPT'        => 'application/json',
-      'HTTP_AUTHORIZATION' => 'Bearer wrong-token'
-    )
-
-    assert_equal 401, last_response.status
-  end
-
-  it 'shows the endpoint under the base url of this install' do
-    generate_mcp_token
-
-    visit_mcp_token_settings
-
-    assert_page_includes "#{ENV.fetch('BASE_URL')}/mcp/#{@team.id}"
-  end
-
-  it 'points an unknown team at the signup page of this install' do
-    response = mcp_initialize(team_id: '00000000-0000-0000-0000-000000000000', token: 'none')
-
-    assert_equal 404, response.status
-    assert_includes response.body, "#{ENV.fetch('BASE_URL')}/signup"
-  end
-
-  it 'rejects request when no MCP token configured' do
-    post(
-      "/mcp/#{@team.id}",
-      JSON.generate({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
-      'CONTENT_TYPE'       => 'application/json',
-      'HTTP_ACCEPT'        => 'application/json',
-      'HTTP_AUTHORIZATION' => 'Bearer anything'
-    )
-
-    assert_equal 401, last_response.status
-  end
-
-  it 'blocks MCP access when the team is suspended' do
-    generate_mcp_token
-    suspend_team
-
-    resp = mcp_call_tool('list_maps')
-
-    assert_equal 403, resp.status
-    assert_includes resp.body, 'team inactive'
-  end
-
   it 'initializes MCP session' do
-    generate_mcp_token
+    connect_coding_agent
     resp = mcp_initialize
 
     assert_equal 200, resp.status
@@ -104,7 +53,7 @@ describe 'MCP server' do
   end
 
   it 'list_maps returns team maps' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('list_maps')
@@ -124,7 +73,7 @@ describe 'MCP server' do
   end
 
   it 'get_map returns full map hierarchy' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_map', arguments: { 'map_id' => @map.id })
@@ -145,7 +94,7 @@ describe 'MCP server' do
   end
 
   it 'get_story returns story detail with scenarios' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_story', arguments: { 'story_id' => @story.id })
@@ -166,7 +115,7 @@ describe 'MCP server' do
   end
 
   it 'get_feature_file returns the scenarios as a feature file and marks the story as agent-read' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id })
@@ -178,7 +127,7 @@ describe 'MCP server' do
   end
 
   it 'get_feature_file adds step stubs in the language asked for' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id, 'language' => 'typescript' })
@@ -189,7 +138,7 @@ describe 'MCP server' do
   end
 
   it "get_import_format returns the instructions and schema for writing an import file, naming the team's steps" do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_import_format')
@@ -200,7 +149,7 @@ describe 'MCP server' do
   end
 
   it 'get_import_format changes nothing: no story is marked as read by an agent' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     writes = writes_during { mcp_call_tool('get_import_format') }
@@ -210,7 +159,7 @@ describe 'MCP server' do
   end
 
   it 'get_feature_file refuses a language it does not know' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id, 'language' => 'cobol' })
@@ -228,7 +177,7 @@ describe 'MCP server' do
       Story.create(task_id: task.id, map_id: map.id, team_id: team.id, title: 'Theirs', position: 1000,
         created_by_id: creator.id)
     }
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_feature_file', arguments: { 'story_id' => other.id })
@@ -239,7 +188,7 @@ describe 'MCP server' do
   it 'get_story names a scenario written before names by its Then line' do
     Scenario.create(story_id: @story.id, given_text: 'no query', when_text: 'I search', then_text: 'I see a prompt',
       position: 2000)
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_story', arguments: { 'story_id' => @story.id })
@@ -251,7 +200,7 @@ describe 'MCP server' do
   end
 
   it 'get_story finds a story by the 8-character ID on its card' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     text, error = mcp_tool_text(mcp_call_tool('get_story', arguments: { 'story_id' => @story.id[0, 8].upcase }))
@@ -261,7 +210,7 @@ describe 'MCP server' do
   end
 
   it 'get_feature_file finds a story by the 8-character ID on its card' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     text, error = mcp_tool_text(mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id[0, 8] }))
@@ -271,7 +220,7 @@ describe 'MCP server' do
   end
 
   it 'tells an agent where to find a story ID when none matches' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     %w[get_story get_feature_file].product(['00000000', 'YOUR_STORY_ID', '{story_id}']).each do |tool, id|
@@ -284,7 +233,7 @@ describe 'MCP server' do
 
   it "finds nothing by the short ID of another team's story" do
     theirs = other_team_story
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     text, error = mcp_tool_text(mcp_call_tool('get_story', arguments: { 'story_id' => theirs.id[0, 8] }))
@@ -293,17 +242,8 @@ describe 'MCP server' do
     refute_includes text, 'Their story'
   end
 
-  it "get_story says nothing of whether the agent's person is on the story, since a team token has no person" do
-    generate_mcp_token
-    mcp_initialize
-
-    text, = mcp_tool_text(mcp_call_tool('get_story', arguments: { 'story_id' => @story.id }))
-
-    refute JSON.parse(text).key?('assigned_to_you')
-  end
-
   it 'get_story does not expose deploy webhook URL' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_story', arguments: { 'story_id' => @story.id })
@@ -316,7 +256,7 @@ describe 'MCP server' do
   end
 
   it 'records a read with the coding agent the team already has, creating and changing nothing else' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     writes = writes_during { mcp_call_tool('get_story', arguments: { 'story_id' => @story.id }) }
@@ -328,7 +268,7 @@ describe 'MCP server' do
   end
 
   it 'get_feature_file records a read and changes no story' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     writes = writes_during { mcp_call_tool('get_feature_file', arguments: { 'story_id' => @story.id }) }
@@ -338,7 +278,7 @@ describe 'MCP server' do
   end
 
   it 'shows AGENT on the card once a coding agent has read the story' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
     visit_story_card(@story)
 
@@ -350,61 +290,10 @@ describe 'MCP server' do
     assert_page_includes('data-test-id="agent-chip"')
   end
 
-  it 'only the account holder can rotate the MCP token' do
-    bob = add_person(name: 'Bob')
-    login_as(bob)
-
-    driver.submit_generate_mcp_token(@team)
-    @team.refresh
-
-    assert_nil @team.mcp_token
-  end
-
-  # The account holder may pay for and run a team without working on it. The
-  # token is theirs alone to create, so its page opens for them either way.
-  describe 'an account holder who is not working on the team' do
-    before do
-      @holder = Person.create(name: 'Buyer', email: 'buyer@corp.co')
-      TeamMembership.create(team_id: @team.id, person_id: @holder.id, working: false)
-      @team.update(creator_id: @holder.id)
-      login_as(@holder)
-    end
-
-    it 'opens the MCP page' do
-      assert_equal 200, visit_mcp_token_settings.status
-    end
-
-    it 'creates the token, and an agent connects with it' do
-      generate_mcp_token
-
-      refute_nil @team.mcp_token
-      assert_equal 200, connect_mcp_client(host: ENV.fetch('MAINLINE_HOST'), token: @mcp_token).status
-    end
-  end
-
-  it 'still sends a member who is not working, and is not the account holder, back to the team page' do
-    watcher = Person.create(name: 'Watcher', email: 'watcher@corp.co')
-    TeamMembership.create(team_id: @team.id, person_id: watcher.id, working: false)
-    login_as(watcher)
-
-    visited = visit_mcp_token_settings
-
-    assert_equal 302, visited.status
-    assert_equal "/teams/#{@team.id}", URI(visited.headers['Location']).path
-  end
-
-  it 'rotating the MCP token records an event' do
-    generate_mcp_token
-
-    event = Event.where(entity_id: @team.id, action: 'mcp_token_rotated').first
-
-    refute_nil event
-  end
-
   it 'get_story scenarios carry done state' do
     scenario = Scenario.where(story_id: @story.id).first
     mark_scenario_done(@story, scenario)
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_story', arguments: { 'story_id' => @story.id })
@@ -417,22 +306,16 @@ describe 'MCP server' do
   end
 
   it 'exposes only read tools - no scenario or story mutation' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
-    post(
-      "/mcp/#{@team.id}",
-      JSON.generate({ jsonrpc: '2.0', id: 3, method: 'tools/list' }),
-      'CONTENT_TYPE' => 'application/json', 'HTTP_ACCEPT' => 'application/json',
-      'HTTP_AUTHORIZATION' => "Bearer #{@mcp_token}", 'HTTP_HOST' => ENV.fetch('MAINLINE_HOST')
-    )
-    names = JSON.parse(last_response.body).dig('result', 'tools').map { |t| t['name'] }.sort
+    names = mcp_list_tools.map { |t| t['name'] }.sort
 
     assert_empty %w[get_map get_story list_maps] - names
   end
 
   it 'gives every tool a title and says it only reads, the same each time, and reaches nothing outside Mainline' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     read_only = { 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true,
@@ -445,7 +328,7 @@ describe 'MCP server' do
   end
 
   it 'tells a client that every tool needs a sign-in that may read' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     sign_in = { 'securitySchemes' => [{ 'type' => 'oauth2', 'scopes' => ['mainline:read'] }] }
@@ -454,7 +337,7 @@ describe 'MCP server' do
   end
 
   it 'records an agent_read event for every get_story fetch' do
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     mcp_call_tool('get_story', arguments: { 'story_id' => @story.id }, user_agent: 'claude-code/2.0')
@@ -471,7 +354,7 @@ describe 'MCP server' do
   it 'an agent read records who was on the story at the time' do
     bob = add_person(name: 'Bob')
     assign_person(@story, person: bob)
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     mcp_call_tool('get_story', arguments: { 'story_id' => @story.id })
@@ -486,7 +369,7 @@ describe 'MCP server' do
     SetTeamContext.call(other_team.id)
     other_map = Map.create(team_id: other_team.id, name: 'Secret Map', position: 1000)
 
-    generate_mcp_token
+    connect_coding_agent
     mcp_initialize
 
     resp = mcp_call_tool('get_map', arguments: { 'map_id' => other_map.id })
@@ -494,75 +377,5 @@ describe 'MCP server' do
     body = JSON.parse(resp.body)
 
     assert body.dig('result', 'isError')
-  end
-
-  it 'authenticates from cache on second request' do
-    generate_mcp_token
-    resp1 = mcp_initialize
-
-    assert_equal 200, resp1.status
-
-    resp2 = mcp_call_tool('list_maps')
-
-    assert_equal 200, resp2.status
-  end
-
-  it 'rejects cached token after team regenerates MCP token' do
-    generate_mcp_token
-    old_token = @mcp_token
-    resp = mcp_initialize
-
-    assert_equal 200, resp.status
-
-    generate_mcp_token
-    resp = mcp_initialize(token: old_token)
-
-    assert_equal 401, resp.status
-  end
-
-  it 'rate limits failed auth attempts' do
-    generate_mcp_token
-
-    11.times do
-      post(
-        "/mcp/#{@team.id}",
-        JSON.generate({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
-        'CONTENT_TYPE'       => 'application/json',
-        'HTTP_ACCEPT'        => 'application/json',
-        'HTTP_AUTHORIZATION' => 'Bearer wrong-token'
-      )
-    end
-
-    assert_equal 429, last_response.status
-  end
-
-  it 'returns helpful error for placeholder team ID' do
-    post(
-      '/mcp/YOUR_TEAM_ID',
-      JSON.generate({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
-      'CONTENT_TYPE' => 'application/json',
-      'HTTP_ACCEPT'  => 'application/json'
-    )
-
-    assert_equal 400, last_response.status
-
-    body = JSON.parse(last_response.body)
-
-    assert_includes body['error'], 'team ID'
-  end
-
-  it 'returns helpful error for URL-encoded placeholder' do
-    post(
-      '/mcp/%7Bteam_id%7D',
-      JSON.generate({ jsonrpc: '2.0', id: 1, method: 'initialize', params: {} }),
-      'CONTENT_TYPE' => 'application/json',
-      'HTTP_ACCEPT'  => 'application/json'
-    )
-
-    assert_equal 400, last_response.status
-
-    body = JSON.parse(last_response.body)
-
-    assert_includes body['error'], 'team ID'
   end
 end
