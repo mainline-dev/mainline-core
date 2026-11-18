@@ -22,5 +22,7 @@ if %w[development test].include?(ENV['RACK_ENV'])
   require 'logger'
   LOGGER = Logger.new($stdout)
   LOGGER.level = Logger::FATAL if ENV['RACK_ENV'] == 'test'
+  # A seed runs hundreds of thousands of statements; none is worth a line.
+  LOGGER.level = Logger::WARN if ENV.fetch('MAINLINE_SEED', nil)
   DB.loggers << LOGGER
 end

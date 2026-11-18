@@ -230,7 +230,12 @@ class Mainline < Roda
   plugin :typecast_params_sized_integers, sizes: [64], default_size: 64
   plugin :hash_branch_view_subdir
 
-  use RequestLogger, $stderr unless ENV['RACK_ENV'] == 'test'
+  def self.seeding?
+    ENV['RACK_ENV'] == 'development' && ENV.fetch('MAINLINE_SEED', nil)
+  end
+
+  # A seed drives the app through thousands of requests; none is worth a line.
+  use RequestLogger, $stderr unless ENV['RACK_ENV'] == 'test' || seeding?
 
   plugin :not_found do
     @page_title = 'Page not found'
@@ -294,10 +299,6 @@ class Mainline < Roda
   Unreloader.autoload('routes/maps/stories', delete_hook: proc {|f| hash_branch('maps/stories', File.basename(f).delete_suffix('.rb'))}) {}
   Unreloader.autoload('routes/teams', delete_hook: proc {|f| hash_branch('teams', File.basename(f).delete_suffix('.rb'))}) {}
   Unreloader.autoload('routes/webhooks', delete_hook: proc {|f| hash_branch('webhooks', File.basename(f).delete_suffix('.rb'))}) {}
-
-  def self.seeding?
-    ENV['RACK_ENV'] == 'development' && ENV.fetch('MAINLINE_SEED', nil)
-  end
 
   class << self
     attr_accessor :seed_person_id

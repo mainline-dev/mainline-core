@@ -46,8 +46,11 @@ describe 'The seeds' do
       db.run("CREATE DATABASE #{scratch} OWNER mainline")
       db.run("GRANT CONNECT ON DATABASE #{scratch} TO mainline_app")
     end
-    out, status = Subprocess.run(as_development, 'bundle', 'exec', 'rake', 'dev_up')
-    raise "Migrating the scratch database failed:\n#{out}" unless status.success?
+  end
+
+  # Each person's login link in what the trial printed, as [label, address].
+  def login_links(out)
+    out.scan(/^  (.+): (\S+_test_login\S+)$/)
   end
 
   after do
@@ -55,7 +58,7 @@ describe 'The seeds' do
   end
 
   it "build the trial's sample teams on a first start, every released story with its scenarios done" do
-    out, status = Subprocess.run(as_development, 'ruby', '-r', './test_data/dev_seed', '-e', 'DevSeed.trial')
+    out, status = Subprocess.run(as_development, 'bundle', 'exec', 'rake', 'trial_up')
 
     assert_predicate status, :success?, out
     assert_includes out, 'Login as:'
@@ -66,5 +69,19 @@ describe 'The seeds' do
       assert_empty released.exclude(id: db[:scenarios].select(:story_id))
       assert_empty released.where(id: db[:scenarios].where(done_at: nil).select(:story_id))
     end
+  end
+
+  it "print the trial's login links where a newcomer finds them: no statements or requests, each person once, at this install" do
+    out, status = Subprocess.run(as_development, 'bundle', 'exec', 'rake', 'trial_up')
+    labels = login_links(out).map(&:first)
+    sites = login_links(out).map { |_, address| address[%r{\Ahttps?://[^/]+}] }.uniq
+
+    assert_predicate status, :success?, out
+    refute_match(/(INFO|ERROR) -- :/, out)
+    refute_match(%r{"(GET|POST) /}, out)
+    assert_operator out.lines.length, :<, 200
+    refute_empty labels
+    assert_equal labels.uniq, labels
+    assert_equal [ENV.fetch('BASE_URL')], sites
   end
 end

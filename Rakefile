@@ -21,11 +21,13 @@ as_owner = lambda do |env, script|
   RUBY
 end
 
-migrate = lambda do |env, version|
+# quiet leaves every statement out of the output; a migration that fails
+# still stops the task with its error.
+migrate = lambda do |env, version, quiet: false|
   as_owner.call(env, <<~RUBY)
     require 'logger'
     Sequel.extension :migration
-    DB.loggers << Logger.new($stdout) if DB.loggers.empty?
+    DB.loggers << Logger.new($stdout) if DB.loggers.empty? && !#{quiet}
     Sequel::Migrator.apply(DB, 'migrate', #{version.inspect})
   RUBY
 end
@@ -238,8 +240,10 @@ task :dev_seed do
 end
 
 desc 'The trial: migrate, seed the sample teams on the first start, and print their login links'
-task trial_up: :dev_up do
-  sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/dev_seed', '-e', 'DevSeed.trial')
+task :trial_up do
+  puts 'Preparing the database...'
+  migrate.call('development', nil, quiet: true)
+  sh({ 'RACK_ENV' => 'development' }, FileUtils::RUBY, '-r', './test_data/dev_seed', '-e', 'DevSeed.trial', verbose: false)
 end
 
 desc 'Remove seed data from development database'

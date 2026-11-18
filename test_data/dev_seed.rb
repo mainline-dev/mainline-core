@@ -56,9 +56,20 @@ class DevSeed # rubocop:disable Metrics/ClassLength
   end
 
   def self.links
-    teams = Team.order(:name).map { |team| "  #{team.name}: http://localhost:3000/teams/#{team.id}" }
-    people = Person.order(:name).map { |person| "  #{person.name}: http://localhost:3000/_test_login?person_id=#{person.id}&to=/teams" }
-    ['Teams:', *teams, '', 'Login as:', *people].join("\n")
+    base = ENV.fetch('BASE_URL')
+    teams = Team.order(:name).map { |team| "  #{team.name}: #{base}/teams/#{team.id}" }
+    ['Teams:', *teams, '', 'Login as:', *logins(base)].join("\n")
+  end
+
+  # One line a person, labelled with their teams: two sample teams can each
+  # have someone of the same name.
+  def self.logins(base)
+    team_names = Team.select_hash(:id, :name)
+    on = BypassRLS.call { TeamMembership.where(left_at: nil).select_hash_groups(:person_id, :team_id) }
+    Person.order(:name).map do |person|
+      teams = on.fetch(person.id, []).map { |id| team_names[id] }.sort.join(', ')
+      "  #{person.name} (#{teams}): #{base}/_test_login?person_id=#{person.id}&to=/teams"
+    end
   end
 
   GROWING_PAINS = TeamPersona::LOW.to_h.merge(team_size: 13..15).then { |h| TeamPersona.new(**h) }
