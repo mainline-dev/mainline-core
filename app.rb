@@ -624,21 +624,10 @@ class Mainline < Roda
 
     person = signup.person
     CoreEvents.publish(:person_signed_up, person_id: person.id, provider: 'email', session: session)
-    result = ask_to_verify(person)
+    result = EmailVerification.ask(person, now: Time.now)
     flash['error'] = 'Could not send the verification email. Please try again.' if result == :failed
     accept_invite(person, email, session)
     { person: person, verification: result }
-  end
-
-  # Sends the verification email, or where none is required counts the
-  # address as verified.
-  def ask_to_verify(person)
-    if EmailVerification.required?
-      SendVerificationEmail.call(person: person, token: SignedState.generate("verify:#{person.id}"))
-    else
-      person.update(email_verified_at: Time.now)
-      nil
-    end
   end
 
   def check_login_rate_limits(req)
@@ -666,12 +655,7 @@ class Mainline < Roda
 
   def handle_verify_email_get(req, token)
     value = SignedState.verify(token)
-    if value&.start_with?('oauth-verify:')
-      @verify_token = token
-      return view('verify_email_confirm', layout: false)
-    end
-    person = value&.start_with?('verify:') && Person[value.delete_prefix('verify:')]
-    unless person
+    unless value&.start_with?('oauth-verify:') || EmailVerification.person_for(token)
       flash['error'] = 'This verification link has expired or is invalid.'
       return req.redirect('/login')
     end
@@ -683,12 +667,12 @@ class Mainline < Roda
     value = SignedState.verify(token)
     return handle_oauth_verify(req, value) if value&.start_with?('oauth-verify:')
 
-    person = value&.start_with?('verify:') && Person[value.delete_prefix('verify:')]
+    person = EmailVerification.person_for(token)
     unless person
       flash['error'] = 'This verification link has expired or is invalid.'
       return req.redirect('/login')
     end
-    person.update(email_verified_at: Time.now) unless person.email_verified_at
+    EmailVerification.confirm(person, now: Time.now)
     flash['notice'] = 'Email verified.'
     req.redirect session['person_id'] ? '/teams' : '/login'
   end

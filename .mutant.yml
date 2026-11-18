@@ -36,6 +36,7 @@ requires:
   - ./lib/edit_task
   - ./lib/email_login
   - ./lib/email_signup
+  - ./lib/email_verification
   - ./lib/encrypted_email
   - ./lib/first_run
   - ./lib/ensemble_timeline
