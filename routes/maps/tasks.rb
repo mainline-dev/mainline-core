@@ -41,22 +41,8 @@ class Mainline
       end
 
       r.post 'archive' do
-        if Story.where(task_id: @task.id, archived_at: nil).any?
-          flash_msg.error('Cannot archive a step that has stories')
-          next htmx_grid_or_redirect(r)
-        end
-
-        DB.transaction do
-          @task.update(archived_at: Time.now)
-          RecordEvent.call(
-            actor_id:    @current_actor.id,
-            entity:      @task,
-            action:      'archived',
-            after_state: { name: @task.name }
-          )
-        end
-
-        flash_msg.notice("Step '#{@task.name}' archived")
+        result = ArchiveTask.call(task: @task, actor: @current_actor, now: Time.now)
+        result.success? ? flash_msg.notice("Step '#{@task.name}' archived") : flash_msg.error(result.error)
         htmx_grid_or_redirect(r)
       end
 

@@ -13,6 +13,7 @@ requires:
   - ./lib/archive_activity
   - ./lib/archive_persona
   - ./lib/archive_story
+  - ./lib/archive_task
   - ./lib/assign_person
   - ./lib/business_days
   - ./lib/bypass_rls
