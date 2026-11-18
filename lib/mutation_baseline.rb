@@ -34,7 +34,7 @@ module MutationBaseline
     NeverPulled OAuthMetadata OauthRequest OauthRevocation OauthSetting OauthTokens PairingMatrix PersonalToken PersonalTokens
     PromoteMuseumItem ProviderSignup RateLimiter RecordEvent RecordWalkthrough
     ReleaseBlock ReleaseNotes ReleaseStory RemoveScenario RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
-    ResourceCap RevokeGrant RevokeOauthToken SetTeamContext SignInGrant SignedState SignupTimer
+    ReportDeploys ResourceCap RevokeGrant RevokeOauthToken SetTeamContext SignInGrant SignedState SignupTimer
     SoloLog SplitCandidate StartUrgentStory StepStubs StoryId StoryPicker ThroughputScatter TwoPersonRule
     UnassignPerson UnpromoteMuseumItem UrgentStory Walkthroughs
   ].freeze

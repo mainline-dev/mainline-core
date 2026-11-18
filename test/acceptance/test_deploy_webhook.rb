@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'securerandom'
 require_relative '../web_spec_helper'
 require_relative '../dsl/mainline_dsl'
 
@@ -166,6 +167,33 @@ describe 'Deploy webhook' do
     body = JSON.parse(response.body)
 
     assert_equal 'invalid JSON', body['error']
+  end
+
+  it 'counts a story once however often one report names it' do
+    generate_webhook_token
+
+    response = api_deploy(story_ids: [@story.id, @story.id, @story.id[0, 8].upcase])
+
+    assert_equal 200, response.status
+    assert_equal 1, deploys_of(@story)
+  end
+
+  it 'refuses a report naming more than 100 stories' do
+    generate_webhook_token
+    others = Array.new(100) { SecureRandom.uuid }
+
+    response = api_deploy(story_ids: [@story.id, *others])
+
+    assert_equal 400, response.status
+    assert_equal 0, deploys_of(@story)
+  end
+
+  it 'refuses a body that is not a JSON object' do
+    generate_webhook_token
+
+    response = api_deploy_raw(body: '[1]')
+
+    assert_equal 400, response.status
   end
 
   it 'rejects story IDs with LIKE wildcards' do

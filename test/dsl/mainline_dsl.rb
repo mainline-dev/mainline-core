@@ -342,6 +342,11 @@ module MainlineDSL
     driver.status_of(story)
   end
 
+  # How many times the story has been deployed.
+  def deploys_of(story)
+    driver.deploys_of(story)
+  end
+
   # The day the story was last deployed, as the pages write it.
   def last_deployed_on(story)
     driver.last_deployed_on(story)

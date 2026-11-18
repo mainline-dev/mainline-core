@@ -2,7 +2,6 @@
 
 require 'bcrypt'
 require_relative '../lib/rate_limiter'
-require_relative '../lib/story_id'
 
 DEPLOY_RATE_LIMITER = SharedRateLimiter.new(name: 'deploy', capacity: 10, refill_rate: 0.2)
 
@@ -52,36 +51,24 @@ class Mainline
             response.status = 400
             next '{"error":"invalid JSON"}'
           end
-          story_ids = Array(body['story_ids'])
+          unless body.is_a?(Hash)
+            response.status = 400
+            next '{"error":"expected a JSON object"}'
+          end
 
           deploy_actor = Actor[team.webhook_actor_id]
           unless deploy_actor
             response.status = 500
             next JSON.generate(error: 'Webhook actor not configured')
           end
-          deployed = 0
-          now = Time.now
 
-          active = Story.where(map_id: Map.where(team_id: team.id).select(:id), status: 'active')
-          story_ids.each do |sid|
-            story = StoryId.matching(active, sid).first
-            next unless story
-
-            DB.transaction do
-              updates = { deploy_count: Sequel.lit('deploy_count + 1'), last_deployed_at: now }
-              updates[:first_deployed_at] = now if story.deploy_count.zero?
-              DB[:stories].where(id: story.id).update(updates)
-              RecordEvent.call(
-                actor_id:    deploy_actor.id,
-                entity:      story,
-                action:      'deployed',
-                after_state: { deploy_count: story.deploy_count + 1 }
-              )
-            end
-            deployed += 1
+          result = ReportDeploys.call(team: team, actor: deploy_actor, story_ids: Array(body['story_ids']), now: Time.now)
+          unless result.success?
+            response.status = 400
+            next JSON.generate(error: result.error)
           end
 
-          JSON.generate({ deployed: deployed })
+          JSON.generate({ deployed: result.deployed })
         end
       end
     end

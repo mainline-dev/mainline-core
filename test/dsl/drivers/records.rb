@@ -235,6 +235,10 @@ module Records
     Story[story.id].status
   end
 
+  def deploys_of(story)
+    Story[story.id].deploy_count
+  end
+
   def last_deployed_on(story)
     Story[story.id].last_deployed_at.strftime('%Y-%m-%d')
   end

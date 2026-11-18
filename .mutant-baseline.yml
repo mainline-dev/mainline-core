@@ -127,3 +127,4 @@ classes:
   ArchiveActivity: { mutations: 84, killed: 83, alive: 1 }
   ArchiveTask: { mutations: 84, killed: 83, alive: 1 }
   ArchiveMember: { mutations: 101, killed: 99, alive: 2 }
+  ReportDeploys: { mutations: 117, killed: 117, alive: 0 }
