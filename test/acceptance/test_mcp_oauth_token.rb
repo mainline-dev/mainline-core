@@ -42,12 +42,14 @@ describe "An app's access token at /mcp" do
     assert_equal ['Checkout'], map_names(@tokens['access_token'])
   end
 
-  it "records a read as its person's, through the app" do
+  it "records each read as its person's, through the app by its name, with the tool that made it" do
     call_mcp('get_story', token: @tokens['access_token'], arguments: { story_id: @story.id })
+    call_mcp('get_feature_file', token: @tokens['access_token'], arguments: { story_id: @story.id })
 
     visit_story_history(@story)
 
-    assert(story_history.any? { |entry| entry.include?('Alice') && entry.include?('claude.ai') })
+    assert_equal [['Claude Code', 'get_story'], ['Claude Code', 'get_feature_file']], agent_reads_of(@story)
+    assert(story_history.any? { |entry| entry.include?('Alice') && entry.include?('Claude Code') && entry.include?('get_story') })
   end
 
   it 'is refused once its hour is up, while a refreshed one reads' do

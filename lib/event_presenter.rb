@@ -88,10 +88,12 @@ module EventPresenter
     ua ? "read by coding agent (#{ua})" : 'read by coding agent'
   end
 
-  # A read through a personal token or a sign-in: whose agent, and how.
+  # A read through a personal token or a sign-in: whose agent, through which
+  # app, and with which tool, as far as the read recorded them.
   def self.describe_read_for(state, lookup)
     read = "read by coding agent for #{resolve(lookup, :people, state['person_id']) || 'someone'}"
-    state['client'] ? "#{read} (#{state['client']})" : read
+    how = state.values_at('client', 'tool').compact
+    how.empty? ? read : "#{read} (#{how.join(', ')})"
   end
 
   def self.describe_split_out(event, _lookup, _include_name)

@@ -188,7 +188,7 @@ module MainlineMCP
 
   def self.call_get_story(story_id)
     readable_story(story_id) do |story|
-      record_agent_read(story)
+      record_agent_read(story, 'get_story')
       json = McpData.story(story)
       json[:assigned_to_you] = StoryAssignment.where(story_id: story.id, person_id: access.person_id).any? if access.person_id
       MCP::Tool::Response.new([{ type: 'text', text: JSON.generate(json) }])
@@ -199,7 +199,7 @@ module MainlineMCP
     readable_story(story_id) do |story|
       next error_response("Unknown language: #{language}") if language && !StepStubs::LANGUAGES.key?(language)
 
-      record_agent_read(story)
+      record_agent_read(story, 'get_feature_file')
       files = [FeatureFile.for(story)]
       files << StepStubs.for(story, language) if language
       MCP::Tool::Response.new(files.map { |text| { type: 'text', text: text } })
@@ -220,10 +220,11 @@ module MainlineMCP
     error_response(McpRefusals.text(status, team_id, not_found))
   end
 
-  # Reading a story, in any form, records the read, who was on the story and,
-  # through a personal token or a sign-in, whose agent read it and how. It
-  # writes nothing else: the AGENT chip is worked out from these reads.
-  def self.record_agent_read(story)
+  # Reading a story, in any form, records the read, the tool that made it, who
+  # was on the story and, through a personal token or a sign-in, whose agent
+  # read it and how. It writes nothing else: the AGENT chip is worked out from
+  # these reads.
+  def self.record_agent_read(story, tool)
     RecordEvent.call(
       actor_id:    McpActor.id_for(story.team_id),
       entity:      story,
@@ -232,7 +233,8 @@ module MainlineMCP
         user_agent: Thread.current[:mcp_user_agent],
         person_ids: StoryAssignment.where(story_id: story.id).select_map(:person_id),
         person_id:  access.person_id,
-        client:     access.client
+        client:     access.client,
+        tool:       tool
       }.compact
     )
   end

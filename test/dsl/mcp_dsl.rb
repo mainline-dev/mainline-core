@@ -68,6 +68,12 @@ module McpDSL
   end
 
   # A tool call to /mcp with this token.
+  # Each read of the story a coding agent made, oldest first: the app it came
+  # through and the tool that made it.
+  def agent_reads_of(story)
+    driver.events_of(story, action: 'agent_read').map { |event| event.after_state.values_at('client', 'tool') }
+  end
+
   def call_mcp(name, token:, arguments: {})
     body = { jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: name, arguments: arguments } }
     post('/mcp', JSON.generate(body), signed_in_headers(token))

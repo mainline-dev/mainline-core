@@ -84,6 +84,12 @@ describe 'A personal token at /mcp' do
     refute refused
   end
 
+  it 'records a read through a personal token as one, with the tool that made it' do
+    call_mcp('get_story', token: token_for(@team), arguments: { story_id: @card.id })
+
+    assert_equal [['personal token', 'get_story']], agent_reads_of(@card)
+  end
+
   it 'finds a story on any of its teams by the 8-character ID on its card' do
     response = call_mcp('get_story', token: token_for(@team, @mobile), arguments: { story_id: @app.id[0, 8].upcase })
 

@@ -14,7 +14,7 @@ classes:
   DeleteTeam: { mutations: 243, killed: 205, alive: 38 }
   EncryptedEmail: { mutations: 122, killed: 98, alive: 24 }
   EnsembleTimeline: { mutations: 259, killed: 226, alive: 33 }
-  EventPresenter: { mutations: 1292, killed: 1146, alive: 146 }
+  EventPresenter: { mutations: 1622, killed: 1466, alive: 156 }
   FlashAdapter: { mutations: 172, killed: 160, alive: 12 }
   Inventory: { mutations: 285, killed: 245, alive: 40 }
   LeadTime: { mutations: 540, killed: 414, alive: 126 }
@@ -103,7 +103,7 @@ classes:
   RevokeGrant: { mutations: 54, killed: 54, alive: 0 }
   GithubInstall: { mutations: 296, killed: 275, alive: 21 }
   ReleaseBlock: { mutations: 257, killed: 251, alive: 6 }
-  McpAccess: { mutations: 581, killed: 579, alive: 2 }
+  McpAccess: { mutations: 584, killed: 581, alive: 3 }
   ClientMetadata: { mutations: 1039, killed: 1016, alive: 23 }
   OauthRequest: { mutations: 424, killed: 415, alive: 9 }
   SignInGrant: { mutations: 232, killed: 226, alive: 6 }

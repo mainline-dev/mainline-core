@@ -52,6 +52,20 @@ describe EventPresenter do
     assert_equal 'read by coding agent for Alice (personal token)', EventPresenter.describe(event, lookup(people: people('Alice')))
   end
 
+  it 'describes a read with the tool that made it, after the client' do
+    event = build_event(action: 'agent_read',
+      after_state: { 'person_id' => 'p0', 'client' => 'Claude Code', 'tool' => 'get_feature_file' })
+    described = EventPresenter.describe(event, lookup(people: people('Alice')))
+
+    assert_equal 'read by coding agent for Alice (Claude Code, get_feature_file)', described
+  end
+
+  it 'describes a read with a tool and no client by the tool alone' do
+    event = build_event(action: 'agent_read', after_state: { 'person_id' => 'p0', 'tool' => 'get_story' })
+
+    assert_equal 'read by coding agent for Alice (get_story)', EventPresenter.describe(event, lookup(people: people('Alice')))
+  end
+
   it 'describes a read for someone it can no longer name, with no client recorded' do
     event = build_event(action: 'agent_read', after_state: { 'person_id' => 'gone' })
 

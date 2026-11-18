@@ -101,14 +101,24 @@ describe McpAccess do
       refute_nil McpAccess.for_token(token, now: @now)
     end
 
-    it "reads an app's sign-in as its person, through the app's site, while OAuth is on" do
+    it "reads an app's sign-in as its person, through the app by the name it was recognised under, while OAuth is on" do
       token = token_for(@payments)
-      grant_of(token).update(client_id: 'https://claude.ai/oauth/claude-code-client-metadata')
+      grant_of(token).update(client_id: 'https://claude.ai/oauth/claude-code-client-metadata', name: 'Claude Code')
       ENV['OAUTH_ENABLED'] = 'true'
 
       access = McpAccess.for_token(token, now: @now)
 
-      assert_equal [[@payments.id], @alice.id, 'claude.ai'], [access.team_ids, access.person_id, access.client]
+      assert_equal [[@payments.id], @alice.id, 'Claude Code'], [access.team_ids, access.person_id, access.client]
+    ensure
+      ENV.delete('OAUTH_ENABLED')
+    end
+
+    it 'names an app it did not recognise, which has no name kept, by its site' do
+      token = token_for(@payments)
+      grant_of(token).update(client_id: 'https://agent.example/client.json', name: nil)
+      ENV['OAUTH_ENABLED'] = 'true'
+
+      assert_equal 'agent.example', McpAccess.for_token(token, now: @now).client
     ensure
       ENV.delete('OAUTH_ENABLED')
     end

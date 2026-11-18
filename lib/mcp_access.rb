@@ -22,7 +22,7 @@ class McpAccess
 
   attr_reader :team_ids, :person_id, :client, :grant_id
 
-  def initialize(team_ids:, person_id: nil, client: nil, grant_id: nil, own_team_ids: team_ids)
+  def initialize(team_ids:, person_id:, client:, grant_id:, own_team_ids:)
     @team_ids = team_ids
     @person_id = person_id
     @client = client
@@ -34,13 +34,22 @@ class McpAccess
   def self.for_token(token, now:)
     return unless token
 
-    grant_id, person_id, client_id = live_grant(PersonalToken.digest(token), now)
+    grant_id, person_id, client_id, name = live_grant(PersonalToken.digest(token), now)
     return unless grant_id
 
     open = MapAccess.team_ids_for(person_id)
     given = BypassRLS.call { DB[:oauth_grant_teams].where(grant_id: grant_id).select_map(:team_id) }
-    new(team_ids: given & open, person_id: person_id, client: client_id ? URI(client_id).host : 'personal token',
+    new(team_ids: given & open, person_id: person_id, client: client_label(client_id, name),
       grant_id: grant_id, own_team_ids: open)
+  end
+
+  # How a read is labelled: an app by the name it was recognised under, or by
+  # its site when it was not, since an app can call itself anything. A
+  # personal token's own name is its person's wording, so it is not used.
+  def self.client_label(client_id, name)
+    return 'personal token' unless client_id
+
+    name || URI(client_id).host
   end
 
   # The grant of a token Mainline issued, live or not: an expired or revoked
@@ -62,11 +71,11 @@ class McpAccess
       .where(token_hash: digest, revoked_at: nil)
       .where(Sequel[:oauth_access_tokens][:expires_at] > now)
       .where(Sequel.|({ grants[:expires_at] => nil }, grants[:expires_at] > now))
-      .get([grants[:id], :person_id, :client_id])
+      .get([grants[:id], :person_id, :client_id, grants[:name]])
   end
 
   def used(now)
-    DB[:oauth_grants].where(id: @grant_id).update(last_used_at: now) if @grant_id
+    DB[:oauth_grants].where(id: @grant_id).update(last_used_at: now)
   end
 
   # The teams it may read now: given, and not suspended.
