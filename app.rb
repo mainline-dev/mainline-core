@@ -41,6 +41,7 @@ require_relative 'lib/add_scenario'
 require_relative 'lib/accept_invite'
 require_relative 'lib/archive_story'
 require_relative 'lib/deploy_story'
+require_relative 'lib/email_login'
 require_relative 'lib/email_signup'
 require_relative 'lib/release_story'
 require_relative 'lib/remove_scenario'
@@ -433,7 +434,7 @@ class Mainline < Roda
         blocked = check_login_rate_limits(r)
         next blocked if blocked
 
-        person = authenticate_email(r.params)
+        person = EmailLogin.person(email: r.params['email'], password: r.params['password'])
         if person
           accept_invite(person, r.params['email'].to_s.strip.downcase, session)
           regenerate_session(preserve_keys: %w[signup_plan oauth_return])
@@ -477,19 +478,16 @@ class Mainline < Roda
     r.on 'magic-login' do
       r.on String do |token|
         r.get do
-          person = verify_magic_token(token)
-          next magic_login_failed(r) unless person
+          next magic_login_failed(r) unless EmailLogin.person_for_link(token)
 
           @magic_token = token
           view 'magic_login_confirm', layout: false
         end
 
         r.post do
-          person = verify_magic_token(token)
-          token_hash = Digest::SHA256.hexdigest(token)
-          next magic_login_failed(r) unless person && person.last_magic_token_hash != token_hash
+          person = EmailLogin.use_link(token)
+          next magic_login_failed(r) unless person
 
-          person.update(last_magic_token_hash: token_hash)
           regenerate_session(preserve_keys: ['signup_plan'])
           session['person_id'] = person.id
           session['magic_login'] = true
@@ -659,26 +657,6 @@ class Mainline < Roda
       return req.redirect('/login')
     end
     nil
-  end
-
-  def authenticate_email(params)
-    email    = params['email'].to_s.strip.downcase
-    password = params['password'].to_s
-    return nil if email.empty?
-
-    person = Person.find_by_email(email)
-    return nil unless person
-
-    identity = PersonIdentity.where(person_id: person.id, provider: 'email')
-      .exclude(password_digest: nil).first
-    return nil unless identity && BCrypt::Password.new(identity.password_digest) == password
-
-    person
-  end
-
-  def verify_magic_token(token)
-    value = SignedState.verify(token)
-    value&.start_with?('magic:') && Person[value.delete_prefix('magic:')]
   end
 
   def magic_login_failed(req)

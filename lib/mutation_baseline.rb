@@ -26,7 +26,7 @@ module MutationBaseline
     BusinessDays BypassRLS CIMonitor::BranchAge ClientMetadata CIMonitor::Status CIMonitorSetup
     CreateActivity CreatePersona CreatePersonalToken CreateStory CreateTask CsrfCheck CumulativeFlow
     DataExport DeleteTeam DeployStory DiscardMuseumItem EditActivity EditPersona EditScenario EditStory EditTask
-    EmailSignup EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FirstRun FlashAdapter GithubInstall
+    EmailLogin EmailSignup EncryptedEmail EnsembleTimeline EventPresenter FeatureFile FirstRun FlashAdapter GithubInstall
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
     LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid MarkScenario McpAccess MuseumList
     NeverPulled OAuthMetadata OauthRequest OauthRevocation OauthSetting OauthTokens PairingMatrix PersonalToken PersonalTokens

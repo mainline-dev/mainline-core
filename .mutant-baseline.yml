@@ -119,3 +119,4 @@ classes:
   UnassignPerson: { mutations: 177, killed: 176, alive: 1 }
   AcceptInvite: { mutations: 116, killed: 114, alive: 2 }
   EmailSignup: { mutations: 288, killed: 284, alive: 4 }
+  EmailLogin: { mutations: 169, killed: 168, alive: 1 }
