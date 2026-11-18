@@ -9,7 +9,7 @@ class Mainline
     next unless OauthSetting.on?
 
     r.is 'authorize' do
-      outcome = OauthRequest.check(r.params)
+      outcome = OauthRequest.check(r.params, from: request.ip)
       next oauth_refused(outcome.page) if outcome.page
       next r.redirect(outcome.back) if outcome.back
 

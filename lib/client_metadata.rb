@@ -18,8 +18,12 @@ require_relative 'shared_rate_limiter'
 # connection goes to an address that was checked, never one that is private,
 # local or reserved; one redirect at most, checked the same way; five seconds
 # and 10 KB at most. The document must name itself by the address it was
-# asked for. It is kept as long as its own cache headers say, up to a day,
-# and fetches are limited per client ID.
+# asked for. It is kept as long as its own cache headers say, up to a day.
+#
+# Fetching one that is not kept is limited three ways: for whoever sent the
+# request, for the client ID, and overall. The sender is counted first and
+# overall last, so one sender asking about many apps runs out of its own
+# allowance before it uses up anyone else's.
 module ClientMetadata
   MAX_BYTES = 10_240
   MAX_KEPT = 500
@@ -40,7 +44,12 @@ module ClientMetadata
   Response = Struct.new(:status, :body, :location, :cache_control, keyword_init: true)
   Result = Struct.new(:document, :error)
 
-  LIMITER = SharedRateLimiter.new(name: 'client_metadata', capacity: 20, refill_rate: 20.0 / 3600)
+  LIMITERS = {
+    sender:  SharedRateLimiter.new(name: 'client_metadata_sender', capacity: 10, refill_rate: 10.0 / 3600),
+    client:  SharedRateLimiter.new(name: 'client_metadata', capacity: 20, refill_rate: 20.0 / 3600),
+    overall: SharedRateLimiter.new(name: 'client_metadata_overall', capacity: 60, refill_rate: 1.0)
+  }.freeze
+  EVERYONE = 'everyone'
 
   @kept = {}
   @lock = Mutex.new
@@ -54,13 +63,13 @@ module ClientMetadata
   # The document a client ID names, or why there is none: :invalid_client_id,
   # :rate_limited, :blocked_address, :too_many_redirects, :too_large,
   # :fetch_failed or :invalid_document.
-  def self.fetch(client_id, network: self.network, limiter: LIMITER, now: Time.now)
+  def self.fetch(client_id, from:, network: self.network, limiters: LIMITERS, now: Time.now)
     kept = kept(client_id, now)
     return Result.new(kept) if kept
 
     uri = fetchable(client_id)
     return Result.new(nil, :invalid_client_id) unless uri
-    return Result.new(nil, :rate_limited) unless limiter.allow?(client_id)
+    return Result.new(nil, :rate_limited) unless allowed?(limiters, from, client_id)
 
     answer = get(uri, network, 1)
     return Result.new(nil, answer) if answer.is_a?(Symbol)
@@ -72,6 +81,11 @@ module ClientMetadata
     Result.new(document)
   rescue *FAILURES
     Result.new(nil, :fetch_failed)
+  end
+
+  def self.allowed?(limiters, sender, client_id)
+    limiters.fetch(:sender).allow?(sender) && limiters.fetch(:client).allow?(client_id) &&
+      limiters.fetch(:overall).allow?(EVERYONE)
   end
 
   # The address, if it is one a document may be fetched from: HTTPS, on the

@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'securerandom'
 require_relative '../model_spec_helper'
 require_relative '../dsl/client_documents'
 require_relative '../../lib/oauth_request'
@@ -8,6 +9,8 @@ describe OauthRequest do
   cover 'OauthRequest*'
 
   before do
+    @prefix = SharedRateLimiter.prefix
+    SharedRateLimiter.prefix = "rate_limit:#{SecureRandom.hex(4)}:"
     ClientMetadata.forget
     @documents = ClientDocuments.new
     ClientMetadata.network = @documents
@@ -18,7 +21,8 @@ describe OauthRequest do
   after do
     ClientMetadata.network = HttpsFetch
     ClientMetadata.forget
-    ClientMetadata::LIMITER.reset
+    ClientMetadata::LIMITERS.each_value(&:reset)
+    SharedRateLimiter.prefix = @prefix
   end
 
   def publish(client_id, name, redirect_uris)
@@ -32,14 +36,25 @@ describe OauthRequest do
       .merge(changes.transform_keys(&:to_s)).compact
   end
 
+  def check(given, from: '198.51.100.7')
+    OauthRequest.check(given, from: from)
+  end
+
   def sent_back(outcome)
     uri = URI(outcome.back)
     [uri.to_s.split('?').first, URI.decode_www_form(uri.query).to_h]
   end
 
+  it 'counts each fetch against whoever it is told sent the request' do
+    10.times { check(params) }
+
+    assert_nil check(params).request
+    refute_nil check(params, from: '198.51.100.8').request
+  end
+
   describe 'a request it can answer' do
     it 'takes a request from an app it can identify, to an address the app lists' do
-      request = OauthRequest.check(params).request
+      request = check(params).request
 
       assert_equal [@client, 'http://localhost:4000/callback', 'abc'], [request.client_id, request.redirect_uri, request.state]
       assert_equal ['E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM', "#{ENV.fetch('BASE_URL')}/mcp"], [request.challenge, request.resource]
@@ -47,31 +62,31 @@ describe OauthRequest do
 
     it 'names a recognised app by its name, and any other by its site' do
       publish('https://agent.example/client.json', 'Claude', ['https://agent.example/callback'])
-      other = OauthRequest.check(params(client_id: 'https://agent.example/client.json',
+      other = check(params(client_id: 'https://agent.example/client.json',
         redirect_uri: 'https://agent.example/callback')).request
 
-      assert_equal ['Claude Code', true], [OauthRequest.check(params).request.shown_name, OauthRequest.check(params).request.recognised]
+      assert_equal ['Claude Code', true], [check(params).request.shown_name, check(params).request.recognised]
       assert_equal ['agent.example', false, 'agent.example'], [other.shown_name, other.recognised, other.redirect_site]
     end
 
     it 'knows the origin the answer goes back to, with its port unless it is the usual one' do
       publish('https://agent.example/client.json', 'Agent', ['https://agent.example/callback'])
-      other = OauthRequest.check(params(client_id: 'https://agent.example/client.json',
+      other = check(params(client_id: 'https://agent.example/client.json',
         redirect_uri: 'https://agent.example/callback')).request
 
-      assert_equal 'http://localhost:4000', OauthRequest.check(params).request.return_origin
+      assert_equal 'http://localhost:4000', check(params).request.return_origin
       assert_equal 'https://agent.example', other.return_origin
     end
 
     it 'takes a request for offline access as well, or for no scope at all' do
-      refute_nil OauthRequest.check(params(scope: 'mainline:read offline_access')).request
-      refute_nil OauthRequest.check(params(scope: nil)).request
+      refute_nil check(params(scope: 'mainline:read offline_access')).request
+      refute_nil check(params(scope: nil)).request
     end
   end
 
   describe 'a request it answers on a page' do
     it 'is from an app it cannot identify' do
-      outcome = OauthRequest.check(params(client_id: 'https://nowhere.example/client.json'))
+      outcome = check(params(client_id: 'https://nowhere.example/client.json'))
 
       assert_nil outcome.back
       refute_nil outcome.page
@@ -80,7 +95,7 @@ describe OauthRequest do
     it 'names its app, or the address to go back to, other than once' do
       [{ client_id: nil }, { client_id: [@client] }, { client_id: { 'id' => @client } },
        { redirect_uri: nil }, { redirect_uri: ['http://localhost:4000/callback'] }].each do |change|
-        outcome = OauthRequest.check(params(**change))
+        outcome = check(params(**change))
 
         assert_nil outcome.back, change.inspect
         refute_nil outcome.page, change.inspect
@@ -88,7 +103,7 @@ describe OauthRequest do
     end
 
     it 'asks to send the person back to an address the app does not list' do
-      outcome = OauthRequest.check(params(redirect_uri: 'http://localhost:4000/elsewhere'))
+      outcome = check(params(redirect_uri: 'http://localhost:4000/elsewhere'))
 
       assert_nil outcome.back
       refute_nil outcome.page
@@ -97,29 +112,29 @@ describe OauthRequest do
 
   describe 'a request it sends back refused' do
     it 'asks for anything but a code' do
-      assert_equal 'unsupported_response_type', sent_back(OauthRequest.check(params(response_type: 'token'))).last['error']
+      assert_equal 'unsupported_response_type', sent_back(check(params(response_type: 'token'))).last['error']
     end
 
     it 'comes without an S256 challenge, or with one that is not one' do
       [{ code_challenge: nil }, { code_challenge_method: 'plain' }, { code_challenge_method: nil },
        { code_challenge: 'short' }, { code_challenge: "#{'a' * 43}!" }].each do |change|
-        assert_equal 'invalid_request', sent_back(OauthRequest.check(params(**change))).last['error'], change.inspect
+        assert_equal 'invalid_request', sent_back(check(params(**change))).last['error'], change.inspect
       end
     end
 
     it 'asks for anything but this install\'s MCP endpoint' do
-      assert_equal 'invalid_target', sent_back(OauthRequest.check(params(resource: 'https://elsewhere.example/mcp'))).last['error']
-      assert_equal 'invalid_target', sent_back(OauthRequest.check(params(resource: nil))).last['error']
+      assert_equal 'invalid_target', sent_back(check(params(resource: 'https://elsewhere.example/mcp'))).last['error']
+      assert_equal 'invalid_target', sent_back(check(params(resource: nil))).last['error']
     end
 
     it 'asks for a scope it does not offer' do
-      assert_equal 'invalid_scope', sent_back(OauthRequest.check(params(scope: 'mainline:read mainline:write'))).last['error']
+      assert_equal 'invalid_scope', sent_back(check(params(scope: 'mainline:read mainline:write'))).last['error']
     end
   end
 
   describe 'sending the person back' do
     it 'sends them to the address asked for, with the answer, the state, and Mainline as issuer' do
-      outcome = OauthRequest.check(params(response_type: 'token'))
+      outcome = check(params(response_type: 'token'))
 
       assert_instance_of String, outcome.back
       assert_equal ['http://localhost:4000/callback',
@@ -129,7 +144,7 @@ describe OauthRequest do
 
     it 'keeps what the address already asks, and leaves out a state that was not given' do
       publish(@client, 'Claude Code', ['http://localhost/callback?from=agent'])
-      request = OauthRequest.check(params(redirect_uri: 'http://localhost:9/callback?from=agent', state: nil)).request
+      request = check(params(redirect_uri: 'http://localhost:9/callback?from=agent', state: nil)).request
 
       uri = URI(OauthRequest.back(request, code: 'xyz'))
 

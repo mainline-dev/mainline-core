@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'securerandom'
+require 'timecop'
 require_relative '../model_spec_helper'
 require_relative '../../lib/client_metadata'
 
@@ -68,8 +70,13 @@ describe ClientMetadata do
                     redirect_uris: ['http://localhost/callback', 'http://127.0.0.1/callback'] }.merge(fields))
   end
 
-  def fetch(client_id = ClientMetadataDoubles::CLAUDE_CODE, limiter: ClientMetadataDoubles::FakeLimiter.new(true), now: @now)
-    ClientMetadata.fetch(client_id, network: @net, limiter: limiter, now: now)
+  # The three limits a fetch is counted against, all with room, or one without.
+  def limits(refuse: nil)
+    %i[sender client overall].to_h { |name| [name, ClientMetadataDoubles::FakeLimiter.new(name != refuse)] }
+  end
+
+  def fetch(client_id = ClientMetadataDoubles::CLAUDE_CODE, from: '198.51.100.7', limiters: limits, now: @now)
+    ClientMetadata.fetch(client_id, from: from, network: @net, limiters: limiters, now: now)
   end
 
   after { ClientMetadata.forget }
@@ -265,15 +272,67 @@ describe ClientMetadata do
     it 'stops fetching a client ID that is asked for too often, but still gives one it kept' do
       @net.page(ClientMetadataDoubles::CLAUDE_CODE, body: document, cache_control: 'max-age=300')
 
-      limiter = ClientMetadataDoubles::FakeLimiter.new(false)
+      refusing = limits(refuse: :client)
 
-      assert_equal :rate_limited, fetch(limiter: limiter).error
-      assert_equal [ClientMetadataDoubles::CLAUDE_CODE], limiter.asked
+      assert_equal :rate_limited, fetch(limiters: refusing).error
+      assert_equal [ClientMetadataDoubles::CLAUDE_CODE], refusing[:client].asked
       assert_empty @net.connected
 
       fetch
 
-      assert_nil fetch(limiter: ClientMetadataDoubles::FakeLimiter.new(false)).error
+      assert_nil fetch(limiters: limits(refuse: :client)).error
+      assert_nil fetch(limiters: limits(refuse: :sender)).error
+      assert_nil fetch(limiters: limits(refuse: :overall)).error
+    end
+
+    it 'stops fetching for a sender asking about too many apps, before counting it against the app or everyone' do
+      @net.page(ClientMetadataDoubles::CLAUDE_CODE, body: document)
+      refusing = limits(refuse: :sender)
+
+      assert_equal :rate_limited, fetch(from: '198.51.100.7', limiters: refusing).error
+      assert_equal [['198.51.100.7'], [], []], refusing.values_at(:sender, :client, :overall).map(&:asked)
+      assert_empty @net.connected
+    end
+
+    it 'stops fetching when too much is being fetched overall, counting every sender and app together' do
+      @net.page(ClientMetadataDoubles::CLAUDE_CODE, body: document)
+      refusing = limits(refuse: :overall)
+      errors = [fetch(from: '198.51.100.7', limiters: refusing), fetch('https://claude.ai/other', from: '198.51.100.8', limiters: refusing)]
+
+      assert_equal %i[rate_limited rate_limited], errors.map(&:error)
+      assert_equal [ClientMetadata::EVERYONE] * 2, refusing[:overall].asked
+      assert_empty @net.connected
+    end
+
+    describe 'with the limits it comes with' do
+      # Counts of its own, so another run of these tests at the same moment
+      # cannot use them up.
+      before do
+        @prefix = SharedRateLimiter.prefix
+        SharedRateLimiter.prefix = "rate_limit:#{SecureRandom.hex(4)}:"
+      end
+
+      after do
+        ClientMetadata::LIMITERS.each_value(&:reset)
+        SharedRateLimiter.prefix = @prefix
+      end
+
+      def fetch_as(sender, app)
+        @net.page(app, body: document(app))
+        ClientMetadata.fetch(app, from: sender, network: @net).error
+      end
+
+      it 'lets one sender fetch 10 new documents before making it wait' do
+        errors = Timecop.freeze { Array.new(11) { |n| fetch_as('198.51.100.7', "https://claude.ai/app#{n}") } }
+
+        assert_equal ([nil] * 10) + [:rate_limited], errors
+      end
+
+      it 'lets 60 new documents be fetched overall before making everyone wait' do
+        errors = Timecop.freeze { Array.new(61) { |n| fetch_as("198.51.100.#{n}", "https://claude.ai/app#{n}") } }
+
+        assert_equal ([nil] * 60) + [:rate_limited], errors
+      end
     end
   end
 

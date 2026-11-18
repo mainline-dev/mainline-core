@@ -19,7 +19,7 @@ module OauthRecords
   def forget_client_documents
     ClientMetadata.network = HttpsFetch
     ClientMetadata.forget
-    ClientMetadata::LIMITER.reset
+    ClientMetadata::LIMITERS.each_value(&:reset)
   end
 
   def teams_given_by_last_sign_in

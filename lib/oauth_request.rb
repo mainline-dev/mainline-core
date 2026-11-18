@@ -37,8 +37,8 @@ module OauthRequest
 
   Outcome = Struct.new(:request, :page, :back)
 
-  def self.check(params)
-    document = ClientMetadata.fetch(params['client_id']).document
+  def self.check(params, from:)
+    document = ClientMetadata.fetch(params['client_id'], from: from).document
     return Outcome.new(nil, "Mainline can't identify the app that sent you here, so it can't sign it in.") unless document
 
     redirect_uri = params['redirect_uri']
