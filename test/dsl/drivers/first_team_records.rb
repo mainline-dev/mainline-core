@@ -10,4 +10,9 @@ module FirstTeamRecords
   def team_named(name)
     Team.where(name: name).first
   end
+
+  def map_names(team)
+    SetTeamContext.call(team.id)
+    Map.where(team_id: team.id).select_map(:name)
+  end
 end

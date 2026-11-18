@@ -107,14 +107,32 @@ class Mainline
     notes
   end
 
+  # Whether the person may add a map to the team they are on: only someone
+  # working on its stories.
+  def may_add_map?
+    return false unless @current_team
+
+    MapAccess.open_to?(TeamMembership.first(team_id: @current_team.id, person_id: @current_person.id, left_at: nil))
+  end
+
+  # Where someone who may not is sent: the team's account page, which offers
+  # joining, or their teams when they are on none.
+  def no_new_map_path
+    @current_team ? "/teams/#{@current_team.id}/account" : '/teams'
+  end
+
   hash_branch('maps') do |r|
     r.get 'new' do
+      next r.redirect(no_new_map_path) unless may_add_map?
+
       @map_name = ''
       view 'new'
     end
 
     r.is do
       r.post do
+        next r.redirect(no_new_map_path) unless may_add_map?
+
         SetTeamContext.call(@current_team.id)
         name = typecast_params.nonempty_str('name')
 

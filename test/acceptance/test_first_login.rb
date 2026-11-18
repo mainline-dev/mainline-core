@@ -91,6 +91,35 @@ describe 'First login landing' do
       assert_predicate self, :map_opens?
     end
 
+    it 'gives someone with no team yet no new-map form' do
+      refute_predicate self, :new_map_form_offered?
+    end
+
+    it 'takes no new map from a creator who is not working on stories' do
+      start_a_team('Acme', working: false)
+      offered = new_map_form_offered?
+      submit_create_map(name: 'Checkout')
+
+      refute offered
+      assert_empty map_names
+    end
+
+    it 'offers them joining on the first steps, where a new map would be' do
+      start_a_team('Acme', working: false)
+      visit_team_page
+
+      assert_shown('first-run-join')
+      refute_shown('first-run-new-map')
+    end
+
+    it 'offers a working creator a new map on the first steps' do
+      start_a_team('Acme', working: true)
+      visit_team_page
+
+      assert_shown('first-run-new-map')
+      refute_shown('first-run-join')
+    end
+
     it 'keeps the choice when the form is refused' do
       start_a_team('', working: false)
 

@@ -444,10 +444,22 @@ module MainlineDSL
   end
 
   # The person signed in creates a team, saying whether they will work on its
-  # stories too. It becomes the team of the test once it exists.
+  # stories too. Once it exists it is the team of the test, and they are on
+  # its page, where creating it sends them.
   def start_a_team(name, working:)
     driver.submit_create_team(team_name: name, working: working)
     @team = driver.team_named(name)
+    driver.visit_team(@team) if @team
+  end
+
+  # Whether the person signed in is given the form for a new map.
+  def new_map_form_offered?
+    driver.new_map_form_offered?
+  end
+
+  # The names of the team's maps.
+  def map_names
+    driver.map_names(@team)
   end
 
   # Whether the map opens for the person signed in.

@@ -145,6 +145,11 @@ class HttpDriver
     last_response.body.match?(/<input[^>]*data-test-id="team-working"[^>]*\schecked/)
   end
 
+  def new_map_form_offered?
+    get '/maps/new'
+    last_response.status == 200 && last_response.body.include?('data-test-id="new-map-form"')
+  end
+
   def map_opens?(map)
     get "/maps/#{map.id}"
     last_response.status == 200

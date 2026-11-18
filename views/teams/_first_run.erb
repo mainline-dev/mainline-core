@@ -1,9 +1,14 @@
 <% team_path = "/teams/#{@team.id}" %>
 <% map_path = @maps.any? ? "/maps/#{@maps.first.id}" : '/maps/new' %>
 <%
+  # Someone not working on the team's stories joins before they can start a map.
+  start_actions = if @is_working_member
+                    [['New map', '/maps/new', 'first-run-new-map'], ['Import', "#{team_path}/museum/import", 'first-run-import']]
+                  else
+                    [['Join as a working member', "#{team_path}/account", 'first-run-join']]
+                  end
   steps = [
-    [:map, 'Start your map.', 'Begin with a new map, or import a Jira CSV or a Mainline file into the Ticket Museum.',
-     [['New map', '/maps/new', 'first-run-new-map'], ['Import', "#{team_path}/museum/import", 'first-run-import']]],
+    [:map, 'Start your map.', 'Begin with a new map, or import a Jira CSV or a Mainline file into the Ticket Museum.', start_actions],
     [:promote, "Pull what's real.", "Promote the work you'd start in the next few weeks onto the map.", [['Open the museum', "#{team_path}/museum", nil]]],
     [:slice, 'Shape it into a map.', 'Arrange the stories under the activities they serve, and slice the first release.', [['Open the map', map_path, nil]]],
     [:start, 'One story each.', 'Each person starts one story, and nobody starts a second until the first is released.', [['Open the map', map_path, nil]]],
