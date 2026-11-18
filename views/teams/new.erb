@@ -13,6 +13,14 @@
     <input type="text" id="team_name" name="team_name" value="<%= @team_name %>"
            placeholder="e.g. Acme Corp" maxlength="100" required autofocus>
 
+    <div class="checkbox-group">
+      <label>
+        <input type="checkbox" name="working" value="1" data-test-id="team-working" <%= 'checked' unless @working == false %>>
+        I'll work on stories too
+      </label>
+    </div>
+    <p class="muted">Leave it unticked if you'll only manage the team's account. You can join later.</p>
+
     <button type="submit" class="btn">Create Team</button>
   </form>
 </div>

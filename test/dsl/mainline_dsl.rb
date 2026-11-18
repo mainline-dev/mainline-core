@@ -429,6 +429,32 @@ module MainlineDSL
     driver.submit_create_team(team_name: team_name)
   end
 
+  # Someone with an account and no team yet signs in.
+  def someone_new_signs_in(name: 'Alice')
+    login_as(driver.person_without_a_team(name: name, email: "#{name.downcase}@acme.co"))
+  end
+
+  def visit_new_team_form
+    driver.visit_new_team
+  end
+
+  # Whether the Create team form on the page has working on stories ticked.
+  def working_on_stories_ticked?
+    driver.working_on_stories_ticked?
+  end
+
+  # The person signed in creates a team, saying whether they will work on its
+  # stories too. It becomes the team of the test once it exists.
+  def start_a_team(name, working:)
+    driver.submit_create_team(team_name: name, working: working)
+    @team = driver.team_named(name)
+  end
+
+  # Whether the map opens for the person signed in.
+  def map_opens?
+    driver.map_opens?(@map)
+  end
+
   def visit_edit_team
     driver.visit_edit_team(@team)
   end

@@ -64,4 +64,37 @@ describe 'First login landing' do
 
     assert membership.working
   end
+
+  describe 'saying whether they will work on stories too' do
+    before { someone_new_signs_in }
+
+    it 'offers working on stories, ticked to start' do
+      visit_new_team_form
+
+      assert_predicate self, :working_on_stories_ticked?
+    end
+
+    it 'opens the maps to a creator who will work on stories' do
+      start_a_team('Acme', working: true)
+      create_map
+
+      assert_predicate self, :map_opens?
+    end
+
+    it 'keeps the maps closed to a creator who will not, until they join' do
+      start_a_team('Acme', working: false)
+      create_map
+      closed = !map_opens?
+      join_as_working_member
+
+      assert closed
+      assert_predicate self, :map_opens?
+    end
+
+    it 'keeps the choice when the form is refused' do
+      start_a_team('', working: false)
+
+      refute_predicate self, :working_on_stories_ticked?
+    end
+  end
 end

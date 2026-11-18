@@ -34,6 +34,7 @@ class Mainline
 
       r.post do
         team_name = typecast_params.nonempty_str('team_name')
+        working = r.params['working'] == '1'
 
         if holds_suspended_team?
           flash['error'] = 'One of your teams is suspended. Resolve it before creating another.'
@@ -58,6 +59,7 @@ class Mainline
 
         unless @errors.empty?
           @team_name = team_name || ''
+          @working = working
           next view('new')
         end
 
@@ -65,7 +67,7 @@ class Mainline
         TeamMembership.create(
           team_id:   @current_team.id,
           person_id: @current_person.id,
-          working:   false
+          working:   working
         )
         CoreEvents.publish(:team_created, team_id: @current_team.id, creator_id: @current_person.id)
 

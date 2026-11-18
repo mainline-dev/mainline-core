@@ -7,11 +7,13 @@ require 'timecop'
 require 'zip'
 require_relative 'records'
 require_relative 'oauth_records'
+require_relative 'first_team_records'
 
 class HttpDriver
   include Rack::Test::Methods
   include Records
   include OauthRecords
+  include FirstTeamRecords
 
   def app
     Mainline.app
@@ -135,8 +137,17 @@ class HttpDriver
   end
 
   def submit_create_team(attrs)
-    post '/teams', { 'team_name' => attrs[:team_name] }
+    post '/teams', { 'team_name' => attrs[:team_name], 'working' => ('1' if attrs[:working]) }.compact
     last_response
+  end
+
+  def working_on_stories_ticked?
+    last_response.body.match?(/<input[^>]*data-test-id="team-working"[^>]*\schecked/)
+  end
+
+  def map_opens?(map)
+    get "/maps/#{map.id}"
+    last_response.status == 200
   end
 
   def visit_team_dashboard(team)
