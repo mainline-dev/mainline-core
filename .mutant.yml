@@ -5,6 +5,7 @@ integration:
 
 requires:
   - ./models
+  - ./lib/accept_invite
   - ./lib/activation
   - ./lib/add_scenario
   - ./lib/add_to_story

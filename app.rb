@@ -38,6 +38,7 @@ require_relative 'lib/inventory'
 require_relative 'lib/jira_csv'
 require_relative 'lib/jira_markup'
 require_relative 'lib/add_scenario'
+require_relative 'lib/accept_invite'
 require_relative 'lib/archive_story'
 require_relative 'lib/deploy_story'
 require_relative 'lib/release_story'
@@ -840,25 +841,12 @@ class Mainline < Roda
     saved.each { |k, v| session[k] = v unless v.nil? }
   end
 
+  # Takes up the invitation the session holds, if it was sent to this address.
   def accept_invite(person, email, sess)
-    invite_token = sess.delete('invite_token')
-    return unless invite_token
+    invitation = AcceptInvite.invitation_for(token: sess.delete('invite_token'), email: email)
+    return unless invitation
 
-    invitation = Invitation.pending(invite_token)
-    email_bidx = BlindIndex.generate_bidx(email, key: Lockbox.master_key)
-    return unless invitation && invitation.email_bidx == email_bidx
-
-    join_team(invitation, person)
-  end
-
-  def join_team(invitation, person)
-    existing = TeamMembership.where(team_id: invitation.team_id, person_id: person.id).first
-    if existing
-      existing.update(left_at: nil, working: true) if existing.left_at
-    else
-      TeamMembership.create(team_id: invitation.team_id, person_id: person.id, working: true)
-    end
-    BypassRLS.call { invitation.update(accepted_at: Time.now) }
+    AcceptInvite.join(invitation: invitation, person: person, now: Time.now)
   end
 
   # A suspended team the person holds the account for and still belongs to.

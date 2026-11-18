@@ -117,3 +117,4 @@ classes:
   EditScenario: { mutations: 128, killed: 127, alive: 1 }
   EditStory: { mutations: 376, killed: 372, alive: 4 }
   UnassignPerson: { mutations: 177, killed: 176, alive: 1 }
+  AcceptInvite: { mutations: 116, killed: 114, alive: 2 }
