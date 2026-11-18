@@ -123,3 +123,4 @@ classes:
   EmailVerification: { mutations: 114, killed: 111, alive: 3 }
   ProviderSignup: { mutations: 176, killed: 172, alive: 4 }
   ChangeTeamConstraint: { mutations: 219, killed: 212, alive: 7 }
+  ChangeTeamField: { mutations: 87, killed: 83, alive: 4 }

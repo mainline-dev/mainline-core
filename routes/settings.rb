@@ -180,18 +180,7 @@ class Mainline
       return req.redirect('/settings')
     end
 
-    old_tz = @team.timezone
-    @team.update(timezone: tz)
-
-    if old_tz != tz
-      RecordEvent.call(
-        actor_id: @current_person.actor.id, entity: @team, action: 'updated',
-        team_id: @team.id,
-        before_state: { timezone: old_tz },
-        after_state: { timezone: tz }
-      )
-    end
-
+    ChangeTeamField.call(team: @team, actor: @current_person.actor, field: :timezone, value: tz)
     flash['notice'] = 'Timezone updated'
     req.redirect '/settings'
   end
@@ -211,18 +200,7 @@ class Mainline
       return req.redirect('/settings')
     end
 
-    old_region = @team.holiday_region
-    @team.update(holiday_region: region)
-
-    if old_region != region
-      RecordEvent.call(
-        actor_id: @current_person.actor.id, entity: @team, action: 'updated',
-        team_id: @team.id,
-        before_state: { holiday_region: old_region },
-        after_state: { holiday_region: region }
-      )
-    end
-
+    ChangeTeamField.call(team: @team, actor: @current_person.actor, field: :holiday_region, value: region)
     flash['notice'] = 'Holiday region updated'
     req.redirect '/settings'
   end
