@@ -66,6 +66,7 @@ requires:
   - ./lib/personal_token
   - ./lib/personal_tokens
   - ./lib/promote_museum_item
+  - ./lib/provider_signup
   - ./lib/rate_limiter
   - ./lib/record_event
   - ./lib/record_walkthrough

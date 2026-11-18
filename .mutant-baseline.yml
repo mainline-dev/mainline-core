@@ -121,3 +121,4 @@ classes:
   EmailSignup: { mutations: 288, killed: 284, alive: 4 }
   EmailLogin: { mutations: 169, killed: 168, alive: 1 }
   EmailVerification: { mutations: 114, killed: 111, alive: 3 }
+  ProviderSignup: { mutations: 176, killed: 172, alive: 4 }

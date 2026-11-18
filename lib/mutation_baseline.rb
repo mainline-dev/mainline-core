@@ -31,7 +31,7 @@ module MutationBaseline
     ImportInstructions ImportToMuseum Inventory JiraCsv JiraMarkup Kickoff LeadTime
     LetGo LetGoPrompt LetGoReview MachinePaths MainlineFile MapAccess MapGrid MarkScenario McpAccess MuseumList
     NeverPulled OAuthMetadata OauthRequest OauthRevocation OauthSetting OauthTokens PairingMatrix PersonalToken PersonalTokens
-    PromoteMuseumItem RateLimiter RecordEvent RecordWalkthrough
+    PromoteMuseumItem ProviderSignup RateLimiter RecordEvent RecordWalkthrough
     ReleaseBlock ReleaseNotes ReleaseStory RemoveScenario RemoveUnverifiedAccounts ReorderActivities ReorderStories ReorderTasks
     ResourceCap RevokeGrant RevokeOauthToken SetTeamContext SignInGrant SignedState SignupTimer
     SoloLog SplitCandidate StartUrgentStory StepStubs StoryId StoryPicker ThroughputScatter TwoPersonRule

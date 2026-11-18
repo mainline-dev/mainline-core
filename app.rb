@@ -43,6 +43,7 @@ require_relative 'lib/archive_story'
 require_relative 'lib/deploy_story'
 require_relative 'lib/email_login'
 require_relative 'lib/email_signup'
+require_relative 'lib/provider_signup'
 require_relative 'lib/release_story'
 require_relative 'lib/remove_scenario'
 require_relative 'lib/mark_scenario'
@@ -654,8 +655,7 @@ class Mainline < Roda
   end
 
   def handle_verify_email_get(req, token)
-    value = SignedState.verify(token)
-    unless value&.start_with?('oauth-verify:') || EmailVerification.person_for(token)
+    unless ProviderSignup.link?(token) || EmailVerification.person_for(token)
       flash['error'] = 'This verification link has expired or is invalid.'
       return req.redirect('/login')
     end
@@ -664,8 +664,7 @@ class Mainline < Roda
   end
 
   def handle_verify_email_post(req, token)
-    value = SignedState.verify(token)
-    return handle_oauth_verify(req, value) if value&.start_with?('oauth-verify:')
+    return handle_oauth_verify(req, token) if ProviderSignup.link?(token)
 
     person = EmailVerification.person_for(token)
     unless person
@@ -677,13 +676,8 @@ class Mainline < Roda
     req.redirect session['person_id'] ? '/teams' : '/login'
   end
 
-  def handle_oauth_verify(req, value)
-    encoded = value.delete_prefix('oauth-verify:')
-    pending = begin
-      JSON.parse(Base64.urlsafe_decode64(encoded))
-    rescue JSON::ParserError, ArgumentError
-      nil
-    end
+  def handle_oauth_verify(req, token)
+    pending = ProviderSignup.pending_from(token)
     unless pending
       flash['error'] = 'This verification link has expired or is invalid.'
       return req.redirect('/login')
@@ -710,12 +704,9 @@ class Mainline < Roda
     @verify_link = session['oauth_verify_link']
   end
 
+  # Sends the link that confirms a pending sign-up's address.
   def generate_oauth_verify_token(pending)
-    data = { 'name' => pending['name'], 'email' => pending['email'],
-             'provider' => pending['provider'], 'uid' => pending['uid'] }
-    encoded = Base64.urlsafe_encode64(JSON.generate(data), padding: false)
-    token = SignedState.generate("oauth-verify:#{encoded}")
-    SendVerificationEmail.call(person: Struct.new(:email).new(pending['email']), token: token)
+    SendVerificationEmail.call(person: Struct.new(:email).new(pending['email']), token: ProviderSignup.link_token(pending))
   end
 
   def complete_oauth_signup(pending, email)
@@ -729,23 +720,12 @@ class Mainline < Roda
       flash['error'] = SIGNUPS_CLOSED
       return nil
     end
-    person = create_oauth_person(pending, email)
+    person = ProviderSignup.create(pending, email: email, now: Time.now)
     clear_pending_signup
     CoreEvents.publish(:person_signed_up, person_id: person.id, provider: pending['provider'], session: session)
     accept_invite(person, email, session)
     establish_session(person, pending)
     person
-  end
-
-  def create_oauth_person(pending, email)
-    DB.transaction {
-      p = Person.create(name: pending['name'], email: email, email_verified_at: Time.now)
-      PersonIdentity.create(
-        person_id: p.id, provider: pending['provider'],
-        provider_subject: pending['uid'], email: email
-      )
-      p
-    }
   end
 
   def establish_session(person, pending)
