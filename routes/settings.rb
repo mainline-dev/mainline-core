@@ -75,12 +75,8 @@ class Mainline
     elsif reason.empty? && limit != AssignPerson.wip_limit(@team)
       flash['error'] = 'Give a reason for changing the limit.'
     else
-      DB.transaction do
-        upsert_constraint_with_event(
-          AssignPerson::WIP_KEY, limit,
-          min: 1, max: AssignPerson::WIP_CEILING, default: AssignPerson::DEFAULT_WIP_LIMIT, reason: reason
-        )
-      end
+      bounds = { min: 1, max: AssignPerson::WIP_CEILING, default: AssignPerson::DEFAULT_WIP_LIMIT }
+      change_constraints({ key: AssignPerson::WIP_KEY, value: limit, **bounds }, reason: reason)
       flash['notice'] = 'WIP limit updated'
     end
     req.redirect '/settings'
@@ -95,10 +91,9 @@ class Mainline
       return req.redirect('/settings')
     end
 
-    DB.transaction do
-      upsert_constraint_with_event('inventory_aging_days', aging, min: 1, max: 30, default: 4)
-      upsert_constraint_with_event('inventory_stale_days', stale, min: 2, max: 60, default: 10)
-    end
+    aging_days = { key: 'inventory_aging_days', value: aging, min: 1, max: 30, default: 4 }
+    stale_days = { key: 'inventory_stale_days', value: stale, min: 2, max: 60, default: 10 }
+    change_constraints(aging_days, stale_days)
 
     flash['notice'] = 'Inventory thresholds updated'
     req.redirect '/settings'
@@ -117,11 +112,9 @@ class Mainline
       return req.redirect('/settings')
     end
 
-    DB.transaction do
-      upsert_constraint_with_event('split_percentile', pct, min: 50, max: 100, default: 80)
-      upsert_constraint_with_event('split_min_released', min_rel, min: 5, max: 50, default: 10)
-      SplitCandidate.invalidate_threshold!(@team.id)
-    end
+    percentile = { key: 'split_percentile', value: pct, min: 50, max: 100, default: 80 }
+    min_released = { key: 'split_min_released', value: min_rel, min: 5, max: 50, default: 10 }
+    change_constraints(percentile, min_released) { SplitCandidate.invalidate_threshold!(@team.id) }
 
     flash['notice'] = 'Split thresholds updated'
     req.redirect '/settings'
@@ -133,7 +126,7 @@ class Mainline
 
   def save_solo_activation(req)
     value = typecast_params.str('allow_solo_activation') == '1' ? 1 : 0
-    upsert_constraint_with_event('allow_solo_activation', value, min: 0, max: 1, default: 0)
+    change_constraints({ key: 'allow_solo_activation', value: value, min: 0, max: 1, default: 0 })
     flash['notice'] = 'Activation setting updated'
     req.redirect '/settings'
   end
@@ -147,9 +140,7 @@ class Mainline
       flash['error'] = 'Give a reason for changing the two-person rule.'
       flash['error_reason'] = 'reason-needed'
     else
-      DB.transaction do
-        upsert_constraint_with_event(TwoPersonRule::KEY, value, min: 0, max: 1, default: 1, reason: reason)
-      end
+      change_constraints({ key: TwoPersonRule::KEY, value: value, min: 0, max: 1, default: 1 }, reason: reason)
       flash['notice'] = 'Two-person rule updated'
     end
     req.redirect '/settings'
@@ -165,13 +156,9 @@ class Mainline
       flash['error'] = error
       flash['error_reason'] = error_reason
     else
-      DB.transaction do
-        upsert_constraint_with_event(
-          TwoPersonRule::LIMIT_KEY, limit,
-          min: TwoPersonRule::LIMIT_RANGE.min, max: TwoPersonRule::LIMIT_RANGE.max,
-          default: TwoPersonRule::DEFAULT_LIMIT, reason: reason
-        )
-      end
+      range = TwoPersonRule::LIMIT_RANGE
+      setting = { key: TwoPersonRule::LIMIT_KEY, value: limit, min: range.min, max: range.max, default: TwoPersonRule::DEFAULT_LIMIT }
+      change_constraints(setting, reason: reason)
       flash['notice'] = 'Walkthrough limit updated'
     end
     req.redirect '/settings'
@@ -249,34 +236,13 @@ class Mainline
       return req.redirect '/settings'
     end
 
-    upsert_constraint_with_event('default_story_template', idx, min: 0, max: 2, default: 0)
+    change_constraints({ key: 'default_story_template', value: idx, min: 0, max: 2, default: 0 })
     flash['notice'] = 'Default story template updated'
     req.redirect '/settings'
   end
 
-  def upsert_constraint_with_event(key, value, min:, max:, default:, reason: nil)
-    old_value = TeamConstraint.for_team(@team.id, key, default: default)
-    upsert_constraint(key, value, min: min, max: max, default: default)
-    return if old_value == value
-
-    row = TeamConstraint.where(team_id: @team.id, constraint_key: key).first
-    RecordEvent.call(
-      actor_id: @current_person.actor.id, entity: row, action: 'updated',
-      team_id: @team.id,
-      before_state: { constraint_key: key, value: old_value },
-      after_state: { constraint_key: key, value: value, reason: reason }.compact
-    )
-  end
-
-  def upsert_constraint(key, value, min:, max:, default:)
-    DB[:team_constraints].insert_conflict(
-      target: %i[team_id constraint_key],
-      update: { value: value, updated_at: Sequel.lit('now()') }
-    ).insert(
-      id: Sequel.lit('gen_random_uuid()'),
-      team_id: @team.id, constraint_key: key,
-      value: value, min_value: min, max_value: max, default_value: default,
-      updated_at: Sequel.lit('now()')
-    )
+  # Saves the team's numbered settings given, together, each with its record.
+  def change_constraints(*settings, reason: nil, &)
+    ChangeTeamConstraint.call(team: @team, actor: @current_person.actor, settings: settings, reason: reason, &)
   end
 end

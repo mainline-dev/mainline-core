@@ -70,6 +70,7 @@ requires:
   - ./lib/rate_limiter
   - ./lib/record_event
   - ./lib/record_walkthrough
+  - ./lib/change_team_constraint
   - ./lib/client_metadata
   - ./lib/mcp_access
   - ./lib/oauth_request
