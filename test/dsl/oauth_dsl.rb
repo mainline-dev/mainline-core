@@ -29,6 +29,24 @@ module OauthDsl
                              'resource' => resource, 'scope' => 'mainline:read' }.compact)
   end
 
+  # In a browser test: the app sends this browser to sign in, and is to be
+  # sent back to a page of the test's own server, where the browser can
+  # follow. The app must list that page on a loopback address.
+  def start_sign_in_in_this_browser
+    start_sign_in(redirect_uri: driver.own_address('/teams'))
+  end
+
+  # Two presses a hundredth of a second apart, as a hurried double click
+  # lands them, then waits for the page to move on.
+  def press_twice(test_id)
+    driver.press_twice(test_id)
+  end
+
+  # How many times an app has been signed in.
+  def app_sign_ins_made
+    driver.app_sign_ins_made
+  end
+
   # What the consent page shows: the app, whether it is recognised or comes
   # with a warning, the site the person goes back to, and each team offered,
   # by name, ticked or not. Nil when no consent page is shown.

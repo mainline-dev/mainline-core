@@ -22,6 +22,10 @@ module OauthRecords
     ClientMetadata::LIMITERS.each_value(&:reset)
   end
 
+  def app_sign_ins_made
+    OauthGrant.exclude(client_id: nil).count
+  end
+
   def teams_given_by_last_sign_in
     grant = OauthGrant.exclude(client_id: nil).order(:created_at).last
     return unless grant

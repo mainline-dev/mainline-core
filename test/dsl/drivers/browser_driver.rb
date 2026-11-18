@@ -4,10 +4,12 @@
 # Not used until slice 17 (drag-and-drop) or when verifying HTMX behavior.
 
 require_relative 'records'
+require_relative 'oauth_records'
 
 class BrowserDriver
   include Capybara::DSL
   include Records
+  include OauthRecords
 
   def login_as(person)
     visit "/_test_login?person_id=#{person.id}"
@@ -176,6 +178,27 @@ class BrowserDriver
         setTimeout(function() { form.requestSubmit(event.submitter); }, 500);
       }, true);
     JS
+  end
+
+  def visit_authorize(params)
+    visit "/oauth/authorize?#{URI.encode_www_form(params)}"
+  end
+
+  # An address on the test's own server, as the browser reaches it.
+  def own_address(path)
+    server = Capybara.current_session.server
+    "http://#{server.host}:#{server.port}#{path}"
+  end
+
+  def press_twice(test_id)
+    page.execute_script(<<~JS)
+      (function() {
+        var button = document.querySelector('[data-test-id="#{test_id}"]');
+        button.click();
+        setTimeout(function() { button.click(); }, 10);
+      })()
+    JS
+    page.has_no_css?(%([data-test-id="#{test_id}"]))
   end
 
   def reset!
