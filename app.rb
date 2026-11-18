@@ -41,6 +41,7 @@ require_relative 'lib/add_scenario'
 require_relative 'lib/accept_invite'
 require_relative 'lib/archive_story'
 require_relative 'lib/deploy_story'
+require_relative 'lib/email_signup'
 require_relative 'lib/release_story'
 require_relative 'lib/remove_scenario'
 require_relative 'lib/mark_scenario'
@@ -620,10 +621,10 @@ class Mainline < Roda
 
     return { error: SIGNUPS_CLOSED } unless Signups.allowed?(email: email, invite_token: session['invite_token'])
 
-    error = validate_signup(name, email, password)
-    return { error: error } if error
+    signup = EmailSignup.call(name: name, email: email, password: password)
+    return { error: signup.error } if signup.error
 
-    person = create_email_person(name, email, password)
+    person = signup.person
     CoreEvents.publish(:person_signed_up, person_id: person.id, provider: 'email', session: session)
     result = ask_to_verify(person)
     flash['error'] = 'Could not send the verification email. Please try again.' if result == :failed
@@ -639,29 +640,6 @@ class Mainline < Roda
     else
       person.update(email_verified_at: Time.now)
       nil
-    end
-  end
-
-  def create_email_person(name, email, password)
-    DB.transaction {
-      p = Person.create(name: name, email: email)
-      email_bidx = BlindIndex.generate_bidx(email, key: Lockbox.master_key)
-      PersonIdentity.create(
-        person_id: p.id, provider: 'email', provider_subject: email_bidx,
-        email: email, password_digest: BCrypt::Password.create(password, cost: 12)
-      )
-      p
-    }
-  end
-
-  def validate_signup(name, email, password)
-    if name.length < 2 then 'Name must be at least 2 characters'
-    elsif name.length > 100 then 'Name must be 100 characters or fewer'
-    elsif email.empty? then 'Email is required'
-    elsif !email.match?(/\A[^@\s]+@[^@\s]+\.[^@\s]+\z/) then 'Email is not valid'
-    elsif email.length > 254 then 'Email is too long'
-    elsif (e = validate_password(password)) then e
-    elsif Person.find_by_email(email) then 'An account with that email already exists'
     end
   end
 
@@ -696,12 +674,6 @@ class Mainline < Roda
     return nil unless identity && BCrypt::Password.new(identity.password_digest) == password
 
     person
-  end
-
-  def validate_password(password)
-    if password.length < 12 then 'Password must be at least 12 characters'
-    elsif password.length > 70 then 'Password must be 70 characters or fewer'
-    end
   end
 
   def verify_magic_token(token)

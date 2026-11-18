@@ -34,6 +34,7 @@ requires:
   - ./lib/edit_scenario
   - ./lib/edit_story
   - ./lib/edit_task
+  - ./lib/email_signup
   - ./lib/encrypted_email
   - ./lib/first_run
   - ./lib/ensemble_timeline

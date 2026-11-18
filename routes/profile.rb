@@ -16,7 +16,7 @@ class Mainline
         end
         password = r.params['password'].to_s
 
-        password_error = validate_password(password)
+        password_error = EmailSignup.password_error(password)
         if password_error
           flash['error'] = password_error
           next r.redirect('/profile/providers')
