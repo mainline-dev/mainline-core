@@ -95,6 +95,35 @@ Set `BASE_URL` to `https://mainline.example.org` and `MAINLINE_HOST` to `mainlin
 
 Set `SIGNUPS=closed` on anything reachable from the internet, and sign up as soon as it starts, because the first person to sign up gets in. After that, people need an invitation. New email accounts verify their address before creating a team, so SMTP has to work.
 
+### Upgrading
+
+The image is published as `latest` and under each version, such as `0.3.2`. [CHANGELOG.md](CHANGELOG.md) lists what changed. To move to the newest:
+
+```shell
+docker compose -f docker-compose.selfhost.yml pull
+docker compose -f docker-compose.selfhost.yml up -d
+```
+
+Pull first: `up` alone keeps the image you already have. The app migrates its database when it starts. Take a backup before you upgrade.
+
+### Backups
+
+Everything a team has is in the Postgres database. Redis holds only rate-limit counts and queued jobs.
+
+```shell
+docker compose -f docker-compose.selfhost.yml exec -T db pg_dump -U mainline mainline_production > mainline-backup.sql
+```
+
+Keep `LOCKBOX_MASTER_KEY` with the backup. Email addresses are encrypted with it, and a restore under another key cannot read them.
+
+To restore on a new server, start the database alone, load the backup, then start the rest:
+
+```shell
+docker compose -f docker-compose.selfhost.yml up -d db
+docker compose -f docker-compose.selfhost.yml exec -T db psql -U mainline -d mainline_production < mainline-backup.sql
+docker compose -f docker-compose.selfhost.yml up -d
+```
+
 ## Working on the code
 
 Contributors run the development stack, `docker-compose.dev.yml`, built from the checkout. Point compose at it in your shell, then start it:
