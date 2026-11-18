@@ -48,22 +48,8 @@ class Mainline
       end
 
       r.post 'archive' do
-        if Task.where(activity_id: @activity.id, archived_at: nil).any?
-          flash_msg.error('Cannot archive an activity that has tasks')
-          next htmx_grid_or_redirect(r)
-        end
-
-        DB.transaction do
-          @activity.update(archived_at: Time.now)
-          RecordEvent.call(
-            actor_id:    @current_actor.id,
-            entity:      @activity,
-            action:      'archived',
-            after_state: { name: @activity.name }
-          )
-        end
-
-        flash_msg.notice("Activity '#{@activity.name}' archived")
+        result = ArchiveActivity.call(activity: @activity, actor: @current_actor, now: Time.now)
+        result.success? ? flash_msg.notice("Activity '#{@activity.name}' archived") : flash_msg.error(result.error)
         htmx_grid_or_redirect(r)
       end
 

@@ -124,3 +124,4 @@ classes:
   ProviderSignup: { mutations: 176, killed: 172, alive: 4 }
   ChangeTeamConstraint: { mutations: 219, killed: 212, alive: 7 }
   ChangeTeamField: { mutations: 87, killed: 83, alive: 4 }
+  ArchiveActivity: { mutations: 84, killed: 83, alive: 1 }
