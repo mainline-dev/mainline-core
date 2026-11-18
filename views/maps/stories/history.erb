@@ -16,7 +16,7 @@
     <tbody>
       <% @events.reverse.each do |event| %>
         <tr>
-          <td class="history-when"><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+          <td class="history-when"><%== UtcStamp.html(event.occurred_at) %></td>
           <td class="history-who"><%= event.actor.name %></td>
           <td class="history-what" data-test-id="history-what">
             <%= EventPresenter.describe(event, { people: @people_by_id, slices: @slices_by_id, tasks: @tasks_by_id }) %>

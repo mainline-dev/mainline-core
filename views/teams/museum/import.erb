@@ -44,7 +44,7 @@
 <% else %>
   <p class="mu-acq-line" data-test-id="museum-import-status" data-status="<%= @import.status %>">
     <% if @import.status == 'imported' %>
-      Acquired <%= @import.imported_at.strftime('%Y-%m-%d %H:%M') %><% if @import.actor %> by <span data-test-id="museum-import-by"><%= @import.actor.name %></span><% end %>: <strong><%= @import.added %> new exhibits</strong>, <%= @import.updated %> refreshed from the newer file.
+      Acquired <%== UtcStamp.html(@import.imported_at) %><% if @import.actor %> by <span data-test-id="museum-import-by"><%= @import.actor.name %></span><% end %>: <strong><%= @import.added %> new exhibits</strong>, <%= @import.updated %> refreshed from the newer file.
     <% elsif @import.status == 'undone' %>
       Returned <%= @import.undone_at.strftime('%Y-%m-%d') %>. The museum is as it was.
     <% else %>

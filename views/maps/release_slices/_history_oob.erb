@@ -9,7 +9,7 @@
         <tbody>
           <% @slice_events.each do |event| %>
             <tr>
-              <td style="white-space: nowrap; color: var(--text-tertiary); font-size: 0.8rem;"><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+              <td style="white-space: nowrap; color: var(--text-tertiary); font-size: 0.8rem;"><%== UtcStamp.html(event.occurred_at) %></td>
               <td style="white-space: nowrap;"><%= event.actor.name %></td>
               <td><%= EventPresenter.describe(event, { people: {}, slices: {}, tasks: {}, personas: {} }) %></td>
             </tr>

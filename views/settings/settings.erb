@@ -176,7 +176,7 @@
     <tbody>
       <% @settings_events.each do |event| %>
         <tr>
-          <td class="history-when"><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+          <td class="history-when"><%== UtcStamp.html(event.occurred_at) %></td>
           <td><%= event.actor.person&.name || event.actor.name %></td>
           <%
             if event.after_state.key?('timezone')

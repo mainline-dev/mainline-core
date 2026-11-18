@@ -885,6 +885,11 @@ class HttpDriver
     last_response.body.scan(/data-test-id="walked-not-released" data-story="([^"]+)"/).flatten
   end
 
+  # The exact moment each time on the page carries.
+  def time_stamps
+    Nokogiri::HTML(last_response.body).css('time[datetime]').map { |time| time['datetime'] }
+  end
+
   def story_history
     last_response.body.scan(%r{<td class="history-what" data-test-id="history-what">(.*?)</td>}m).flatten.map(&:strip).reverse
   end

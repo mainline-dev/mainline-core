@@ -51,7 +51,7 @@
           <div class="mu-past-row" data-test-id="museum-import-row" data-status="<%= import.status %>">
             <a href="/teams/<%= @team.id %>/museum/imports/<%= import.id %>" class="mu-past-file" data-test-id="museum-import-link-row"><%= import.file_name %></a>
             <span class="mu-past-by"><%= import.actor&.name %></span>
-            <span class="mu-past-when"><%= (import.imported_at || import.created_at).strftime('%Y-%m-%d %H:%M') %></span>
+            <span class="mu-past-when"><%== UtcStamp.html(import.imported_at || import.created_at) %></span>
             <% if import.status == 'staged' %>
               <span class="mu-past-waiting">Waiting to be catalogued</span>
             <% elsif import.status == 'imported' %>

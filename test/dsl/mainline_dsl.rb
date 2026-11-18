@@ -1347,6 +1347,18 @@ module MainlineDSL
     driver.visit_settings
   end
 
+  def visit_map_history
+    driver.visit_map_history(@map)
+  end
+
+  # The page shows at least one time, and every time on it is given in UTC.
+  def assert_stamped_in_utc
+    stamps = driver.time_stamps
+
+    refute_empty stamps
+    assert(stamps.all? { |stamp| stamp.end_with?('Z') }, "Expected every time in UTC, got #{stamps.inspect}")
+  end
+
   def update_settings(**params)
     driver.update_settings(params.transform_keys(&:to_s).transform_values(&:to_s))
   end

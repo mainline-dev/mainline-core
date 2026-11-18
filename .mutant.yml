@@ -106,6 +106,7 @@ requires:
   - ./lib/throughput_scatter
   - ./lib/two_person_rule
   - ./lib/urgent_story
+  - ./lib/utc_stamp
   - ./lib/walkthroughs
   - ./lib/unassign_person
   - ./lib/unpromote_museum_item

@@ -16,7 +16,7 @@
       <tbody>
         <% @events.each do |event| %>
           <tr>
-            <td><%= event.occurred_at.strftime('%Y-%m-%d %H:%M') %></td>
+            <td><%== UtcStamp.html(event.occurred_at) %></td>
             <td><%= @actors[event.actor_id]&.name %></td>
             <td>
               <% entity_name = @entity_names[event.entity_id] %>
