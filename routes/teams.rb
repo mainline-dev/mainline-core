@@ -299,39 +299,7 @@ class Mainline
               next r.redirect "/teams/#{@team.id}/members"
             end
 
-            DB.transaction do
-              target_membership.update(left_at: Time.now)
-              person = Person[person_id]
-              RecordEvent.call(
-                actor_id:     @current_actor.id,
-                entity:       target_membership,
-                action:       'member_archived',
-                before_state: { person_id: person_id, name: person.name }
-              )
-
-              StoryAssignment.where(person_id: person_id, team_id: @team.id).each do |sa|
-                story = Story[sa.story_id]
-                sa.destroy
-                RecordEvent.call(
-                  actor_id:     @current_actor.id,
-                  entity:       story,
-                  action:       'person_unassigned',
-                  before_state: { person_id: person_id }
-                )
-
-                remaining = StoryAssignment.where(story_id: story.id).count
-                next unless remaining.zero? && story.status == 'active'
-
-                story.update(status: 'planned')
-                RecordEvent.call(
-                  actor_id:    @current_actor.id,
-                  entity:      story,
-                  action:      'deactivated',
-                  after_state: { reason: 'no_assignees' }
-                )
-              end
-            end
-
+            ArchiveMember.call(membership: target_membership, actor: @current_actor, now: Time.now)
             flash['notice'] = 'Member archived'
             r.redirect "/teams/#{@team.id}/members"
           end

@@ -641,6 +641,16 @@ module MainlineDSL
     driver.visit_solo_log(@team)
   end
 
+  # Whether the solo log shown lists this story.
+  def in_solo_log?(story)
+    driver.solo_log_story_ids.include?(story.id)
+  end
+
+  # The account holder archives a working member of the team.
+  def archive_member(person)
+    driver.submit_archive_member(@team, person)
+  end
+
   def visit_walkthroughs
     driver.visit_walkthroughs(@team)
   end

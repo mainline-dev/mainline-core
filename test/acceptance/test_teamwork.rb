@@ -225,6 +225,21 @@ describe 'Teamwork - Solo Log' do
     assert_page_includes('Alice')
   end
 
+  it 'shows a story one person shipped after the other was archived from the team' do
+    make_account_holder(@alice)
+    story = create_story('Left to finish', under_task: @task)
+    assign_person(story, person: @alice)
+    assign_person(story, person: @bob)
+    archive_member(@bob)
+
+    deploy_story(story)
+    pass_a_scenario(story)
+    release_story(story)
+    visit_solo_log
+
+    assert in_solo_log?(story)
+  end
+
   it 'excludes stories that were ever paired' do
     story = create_story('Paired ship', under_task: @task)
     assign_person(story, person: @alice)

@@ -829,6 +829,10 @@ class HttpDriver
     last_response
   end
 
+  def solo_log_story_ids
+    last_response.body.scan(/data-test-id="solo-row"[^>]*data-story="([^"]+)"/).flatten
+  end
+
   def visit_walkthroughs(team)
     get "/teams/#{team.id}/teamwork/walkthroughs"
     last_response

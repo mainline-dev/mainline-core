@@ -22,8 +22,8 @@ module MutationBaseline
   # The classes that are measured. A class belongs here once its tests say
   # what they cover (cover 'Name*'), since those are the tests mutant uses.
   LIB = %w[
-    AcceptInvite Activation AddScenario AddToStory AgentReads ArchiveActivity ArchivePersona ArchiveStory ArchiveTask
-    AssignPerson
+    AcceptInvite Activation AddScenario AddToStory AgentReads ArchiveActivity ArchiveMember
+    ArchivePersona ArchiveStory ArchiveTask AssignPerson
     BusinessDays BypassRLS ChangeTeamConstraint ChangeTeamField CIMonitor::BranchAge ClientMetadata CIMonitor::Status CIMonitorSetup
     CreateActivity CreatePersona CreatePersonalToken CreateStory CreateTask CsrfCheck CumulativeFlow
     DataExport DeleteTeam DeployStory DiscardMuseumItem EditActivity EditPersona EditScenario EditStory EditTask
