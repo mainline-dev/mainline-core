@@ -32,10 +32,15 @@ module EmailLogin
   # one or was the last one they used.
   def self.use_link(token)
     person = person_for_link(token)
-    used = Digest::SHA256.hexdigest(token)
-    return unless person && person.last_magic_token_hash != used
+    claim(person, token) if person
+  end
 
-    person.update(last_magic_token_hash: used)
-    person
+  # Marks the link as the last one its person used: the person, or nil when
+  # it already was. Checking and marking are one statement, so two requests
+  # with the same link at the same moment cannot both sign in.
+  def self.claim(person, token)
+    used = Digest::SHA256.hexdigest(token)
+    unused = Person.where(id: person.id).where(Sequel.lit('last_magic_token_hash IS DISTINCT FROM ?', used))
+    person if unused.update(last_magic_token_hash: used) == 1
   end
 end

@@ -61,6 +61,15 @@ describe EmailLogin do
     assert_equal Digest::SHA256.hexdigest(link), @alice.refresh.last_magic_token_hash
   end
 
+  it 'signs nobody in with a link another request used after this one read its person' do
+    link = link_for(@alice)
+    read_before_it_was_used = EmailLogin.person_for_link(link)
+
+    EmailLogin.use_link(link)
+
+    assert_nil EmailLogin.claim(read_before_it_was_used, link)
+  end
+
   it 'signs nobody in with a link that is not one, and remembers nothing' do
     assert_nil EmailLogin.use_link('not-a-link')
     assert_nil @alice.refresh.last_magic_token_hash

@@ -119,7 +119,7 @@ classes:
   UnassignPerson: { mutations: 177, killed: 176, alive: 1 }
   AcceptInvite: { mutations: 116, killed: 114, alive: 2 }
   EmailSignup: { mutations: 288, killed: 284, alive: 4 }
-  EmailLogin: { mutations: 169, killed: 168, alive: 1 }
+  EmailLogin: { mutations: 194, killed: 194, alive: 0 }
   EmailVerification: { mutations: 114, killed: 111, alive: 3 }
   ProviderSignup: { mutations: 176, killed: 172, alive: 4 }
   ChangeTeamConstraint: { mutations: 219, killed: 212, alive: 7 }
