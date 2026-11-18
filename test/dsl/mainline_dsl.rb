@@ -832,6 +832,12 @@ module MainlineDSL
     driver.create_personal_token(name: name, team_ids: teams.map(&:id), expires_on: expires_on)
   end
 
+  # The commands the page gives for connecting an agent, by agent, each as
+  # its copy button would copy it.
+  def connect_commands
+    driver.connect_commands
+  end
+
   # Revokes the listed personal token with this name, with its button.
   def revoke_personal_token(name)
     driver.revoke_personal_token(name)

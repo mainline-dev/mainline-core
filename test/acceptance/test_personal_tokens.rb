@@ -48,6 +48,21 @@ describe 'Personal tokens' do
       personal_tokens_listed
   end
 
+  it "shows how to connect an agent with a new token: each command has this install's address and the token" do
+    token = create_personal_token(name: 'laptop', teams: [@team], expires_on: Date.today + 30)
+    endpoint = "#{ENV.fetch('BASE_URL')}/mcp"
+
+    assert_equal %w[claude-code codex], connect_commands.keys
+    assert(connect_commands.values.all? { |command| command.include?(endpoint) && command.include?(token) })
+  end
+
+  it 'points to the setup steps, and shows no command, when no new token is on the page' do
+    visit_coding_agents
+
+    assert_empty connect_commands
+    assert_shown('connect-setup-steps')
+  end
+
   it 'revokes a token from the list' do
     create_personal_token(name: 'build runner', teams: [@team], expires_on: Date.today + 30)
     create_personal_token(name: 'laptop', teams: [@team], expires_on: Date.today + 30)

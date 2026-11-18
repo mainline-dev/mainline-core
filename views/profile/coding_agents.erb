@@ -7,6 +7,20 @@
     <h2 class="section-title">Your new token</h2>
     <p class="lens-help">Copy it now. Mainline shows it only this once and keeps only a fingerprint of it.</p>
     <code class="token" data-test-id="new-token"><%= @new_token %></code>
+
+    <%
+      endpoint = "#{ENV.fetch('BASE_URL')}/mcp"
+      claude_code = "claude mcp add --transport http mainline \\\n  #{endpoint} \\\n  --header \"Authorization: Bearer #{@new_token}\""
+      codex = "export MAINLINE_TOKEN=\"#{@new_token}\"\ncodex mcp add mainline --url #{endpoint} \\\n  --bearer-token-env-var MAINLINE_TOKEN"
+    %>
+    <h3>Connect your coding agent</h3>
+    <p>Claude Code: run this in a terminal. <button type="button" class="preview-copy-id" data-copy="<%= claude_code %>" data-agent="claude-code" data-test-id="connect-command">Copy</button></p>
+    <pre><%= claude_code %></pre>
+    <p>Codex: run this in a terminal. <button type="button" class="preview-copy-id" data-copy="<%= codex %>" data-agent="codex" data-test-id="connect-command">Copy</button></p>
+    <pre><%= codex %></pre>
+    <p class="muted">Codex reads the token from that variable each time it starts, so set it in your shell profile too.</p>
+    <p>Any other agent: give it the address <code><%= endpoint %></code> and send the token in an <code>Authorization: Bearer</code> header.</p>
+    <p>Then ask your agent to list your Mainline maps.</p>
   </section>
 <% end %>
 
@@ -35,6 +49,7 @@
 <section class="section">
   <h2 class="section-title">Personal tokens</h2>
   <p class="lens-help">For a coding agent that cannot sign in through a browser, such as one on a build runner.</p>
+  <p class="lens-help">To connect an agent with a token, see the <a href="https://mainline.dev/docs/coding-agents" data-test-id="connect-setup-steps">setup steps</a>.</p>
 
   <% if @personal_tokens.empty? %>
     <p class="lens-help" data-test-id="no-personal-tokens">You have no personal tokens.</p>
