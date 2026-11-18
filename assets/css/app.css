@@ -2448,6 +2448,45 @@ select {
     justify-content: space-between;
 }
 
+/* A name with one action: connected accounts, coding agent sign-ins and tokens */
+.provider-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.125rem 1rem;
+    max-width: 480px;
+    padding: 0.625rem 0;
+    font-size: 0.875rem;
+}
+
+.provider-row + .provider-row {
+    border-top: 1px solid var(--border-subtle);
+}
+
+.provider-name {
+    grid-column: 1;
+    grid-row: 1;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.provider-row .inline-form {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.provider-row .btn {
+    margin-top: 0;
+}
+
+.provider-row .muted {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    font-size: 0.8125rem;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
 #activity-list {
     max-width: 360px;
 }
