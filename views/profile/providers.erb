@@ -15,27 +15,20 @@
     </div>
   <% end %>
 
-  <h3>Connect another provider</h3>
-  <div class="provider-connect-options">
-    <% if SignInProviders.enabled?('google_oauth2') && @identities.none? { |i| i.provider == 'google_oauth2' } %>
-      <form method="post" action="/profile/providers/connect/google_oauth2">
-        <%== csrf_tag('/profile/providers/connect/google_oauth2') %>
-        <button type="submit" class="btn">Connect Google</button>
-      </form>
-    <% end %>
-    <% if SignInProviders.enabled?('github') && @identities.none? { |i| i.provider == 'github' } %>
-      <form method="post" action="/profile/providers/connect/github">
-        <%== csrf_tag('/profile/providers/connect/github') %>
-        <button type="submit" class="btn">Connect GitHub</button>
-      </form>
-    <% end %>
-    <% if SignInProviders.enabled?('gitlab') && @identities.none? { |i| i.provider == 'gitlab' } %>
-      <form method="post" action="/profile/providers/connect/gitlab">
-        <%== csrf_tag('/profile/providers/connect/gitlab') %>
-        <button type="submit" class="btn">Connect GitLab</button>
-      </form>
-    <% end %>
-  </div>
+  <% connectable = %w[google_oauth2 github gitlab].select { |provider|
+       SignInProviders.enabled?(provider) && @identities.none? { |i| i.provider == provider }
+     } %>
+  <% if connectable.any? %>
+    <h3 data-test-id="connect-another">Connect another provider</h3>
+    <div class="provider-connect-options">
+      <% connectable.each do |provider| %>
+        <form method="post" action="/profile/providers/connect/<%= provider %>">
+          <%== csrf_tag("/profile/providers/connect/#{provider}") %>
+          <button type="submit" class="btn">Connect <%= Mainline::PROVIDER_LABELS[provider] %></button>
+        </form>
+      <% end %>
+    </div>
+  <% end %>
 
   <% has_password = @identities.any? { |i| i.provider == 'email' } %>
   <h3><%= has_password ? 'Change password' : 'Set a password' %></h3>

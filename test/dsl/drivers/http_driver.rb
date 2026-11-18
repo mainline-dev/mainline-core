@@ -467,6 +467,16 @@ class HttpDriver
     last_response
   end
 
+  def visit_connected_accounts
+    get '/profile/providers'
+    last_response
+  end
+
+  def connect_provider(provider, uid:, email:, name:)
+    post "/profile/providers/connect/#{provider}"
+    oauth_callback(provider: provider, uid: uid, email: email, name: name)
+  end
+
   def visit_coding_agents(team_id = nil)
     get '/profile/coding-agents', team_id ? { 'team' => team_id } : {}
     last_response

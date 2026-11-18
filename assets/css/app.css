@@ -2487,6 +2487,16 @@ select {
     overflow-wrap: anywhere;
 }
 
+.provider-connect-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.provider-connect-options .btn {
+    margin-top: 0;
+}
+
 #activity-list {
     max-width: 360px;
 }

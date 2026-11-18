@@ -387,6 +387,18 @@ describe 'Authentication' do
       assert_includes resp.body, 'data-test-id="provider-github"'
     end
 
+    it 'offers to connect another provider only while there is one left to connect' do
+      visit_connected_accounts
+
+      assert_shown('connect-another')
+
+      connect_provider('google_oauth2', uid: 'g-200')
+      connect_provider('gitlab', uid: 'gl-200')
+      visit_connected_accounts
+
+      refute_shown('connect-another')
+    end
+
     it 'neither offers nor connects a provider whose client id is disabled' do
       was = ENV.fetch('GITLAB_CLIENT_ID')
       ENV['GITLAB_CLIENT_ID'] = 'disabled'

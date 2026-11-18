@@ -756,6 +756,17 @@ module MainlineDSL
     driver.first_steps_done
   end
 
+  # The signed-in person's Connected Accounts page.
+  def visit_connected_accounts
+    driver.visit_connected_accounts
+  end
+
+  # Connects another sign-in provider to the person signed in, as coming back
+  # from that provider does.
+  def connect_provider(provider, uid:)
+    driver.connect_provider(provider, uid: uid, email: @_login_person.email, name: @_login_person.name)
+  end
+
   # The signed-in person's Coding agents page.
   def visit_coding_agents
     driver.visit_coding_agents
