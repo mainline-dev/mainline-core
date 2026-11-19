@@ -34,11 +34,15 @@ describe 'CI runs every test layer' do
     assert_includes local_script, 'rake mutant_changed'
   end
 
-  # Slopbouncer reads the commits being pushed and lists the tests they made
-  # weaker. It reports and does not stop the push, and it comes before
-  # mutation testing because it takes a second and mutation testing minutes.
-  it 'lists the tests a push made weaker in the local run, before mutation testing' do
-    assert_includes local_script, 'bundle exec slopbouncer origin/master..HEAD'
+  # Slopbouncer compares the working tree with what is on GitHub, so it reads
+  # the commits waiting to be pushed and any change not yet committed, and
+  # lists the tests they made weaker. A run made before the commit, when a
+  # weaker test can still be put right, then sees the change it is testing.
+  # It reports and does not stop the push, and it comes before mutation
+  # testing because it takes a second and mutation testing minutes.
+  it 'lists the tests made weaker since origin/master, committed or not, before mutation testing' do
+    assert_match(%r{bundle exec slopbouncer origin/master( |$)}, local_script)
+    refute_includes local_script, 'origin/master..HEAD'
     assert_operator local_script.index('bundle exec slopbouncer'), :<, local_script.index('rake mutant_changed')
   end
 
