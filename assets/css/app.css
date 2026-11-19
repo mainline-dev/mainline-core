@@ -7398,18 +7398,35 @@ ol.mu-md-list { padding-left: 20px; }
 .ladder-action { margin-left: 6px; color: var(--accent-cyan); white-space: nowrap; }
 
 /* A new team's first steps, above its maps until its first release. */
-.first-run { padding: 20px 24px; border: 1px solid var(--border-subtle); border-radius: 6px; background: var(--bg-surface); }
+/* .section.first-run, so the box keeps its top edge and top padding: .section:first-of-type would otherwise take them. */
+.section.first-run { padding: 20px 24px; border: 1px solid var(--border-subtle); border-radius: 6px; background: var(--bg-surface); }
 .first-run-lead { margin: 0 0 16px; font: 600 16px/1.4 var(--font-body); color: var(--text-primary); }
-.first-run-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
-.first-run-step { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: 14px; color: var(--text-secondary); }
+.first-run-steps { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 12px 24px; }
+.first-run-step { flex: 1 0 100%; display: grid; grid-template-columns: 26px minmax(0, max-content) auto; justify-content: start; gap: 12px; align-items: center; font-size: 14px; color: var(--text-secondary); }
 .first-run-step b { color: var(--text-primary); font-weight: 600; }
 .first-run-tick { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 1px solid var(--border-strong); border-radius: 50%; font: 600 12px/1 var(--font-mono); color: var(--text-tertiary); }
+/* A step that is done keeps its tick and its name, and sits beside the others that are done. */
+.first-run-step.is-done { flex: 0 0 auto; grid-template-columns: 26px auto; }
 .first-run-step.is-done .first-run-tick { border-color: var(--accent-emerald); background: var(--accent-emerald-bg); color: var(--accent-emerald); }
 .first-run-step.is-done b { color: var(--text-secondary); }
+.first-run-actions { display: inline-flex; gap: 12px; }
 .first-run-action { font-size: 13px; color: var(--accent-cyan); white-space: nowrap; }
+/* The 90-day figure is a wait, so it closes the list as a line with no number. */
+.first-run-step.first-run-wait { flex: 1 0 100%; grid-template-columns: minmax(0, max-content) auto; }
+/* Once only the wait is left, the panel is one line that opens onto the steps. */
+.section.first-run.is-settled { padding: 0; border: 0; border-radius: 0; background: none; }
+.first-run-summary { font-size: 14px; color: var(--text-secondary); cursor: pointer; list-style: none; }
+.first-run-summary::before { content: '\25b8'; margin-right: 6px; }
+.first-run-more[open] > .first-run-summary::before { content: '\25be'; }
+.first-run-summary::-webkit-details-marker { display: none; }
+.first-run-summary b { color: var(--text-primary); font-weight: 600; }
+.first-run-summary .first-run-action { margin-left: 6px; }
+.first-run-more[open] > .first-run-steps { margin-top: 12px; }
 @media (max-width: 640px) {
   .first-run-step { grid-template-columns: 26px minmax(0, 1fr); }
-  .first-run-action { grid-column: 2; }
+  .first-run-step.first-run-wait { grid-template-columns: minmax(0, 1fr); }
+  .first-run-actions { grid-column: 2; }
+  .first-run-step.first-run-wait .first-run-actions { grid-column: 1; }
 }
 .mu-never-pulled { margin: 8px 0 0; font: 400 14px/1.4 var(--font-body); color: var(--text-secondary); }
 .mu-rewrite-foot { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--border-subtle); }

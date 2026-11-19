@@ -1369,6 +1369,23 @@ class HttpDriver
     last_response.body.scan(/data-test-id="first-run-step" data-step="([a-z]+)" data-done="true"/).flatten
   end
 
+  def first_steps_listed
+    last_response.body.scan(/data-test-id="first-run-step" data-step="([a-z]+)"/).flatten
+  end
+
+  def first_steps_folded?
+    last_response.body.include?('data-test-id="first-run" data-settled="true"')
+  end
+
+  def figure_due_on
+    day = last_response.body[/data-test-id="first-run-figure"[^>]* data-due="([0-9-]+)"/, 1]
+    day && Date.iso8601(day)
+  end
+
+  def figure_shown
+    last_response.body[/data-test-id="first-run-figure"[^>]* data-percent="(\d+)"/, 1]&.to_i
+  end
+
   def never_pulled_percent
     last_response.body[/data-test-id="museum-never-pulled" data-percent="(\d+)"/, 1]&.to_i
   end

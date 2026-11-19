@@ -340,6 +340,11 @@ class Mainline
                            {}
                          end
           @first_run = FirstRun.for(@team)
+          @first_run_settled = FirstRun.settled?(@first_run)
+          if @first_run
+            @never_pulled = NeverPulled.percent(@team.id)
+            @never_pulled_due = NeverPulled.due(@team.id)
+          end
           @ladder = Activation.for(@team) unless @first_run
           @page_title = "#{@team.name} - Mainline"
           view 'show'

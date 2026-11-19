@@ -118,6 +118,45 @@ describe FirstRun do
     assert_equal %i[map figure], done
   end
 
+  describe 'whether the steps every team needs are done' do
+    def needed_steps_done(without: nil)
+      map
+      exhibit(promoted_at: @now, story_id: story.id) unless without == :promote
+      ReleaseSlice.create(map_id: map.id, team_id: @team.id, name: 'First release', position: 1000) unless without == :slice
+      story(status: 'active') unless without == :start
+      FirstRun.settled?(FirstRun.for(@team, now: @now))
+    end
+
+    it 'is so with a map, something promoted, a slice and a story started, whatever the coding agent and the figure' do
+      assert needed_steps_done
+      assert_equal %i[map promote slice start], done
+    end
+
+    it 'is not so while nothing is promoted' do
+      refute needed_steps_done(without: :promote)
+    end
+
+    it 'is not so while there is no release slice' do
+      refute needed_steps_done(without: :slice)
+    end
+
+    it 'is not so while no story has started' do
+      refute needed_steps_done(without: :start)
+    end
+
+    it 'is not so for a team with no map and nothing in the museum, even with a coding agent' do
+      give_a_coding_agent(@team)
+
+      refute FirstRun.settled?(FirstRun.for(@team, now: @now))
+    end
+
+    it 'is not so once a story has been released, when there are no first steps at all' do
+      story(status: 'released', released_at: @now)
+
+      refute FirstRun.settled?(FirstRun.for(@team, now: @now))
+    end
+  end
+
   it 'has no first steps once a story has been released' do
     story(status: 'released', released_at: @now)
 

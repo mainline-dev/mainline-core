@@ -98,4 +98,54 @@ describe NeverPulled do
 
     assert_equal 50, percent
   end
+
+  describe 'when the figure is due' do
+    def due
+      NeverPulled.due(@team.id)
+    end
+
+    it 'is never for a team with nothing in the museum' do
+      assert_nil due
+    end
+
+    it 'is 90 days after the oldest ticket came in' do
+      exhibit(days_ago: 10)
+      exhibit(days_ago: 30)
+      exhibit(days_ago: 20)
+
+      assert_equal @now + (60 * 86_400), due
+    end
+
+    it 'is the moment the percentage starts to be given, and not a second sooner' do
+      exhibit(days_ago: 30)
+
+      assert_nil NeverPulled.percent(@team.id, now: due - 1)
+      assert_equal 100, NeverPulled.percent(@team.id, now: due)
+    end
+
+    it 'does not count from an epic, a sub-task or a story proposed from a specification' do
+      exhibit(days_ago: 80, type: 'Epic')
+      exhibit(days_ago: 75, type: 'Subtask')
+      exhibit(days_ago: 70, type: 'Sub-task')
+      exhibit(days_ago: 60, source: 'mainline')
+      exhibit(days_ago: 5)
+
+      assert_equal @now + (85 * 86_400), due
+    end
+
+    it 'is never for a team whose museum holds only stories proposed from a specification' do
+      exhibit(days_ago: 60, source: 'mainline')
+
+      assert_nil due
+    end
+
+    it "does not count another team's tickets" do
+      other = Team.create(name: 'Other')
+      SetTeamContext.call(other.id)
+      exhibit(days_ago: 60, team: other)
+      SetTeamContext.call(@team.id)
+
+      assert_nil due
+    end
+  end
 end

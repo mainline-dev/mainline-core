@@ -824,6 +824,26 @@ module MainlineDSL
     driver.first_steps_done
   end
 
+  # Every first step the team page lists, done or not, in order.
+  def first_steps_listed
+    driver.first_steps_listed
+  end
+
+  # Whether the first steps are folded into one line.
+  def first_steps_folded?
+    driver.first_steps_folded?
+  end
+
+  # The day the team page says the museum will have its figure, if it says.
+  def figure_due_on
+    driver.figure_due_on
+  end
+
+  # The never-pulled percentage the team page gives, once it can.
+  def figure_shown
+    driver.figure_shown
+  end
+
   # The signed-in person's Connected Accounts page.
   def visit_connected_accounts
     driver.visit_connected_accounts
