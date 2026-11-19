@@ -195,11 +195,16 @@ module MainlineMCP
     end
   end
 
+  NO_SCENARIOS = 'This story has no scenarios yet, so there is no feature file. Scenarios are its acceptance ' \
+                 'criteria: ask a person to add them in Mainline before starting work on it.'
+
   def self.call_get_feature_file(story_id, language = nil)
     readable_story(story_id) do |story|
       next error_response("Unknown language: #{language}") if language && !StepStubs::LANGUAGES.key?(language)
 
       record_agent_read(story, 'get_feature_file')
+      next error_response(NO_SCENARIOS) if Scenario.where(story_id: story.id).empty?
+
       files = [FeatureFile.for(story)]
       files << StepStubs.for(story, language) if language
       MCP::Tool::Response.new(files.map { |text| { type: 'text', text: text } })

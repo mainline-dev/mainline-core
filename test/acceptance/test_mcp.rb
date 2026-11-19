@@ -15,8 +15,8 @@ describe 'MCP server' do
     create_map
     persona  = create_persona('User')
     activity = create_activity('Browse', for_personas: [persona])
-    task     = create_task('Search', under_activity: activity)
-    @story = create_story('Show results', under_task: task)
+    @task    = create_task('Search', under_activity: activity)
+    @story = create_story('Show results', under_task: @task)
     @story.update(description: 'Display search results')
     create_scenario(@story, name: 'Search shows matching results', given_text: 'a query', when_text: 'I search',
       then_text: 'I see results')
@@ -154,6 +154,17 @@ describe 'MCP server' do
     assert_includes text['text'], "@story-#{@story.id}"
     assert_includes text['text'], 'Scenario: Search shows matching results'
     assert_equal(1, BypassRLS.call { Event.where(entity_id: @story.id, action: 'agent_read').count })
+  end
+
+  it 'get_feature_file tells an agent a story has no scenarios, with no feature file or stubs' do
+    connect_coding_agent
+    mcp_initialize
+    bare = create_story('No scenarios yet', under_task: @task)
+
+    text, error = mcp_tool_text(mcp_call_tool('get_feature_file', arguments: { 'story_id' => bare.id, 'language' => 'ruby' }))
+
+    assert error
+    refute_includes text, 'Feature:'
   end
 
   it 'get_feature_file adds step stubs in the language asked for' do
