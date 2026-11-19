@@ -104,7 +104,11 @@
                hx-swap="innerHTML">Assign</a>
           </span>
           <a href="/maps/<%= map_id %>/stories/<%= story.id %>/history" class="add-link">History<span class="add-link-count" data-tippy-content="<%= deploy_tip %>"><%= deploy_count || 0 %></span></a>
-          <details class="card-kebab" data-test-id="card-kebab">
+          <%# The board stays on screen while stories change elsewhere, so the menu
+              asks for the story's actions again each time it is opened. %>
+          <details class="card-kebab" data-test-id="card-kebab"
+                   hx-get="/maps/<%= map_id %>/stories/<%= story.id %>/card" hx-trigger="toggle[this.open]"
+                   hx-select=".card-kebab-menu" hx-target="find .card-kebab-menu" hx-swap="outerHTML">
             <summary aria-label="Actions">&#x22EE;</summary>
             <div class="card-kebab-menu">
               <button type="button" class="deploy-btn delete-confirm"
@@ -156,7 +160,9 @@
                hx-swap="innerHTML">Assign</a>
           </span>
           <a href="/maps/<%= map_id %>/stories/<%= story.id %>/history" class="add-link">History<span class="add-link-count" data-tippy-content="<%= deploy_tip %>"><%= deploy_count || 0 %></span></a>
-          <details class="card-kebab" data-test-id="card-kebab">
+          <details class="card-kebab" data-test-id="card-kebab"
+                   hx-get="/maps/<%= map_id %>/stories/<%= story.id %>/card" hx-trigger="toggle[this.open]"
+                   hx-select=".card-kebab-menu" hx-target="find .card-kebab-menu" hx-swap="outerHTML">
             <summary aria-label="Actions">&#x22EE;</summary>
             <div class="card-kebab-menu">
               <button type="button" class="archive-btn delete-confirm"

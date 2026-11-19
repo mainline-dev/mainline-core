@@ -148,6 +148,14 @@ class BrowserDriver
     find(%([data-test-id="#{test_id}"])).click
   end
 
+  def open_card_menu
+    find('[data-test-id="card-kebab"] summary').click
+  end
+
+  def card_menu_open?
+    page.has_css?('[data-test-id="card-kebab"][open]')
+  end
+
   # The middle of the element on screen, to click the same spot again once
   # something else has taken its place.
   def spot_of(test_id)

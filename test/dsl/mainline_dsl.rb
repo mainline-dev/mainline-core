@@ -657,6 +657,26 @@ module MainlineDSL
     driver.visit_map(@map)
   end
 
+  # What the block does happens in a session of its own, as the person given,
+  # while the page this test has open stays as it was drawn.
+  def elsewhere(as:)
+    here = @driver
+    @driver = HttpDriver.new
+    @driver.login_as(as)
+    yield
+  ensure
+    @driver = here
+  end
+
+  # Opens the menu of the one card on the board.
+  def open_card_menu
+    driver.open_card_menu
+  end
+
+  def card_menu_open?
+    driver.card_menu_open?
+  end
+
   def visit_map_active
     driver.visit_map_active(@map)
   end
