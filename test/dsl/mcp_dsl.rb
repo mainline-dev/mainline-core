@@ -120,6 +120,25 @@ module McpDSL
     JSON.parse(last_response.body).dig('result', 'supportedVersions')
   end
 
+  # What the server says it can do, to a client that asks before anything else.
+  def mcp_capabilities_offered(token: nil)
+    post('/mcp', JSON.generate({ jsonrpc: '2.0', id: 1, method: 'server/discover' }), signed_in_headers(token || @mcp_token))
+    JSON.parse(last_response.body).dig('result', 'capabilities')
+  end
+
+  # Whether a 2026-07-28 client asking to be told of changes is given a stream
+  # to wait on.
+  def mcp_listen_opens_a_stream?(token: nil)
+    version = '2026-07-28'
+    headers = signed_in_headers(token || @mcp_token)
+      .merge('HTTP_MCP_PROTOCOL_VERSION' => version, 'HTTP_MCP_METHOD' => 'subscriptions/listen',
+        'HTTP_ACCEPT' => 'application/json, text/event-stream')
+    meta = { 'io.modelcontextprotocol/protocolVersion' => version, 'io.modelcontextprotocol/clientCapabilities' => {} }
+    body = { jsonrpc: '2.0', id: 4, method: 'subscriptions/listen', params: { notifications: { toolsListChanged: true }, _meta: meta } }
+    post('/mcp', JSON.generate(body), headers)
+    last_response.content_type.to_s.include?('text/event-stream')
+  end
+
   # The names of the tools the server lists for a client on this protocol
   # version that opened no session. Such a client says which version it
   # speaks, and what it can do, on every request, in the request's own _meta,

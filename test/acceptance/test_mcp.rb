@@ -58,6 +58,18 @@ describe 'MCP server' do
     assert_includes mcp_tools_listed_on('2026-07-28'), 'list_maps'
   end
 
+  it 'promises a client on the 2026-07-28 protocol no change notifications, since it cannot send them' do
+    connect_coding_agent
+
+    assert(mcp_capabilities_offered.values.none? { |ability| ability.key?('listChanged') })
+  end
+
+  it 'answers a request to listen for changes with a refusal, never an empty stream' do
+    connect_coding_agent
+
+    refute_predicate self, :mcp_listen_opens_a_stream?
+  end
+
   it 'initializes MCP session' do
     connect_coding_agent
     resp = mcp_initialize

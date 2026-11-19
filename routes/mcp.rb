@@ -3,9 +3,12 @@
 require_relative '../lib/mcp_access'
 require_relative '../lib/mcp_server'
 
+# Each call is answered whole: the route below hands back a finished answer
+# and cannot hold a stream open. So the server offers no stream to listen on
+# for changes, and does not say it sends change notifications.
 MCP_TRANSPORT = MCP::Server::Transports::StreamableHTTPTransport.new(
   MainlineMCP.build_server, stateless: true, enable_json_response: true,
-  allowed_hosts: [ENV.fetch('MAINLINE_HOST')]
+  serve_subscriptions_listen: false, allowed_hosts: [ENV.fetch('MAINLINE_HOST')]
 )
 
 class Mainline
