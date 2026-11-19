@@ -129,10 +129,8 @@ describe 'Assignments' do
 
     visit_inline_assign(@story)
 
-    body = page_body
-
-    assert_includes body, 'Alice'
-    refute_includes body, 'Bob'
+    assert_includes people_offered_to_assign, 'Alice'
+    refute_includes people_offered_to_assign, 'Bob'
   end
 
   it 'rejects assigning without selecting a person' do

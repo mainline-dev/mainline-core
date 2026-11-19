@@ -414,6 +414,10 @@ class HttpDriver
     last_response
   end
 
+  def people_offered_to_assign
+    Nokogiri::HTML(last_response.body).css('.inline-assign-option').map { |option| option.text.strip.delete_suffix(' (busy)') }
+  end
+
   def htmx_get_inline_assign(map, story)
     get "/maps/#{map.id}/stories/#{story.id}/assignments/inline",
       {}, { 'HTTP_HX_REQUEST' => 'true' }

@@ -237,6 +237,11 @@ module MainlineDSL
     driver.htmx_get_inline_assign(@map, story)
   end
 
+  # The names the assign dropdown on the page offers, busy or not.
+  def people_offered_to_assign
+    driver.people_offered_to_assign
+  end
+
   def assign_person(story, person:)
     driver.submit_assign_person(@map, story, person_id: person.id)
   end
