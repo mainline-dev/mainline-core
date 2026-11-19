@@ -365,6 +365,13 @@ describe 'MCP server' do
     end
   end
 
+  it 'gives every tool its title again in its annotations, where some clients look for it' do
+    connect_coding_agent
+    mcp_initialize
+
+    mcp_list_tools.each { |tool| assert_equal tool['title'], tool['annotations']['title'], tool['name'] }
+  end
+
   # Reading a story leaves a record in its history, once for every read. A
   # tool that writes anything is not read-only as the directories mean it, so
   # the two that read a story say so, and the rest say they only read.

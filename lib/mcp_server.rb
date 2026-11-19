@@ -12,19 +12,24 @@ require_relative 'step_stubs'
 require_relative 'story_id'
 
 module MainlineMCP
-  # No tool changes anything a team edits, and none reaches outside Mainline.
-  # Most only read, and give the same answer each time.
-  READ_ONLY = { read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false }.freeze
-  # Reading a story leaves a record in its history, once for every read,
-  # which is how the card knows a coding agent has read it. A tool that
-  # writes anything is not read-only as the directories that list the server
-  # mean it, so the two that read a story say so.
-  RECORDED_READ = { read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: false }.freeze
+  # Reading a story adds a line to its history, once for every read, which is
+  # how the card knows a coding agent has read it. Nothing on the story or
+  # anything else a team edits changes.
   RECORDED = "Mainline records in the story's history that a coding agent read it, for whom and with which app. " \
              'Nothing else changes.'
   # Every tool needs a sign-in that may read, which is how ChatGPT knows to
   # offer its connect button.
   SIGN_IN = { securitySchemes: [{ type: 'oauth2', scopes: [OAuthMetadata::SCOPE] }] }.freeze
+
+  # What a tool says of itself. None destroys anything or reaches outside
+  # Mainline. Most only read, and give the same answer each time. A tool that
+  # reads a story leaves a record, once for every read, and a tool that
+  # writes anything is not read-only as the directories that list the server
+  # mean it, so those two say so. The title is given here as well as at the
+  # top of the tool, because a client may look in either place.
+  def self.annotations(title, recorded: false)
+    { title: title, read_only_hint: !recorded, destructive_hint: false, idempotent_hint: !recorded, open_world_hint: false }
+  end
 
   def self.build_server
     instructions = 'Access to a Mainline story map. No tool can change the map. ' \
@@ -53,10 +58,10 @@ module MainlineMCP
   def self.define_list_maps(server)
     server.define_tool(
       name:         'list_maps',
-      title:        'List maps',
-      annotations:  READ_ONLY,
+      title:        'List story maps',
+      annotations:  annotations('List story maps'),
       meta:         SIGN_IN,
-      description:  'List the maps of the teams this coding agent can read, each with its team. ' \
+      description:  'List the story maps of the teams this connection can read, each with its team. ' \
                     "Give a team's ID for that team's maps only.",
       input_schema: {
         type:       'object',
@@ -68,8 +73,8 @@ module MainlineMCP
   def self.define_get_map(server)
     server.define_tool(
       name:         'get_map',
-      title:        'Get map',
-      annotations:  READ_ONLY,
+      title:        'Get a story map',
+      annotations:  annotations('Get a story map'),
       meta:         SIGN_IN,
       description:  'Get full map hierarchy: activities, steps, stories, personas, release slices',
       input_schema: {
@@ -83,8 +88,8 @@ module MainlineMCP
   def self.define_get_story(server)
     server.define_tool(
       name:         'get_story',
-      title:        'Get story',
-      annotations:  RECORDED_READ,
+      title:        'Get a story',
+      annotations:  annotations('Get a story', recorded: true),
       meta:         SIGN_IN,
       description:  "Get story detail: description, scenarios, deploy history, assignments. #{RECORDED}",
       input_schema: {
@@ -98,8 +103,8 @@ module MainlineMCP
   def self.define_get_feature_file(server)
     server.define_tool(
       name:         'get_feature_file',
-      title:        'Get feature file',
-      annotations:  RECORDED_READ,
+      title:        "Get a story's feature file",
+      annotations:  annotations("Get a story's feature file", recorded: true),
       meta:         SIGN_IN,
       description:  "Get a story's scenarios as a Gherkin .feature file, tagged with the story and scenario IDs. " \
                     "With a language, also pending step definitions for it. #{RECORDED}",
@@ -117,12 +122,12 @@ module MainlineMCP
   def self.define_get_import_format(server)
     server.define_tool(
       name:         'get_import_format',
-      title:        'Get import format',
-      annotations:  READ_ONLY,
+      title:        'Get the story import format',
+      annotations:  annotations('Get the story import format'),
       meta:         SIGN_IN,
       description:  'Get the instructions and JSON Schema for a Mainline import file: stories proposed from a ' \
                     'specification, for a person to upload and review. Lists the activities and steps of the team ' \
-                    'the file is for; give team_id when this coding agent reads several teams. ' \
+                    'the file is for; give team_id when this connection reads several teams. ' \
                     'Reads only; nothing is marked or changed.',
       input_schema: {
         type:       'object',
@@ -158,7 +163,7 @@ module MainlineMCP
 
   def self.teams_to_ask_for(team_ids)
     teams = Team.where(id: team_ids).order(:name).map { |team| "#{team.name} (#{team.id})" }
-    "This coding agent reads several teams. For one team's activities and steps, ask again with its team_id: " \
+    "This connection reads several teams. For one team's activities and steps, ask again with its team_id: " \
       "#{teams.join(', ')}."
   end
 
