@@ -355,17 +355,28 @@ describe 'MCP server' do
     assert_empty %w[get_map get_story list_maps] - names
   end
 
-  it 'gives every tool a title and says it only reads, the same each time, and reaches nothing outside Mainline' do
+  it 'gives every tool a title, and says none of them destroys anything or reaches outside Mainline' do
     connect_coding_agent
     mcp_initialize
 
-    read_only = { 'readOnlyHint' => true, 'destructiveHint' => false, 'idempotentHint' => true,
-                  'openWorldHint' => false }
-
     mcp_list_tools.each do |tool|
       refute_empty tool['title'].to_s, tool['name']
-      assert_equal read_only, tool['annotations'], tool['name']
+      assert_equal [false, false], tool['annotations'].values_at('destructiveHint', 'openWorldHint'), tool['name']
     end
+  end
+
+  # Reading a story leaves a record in its history, once for every read. A
+  # tool that writes anything is not read-only as the directories mean it, so
+  # the two that read a story say so, and the rest say they only read.
+  it 'says the two tools that read a story leave something behind each time, and that the rest only read' do
+    connect_coding_agent
+    mcp_initialize
+
+    hints = mcp_list_tools.to_h { |tool| [tool['name'], tool['annotations'].values_at('readOnlyHint', 'idempotentHint')] }
+    recording = %w[get_feature_file get_story]
+
+    assert_equal [[false, false]], hints.values_at(*recording).uniq
+    assert_equal [[true, true]], hints.except(*recording).values.uniq
   end
 
   it 'tells a client that every tool needs a sign-in that may read' do

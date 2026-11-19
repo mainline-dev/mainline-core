@@ -12,16 +12,23 @@ require_relative 'step_stubs'
 require_relative 'story_id'
 
 module MainlineMCP
-  # Every tool only reads: it changes nothing a team edits, gives the same
-  # answer each time, and reaches nothing outside Mainline. A read of a story
-  # is logged, which is how the card knows a coding agent has read it.
+  # No tool changes anything a team edits, and none reaches outside Mainline.
+  # Most only read, and give the same answer each time.
   READ_ONLY = { read_only_hint: true, destructive_hint: false, idempotent_hint: true, open_world_hint: false }.freeze
+  # Reading a story leaves a record in its history, once for every read,
+  # which is how the card knows a coding agent has read it. A tool that
+  # writes anything is not read-only as the directories that list the server
+  # mean it, so the two that read a story say so.
+  RECORDED_READ = { read_only_hint: false, destructive_hint: false, idempotent_hint: false, open_world_hint: false }.freeze
+  RECORDED = "Mainline records in the story's history that a coding agent read it, for whom and with which app. " \
+             'Nothing else changes.'
   # Every tool needs a sign-in that may read, which is how ChatGPT knows to
   # offer its connect button.
   SIGN_IN = { securitySchemes: [{ type: 'oauth2', scopes: [OAuthMetadata::SCOPE] }] }.freeze
 
   def self.build_server
-    instructions = 'Read-only access to a Mainline story map. ' \
+    instructions = 'Access to a Mainline story map. No tool can change the map. ' \
+                   "Reading a story with get_story or get_feature_file is recorded in the story's history. " \
                    'Use list_maps to see available maps, get_map for the full hierarchy, ' \
                    'get_story for details including scenarios (acceptance criteria), ' \
                    'and get_feature_file for those scenarios as a Gherkin feature file. ' \
@@ -77,9 +84,9 @@ module MainlineMCP
     server.define_tool(
       name:         'get_story',
       title:        'Get story',
-      annotations:  READ_ONLY,
+      annotations:  RECORDED_READ,
       meta:         SIGN_IN,
-      description:  'Get story detail: description, scenarios, deploy history, assignments.',
+      description:  "Get story detail: description, scenarios, deploy history, assignments. #{RECORDED}",
       input_schema: {
         type:       'object',
         properties: { story_id: { type: 'string', description: 'UUID of the story' } },
@@ -92,10 +99,10 @@ module MainlineMCP
     server.define_tool(
       name:         'get_feature_file',
       title:        'Get feature file',
-      annotations:  READ_ONLY,
+      annotations:  RECORDED_READ,
       meta:         SIGN_IN,
       description:  "Get a story's scenarios as a Gherkin .feature file, tagged with the story and scenario IDs. " \
-                    'With a language, also pending step definitions for it.',
+                    "With a language, also pending step definitions for it. #{RECORDED}",
       input_schema: {
         type:       'object',
         properties: {
