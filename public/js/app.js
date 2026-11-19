@@ -821,15 +821,16 @@ document.addEventListener('submit', function(e) {
 
 // Ticket Museum cases: clicking an exhibit's row, or its key from the
 // keyboard, opens its whole record underneath, one at a time, with the open
-// key kept in the address. Its Promote opens the case ready to type in. Its
-// tick box, other buttons and links do their own thing.
+// key kept in the address. Its Promote opens the case ready to type in, and
+// on a case already open does what the button at the foot of its form does.
+// Its tick box, other buttons and links do their own thing.
 document.addEventListener('click', function(e) {
   var row = e.target.closest('.mu-row[data-case]');
   if (!row) return;
   var isOpen = row.classList.contains('is-open');
   if (e.target.closest('.mu-promote')) {
     e.preventDefault();
-    if (isOpen) focusMuseumTitle(row);
+    if (isOpen) submitMuseumCase(row);
     else openMuseumCase(row, function() { focusMuseumTitle(row); });
     return;
   }
@@ -876,6 +877,16 @@ document.addEventListener('htmx:afterRequest', function(e) {
   if (row.museumCaseOpened) row.museumCaseOpened();
   row.museumCaseOpened = null;
 });
+
+// Sends whichever form the open case is showing, a new story or adding to
+// one that exists, as that form's own button would, so the form's rules hold.
+// A case still on its way has no form yet: the title is where to start.
+function submitMuseumCase(row) {
+  var panel = museumCaseSlot(row).querySelector('[data-panel]:not([hidden])');
+  var form = panel && panel.querySelector('form');
+  if (!form) { focusMuseumTitle(row); return; }
+  form.requestSubmit(form.querySelector('[type="submit"]:not([form])'));
+}
 
 function focusMuseumTitle(row) {
   var first = museumFirstTitleField(museumCaseSlot(row));

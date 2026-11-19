@@ -148,6 +148,37 @@ class BrowserDriver
     find(%([data-test-id="#{test_id}"])).click
   end
 
+  def visit_museum_page(team)
+    visit "/teams/#{team.id}/museum"
+  end
+
+  # Presses the Promote on an exhibit's row. On a closed exhibit that opens
+  # it; the first step waits for its form.
+  def open_exhibit_to_promote(key)
+    press_row_promote(key)
+    find(%([data-test-id="museum-case"][data-key="#{key}"] [data-test-id="museum-promote-form"]))
+  end
+
+  def press_row_promote(key)
+    find(%([data-test-id="museum-promote"][data-key="#{key}"])).click
+  end
+
+  # A title written out, whichever template the form opened on.
+  def write_story_title(text)
+    picker = find('[data-test-id="museum-promote-form"] [data-test-id="museum-template"]')
+    picker.find('option[value="written"]').select_option unless picker.value == 'written'
+    find('[data-test-id="museum-promote-form"] input[name="title"]').set(text)
+  end
+
+  def exhibit_listed?(key)
+    page.has_css?(%([data-test-id="museum-item"][data-key="#{key}"]))
+  end
+
+  # Waits for the exhibit to go, as its row may still be on its way out.
+  def exhibit_gone?(key)
+    page.has_no_css?(%([data-test-id="museum-item"][data-key="#{key}"]))
+  end
+
   def open_card_menu
     find('[data-test-id="card-kebab"] summary').click
   end

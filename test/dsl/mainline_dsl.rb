@@ -668,6 +668,36 @@ module MainlineDSL
     @driver = here
   end
 
+  # The museum in the browser, for steps that press and type.
+  def open_museum
+    driver.visit_museum_page(@team)
+  end
+
+  def open_exhibit_to_promote(key)
+    driver.open_exhibit_to_promote(key)
+  end
+
+  def press_row_promote(key)
+    driver.press_row_promote(key)
+  end
+
+  def write_story_title(text)
+    driver.write_story_title(text)
+  end
+
+  def exhibit_listed?(key)
+    driver.exhibit_listed?(key)
+  end
+
+  def exhibit_gone?(key)
+    driver.exhibit_gone?(key)
+  end
+
+  # Whether a promote has just happened: its toast offers to undo it.
+  def promote_undo_offered?
+    driver.test_id_shown?('museum-toast-undo')
+  end
+
   # Opens the menu of the one card on the board.
   def open_card_menu
     driver.open_card_menu
