@@ -90,7 +90,7 @@ GEM
     lockbox (2.2.0)
     logger (1.7.0)
     matrix (0.4.3)
-    mcp (0.25.0)
+    mcp (1.10.0)
       json_schemer (>= 2.4)
     mini_mime (1.1.5)
     minitest (6.0.3)
@@ -400,7 +400,7 @@ CHECKSUMS
   lockbox (2.2.0) sha256=f80a20ee0161299b23a588d839d23a1232863112c4b6b9bc31eed28ff9d591af
   logger (1.7.0) sha256=196edec7cc44b66cfb40f9755ce11b392f21f7967696af15d274dde7edff0203
   matrix (0.4.3) sha256=a0d5ab7ddcc1973ff690ab361b67f359acbb16958d1dc072b8b956a286564c5b
-  mcp (0.25.0) sha256=8acf3a5f3b60b6fd6e5d9b8ac5eb85ac504766976cbadaca182d2ffe7d795d98
+  mcp (1.10.0) sha256=0ced6143750f865330fdf3e37fc82309a9bcb175d8e9ed435c89599967d35e60
   mini_mime (1.1.5) sha256=8681b7e2e4215f2a159f9400b5816d85e9d8c6c6b491e96a12797e798f8bccef
   minitest (6.0.3) sha256=88ac8a1de36c00692420e7cb3cc11a0773bbcb126aee1c249f320160a7d11411
   minitest-global_expectations (1.0.2) sha256=b0fda8574322d099d91196c74245ed07a257dbe61e4b6962ec1a71d0cee957e3

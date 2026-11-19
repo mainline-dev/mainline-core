@@ -46,6 +46,18 @@ describe 'MCP server' do
     assert(not_there? { visit_the_old_team_token_page })
   end
 
+  it 'offers the 2026-07-28 protocol to a client that asks which versions it speaks' do
+    connect_coding_agent
+
+    assert_includes mcp_versions_offered, '2026-07-28'
+  end
+
+  it 'lists its tools for a client on the 2026-07-28 protocol, which opens no session first' do
+    connect_coding_agent
+
+    assert_includes mcp_tools_listed_on('2026-07-28'), 'list_maps'
+  end
+
   it 'initializes MCP session' do
     connect_coding_agent
     resp = mcp_initialize

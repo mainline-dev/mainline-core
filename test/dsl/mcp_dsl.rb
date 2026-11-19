@@ -113,6 +113,27 @@ module McpDSL
     [result['content'].find { |c| c['type'] == 'text' }['text'], result['isError']]
   end
 
+  # The protocol versions the server offers a client that asks before anything
+  # else, as clients of the 2026-07-28 revision do.
+  def mcp_versions_offered(token: nil)
+    post('/mcp', JSON.generate({ jsonrpc: '2.0', id: 1, method: 'server/discover' }), signed_in_headers(token || @mcp_token))
+    JSON.parse(last_response.body).dig('result', 'supportedVersions')
+  end
+
+  # The names of the tools the server lists for a client on this protocol
+  # version that opened no session. Such a client says which version it
+  # speaks, and what it can do, on every request, in the request's own _meta,
+  # repeats the version and the method in headers, and takes its answer as
+  # JSON or as a stream.
+  def mcp_tools_listed_on(version, token: nil)
+    headers = signed_in_headers(token || @mcp_token)
+      .merge('HTTP_MCP_PROTOCOL_VERSION' => version, 'HTTP_MCP_METHOD' => 'tools/list',
+        'HTTP_ACCEPT' => 'application/json, text/event-stream')
+    meta = { 'io.modelcontextprotocol/protocolVersion' => version, 'io.modelcontextprotocol/clientCapabilities' => {} }
+    post('/mcp', JSON.generate({ jsonrpc: '2.0', id: 2, method: 'tools/list', params: { _meta: meta } }), headers)
+    (JSON.parse(last_response.body).dig('result', 'tools') || []).map { |tool| tool['name'] }
+  end
+
   # The tools the server offers, as a client lists them.
   def mcp_list_tools(token: nil)
     token ||= @mcp_token
