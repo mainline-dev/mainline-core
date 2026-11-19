@@ -14,7 +14,7 @@ module FirstRun
   # Whether the steps given are those of a team that has done what it needs
   # to. Not so for a team past its first steps, which has none.
   def self.settled?(steps)
-    !steps.nil? && steps.values_at(*NEEDED).all?
+    !steps.nil? && steps.fetch_values(*NEEDED).all?
   end
 
   def self.for(team, now: Time.now)

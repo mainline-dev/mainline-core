@@ -139,6 +139,15 @@ describe NeverPulled do
       assert_nil due
     end
 
+    it "counts only the team asked about, even where every team's tickets are in reach" do
+      other = Team.create(name: 'Other')
+      exhibit(days_ago: 10)
+      SetTeamContext.call(other.id)
+      exhibit(days_ago: 60, team: other)
+
+      assert_equal(@now + (80 * 86_400), BypassRLS.call { NeverPulled.due(@team.id) })
+    end
+
     it "does not count another team's tickets" do
       other = Team.create(name: 'Other')
       SetTeamContext.call(other.id)
