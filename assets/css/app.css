@@ -2236,6 +2236,19 @@ select {
     margin: 0 0 0.75rem;
 }
 
+/* Prose in app pages keeps a readable measure however wide the window is.
+   The same 600px the tutorial's .section p uses. Scoped to the app layout's
+   main#main, so docs and marketing pages (main.docs-content) are untouched. */
+#main > p:not([class]),
+#main .section > p,
+#main .section > details > p,
+#main .section > ul,
+#main .page-subtitle,
+#main .banner-info {
+    max-width: 600px;
+    text-wrap: pretty;
+}
+
 .plan-toggle {
     margin: 1rem 0;
 }

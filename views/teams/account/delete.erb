@@ -10,12 +10,14 @@
   </ul>
   <p><strong>This action cannot be undone.</strong></p>
 
-  <form method="post" action="/teams/<%= @team.id %>/account/delete" id="delete-form" data-team-name="<%= @team.name %>">
-    <%== csrf_tag("/teams/#{@team.id}/account/delete") %>
-    <label for="confirmation">Type <strong class="errors" style="text-transform: none;">DELETE <%= @team.name %></strong> to confirm</label>
-    <input type="text" id="confirmation" name="confirmation" autocomplete="off" autofocus>
-    <button type="submit" class="btn btn-danger" id="delete-btn" disabled>Delete Team Permanently</button>
-  </form>
+  <div class="form-container">
+    <form method="post" action="/teams/<%= @team.id %>/account/delete" id="delete-form" data-team-name="<%= @team.name %>">
+      <%== csrf_tag("/teams/#{@team.id}/account/delete") %>
+      <label for="confirmation">Type <strong class="errors" style="text-transform: none;">DELETE <%= @team.name %></strong> to confirm</label>
+      <input type="text" id="confirmation" name="confirmation" autocomplete="off" autofocus>
+      <button type="submit" class="btn btn-danger" id="delete-btn" disabled>Delete Team Permanently</button>
+    </form>
+  </div>
 </section>
 
 <script nonce="<%= @csp_nonce %>">
