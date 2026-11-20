@@ -41,6 +41,44 @@ describe RequestLogger do
     assert_includes output.string, '"Mozilla/5.0"'
   end
 
+  # The log is kept by another company, and an address can hold a secret: a
+  # sign-in code in its query string, or the token of a link sent by email.
+  # Anyone reading the log could use one that is still good, so the log keeps
+  # the address and leaves the secret out.
+  it 'leaves the query string out of the address' do
+    env['QUERY_STRING'] = 'code=one-time-code&state=abc'
+    logger.call(env)
+
+    assert_includes output.string, '"GET /test"'
+    refute_includes output.string, 'one-time-code'
+  end
+
+  %w[magic-login verify-email invite].each do |link|
+    it "hides the token in a #{link} link" do
+      env['PATH_INFO'] = "/#{link}/the-emailed-token"
+      logger.call(env)
+
+      assert_includes output.string, %("GET /#{link}/[token]")
+      refute_includes output.string, 'the-emailed-token'
+    end
+  end
+
+  it 'leaves the query string out of the referring address' do
+    env['HTTP_REFERER'] = 'https://example.com/page?code=one-time-code'
+    logger.call(env)
+
+    assert_includes output.string, '"https://example.com/page"'
+    refute_includes output.string, 'one-time-code'
+  end
+
+  it 'hides the token of a link in the referring address' do
+    env['HTTP_REFERER'] = 'https://mainline.dev/invite/the-emailed-token'
+    logger.call(env)
+
+    assert_includes output.string, '"https://mainline.dev/invite/[token]"'
+    refute_includes output.string, 'the-emailed-token'
+  end
+
   it 'logs dashes when referer and user agent are absent' do
     logger.call(env)
 
