@@ -1459,23 +1459,11 @@ module MainlineDSL
   end
 
   def login_links_sent(&)
-    sent = []
-    capture = lambda do |person:, **|
-      sent << person.email
-      nil
-    end
-    SendMagicLoginEmail.stub(:call, capture, &)
-    sent
+    driver.login_links_sent(&)
   end
 
   def verification_emails_sent(&)
-    sent = []
-    capture = lambda do |person:, **|
-      sent << person.email
-      nil
-    end
-    SendVerificationEmail.stub(:call, capture, &)
-    sent
+    driver.verification_emails_sent(&)
   end
 
   def connect_mcp_client(host:, token:)

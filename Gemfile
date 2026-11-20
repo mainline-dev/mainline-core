@@ -51,4 +51,5 @@ group :test do
   gem 'rubocop-minitest', require: false
   gem 'mutant-minitest'
   gem 'slopbouncer', require: false
+  gem 'archunit', require: false
 end

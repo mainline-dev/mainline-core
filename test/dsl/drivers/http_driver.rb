@@ -8,12 +8,14 @@ require 'zip'
 require_relative 'records'
 require_relative 'oauth_records'
 require_relative 'first_team_records'
+require_relative 'sent_email'
 
 class HttpDriver
   include Rack::Test::Methods
   include Records
   include OauthRecords
   include FirstTeamRecords
+  include SentEmail
 
   def app
     Mainline.app
