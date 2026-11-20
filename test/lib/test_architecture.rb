@@ -53,6 +53,27 @@ class CallsPastTheDsl < Prism::Visitor
   end
 end
 
+# Whether a file names the web framework: Roda, or the app class built on it.
+class NamesTheFramework < Prism::Visitor
+  NAMES = %i[Roda Mainline].freeze
+
+  def self.in?(path)
+    new.tap { |reader| Prism.parse_file(path).value.accept(reader) }.named
+  end
+
+  attr_reader :named
+
+  def visit_constant_read_node(node)
+    @named = true if NAMES.include?(node.name)
+    super
+  end
+
+  def visit_constant_path_node(node)
+    @named = true if node.parent.nil? && NAMES.include?(node.name)
+    super
+  end
+end
+
 # The acceptance tests are built in four tiers. Test cases say what a person
 # does, in the words the team uses. The DSL turns those words into steps.
 # Drivers carry the steps out against the system. The system knows none of
@@ -160,5 +181,37 @@ describe 'The four tiers of the acceptance tests' do
 
       assert_empty paid, "Paid off. In test/tier_calls.txt these now read, and any at 0 goes:\n#{paid.join("\n")}\n(#{paid.size} in all)"
     end
+  end
+end
+
+# lib holds what the app does: its rules, its sums, what it records. The web
+# framework belongs to the routes, which ask lib and show what it answers, so
+# lib can be tested and changed with no request in sight. A file in lib that
+# names the framework is holding routes. test/lib_breaches.txt records the
+# ones that did before this rule.
+describe 'lib, which knows nothing of the web framework' do
+  def root
+    File.expand_path('../..', __dir__)
+  end
+
+  def found
+    Dir[File.join(root, 'lib/**/*.rb')].select { |path| NamesTheFramework.in?(path) }.map { |path| path.delete_prefix("#{root}/") }
+  end
+
+  def recorded
+    File.readlines(File.join(root, 'test/lib_breaches.txt'), chomp: true)
+      .map { |line| line.sub(/\s*#.*\z/, '') }.reject(&:empty?)
+  end
+
+  it 'names it in no file that is new' do
+    added = found - recorded
+
+    assert_empty added, "A file in lib names Roda or the app class. Routes go in routes:\n#{added.join("\n")}\n(#{added.size} in all)"
+  end
+
+  it 'leaves no file recorded that has stopped naming it' do
+    gone = recorded - found
+
+    assert_empty gone, "Put right. Delete from test/lib_breaches.txt:\n#{gone.join("\n")}\n(#{gone.size} in all)"
   end
 end

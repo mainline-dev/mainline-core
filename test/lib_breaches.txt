@@ -1,0 +1,10 @@
+# Files in lib that name the web framework: Roda, or the app class built on
+# it. Each one holds routes. test/lib/test_architecture.rb reads this list
+# and fails when a file in lib names the framework and is not here, and when
+# a file is still here after it has stopped.
+#
+# This is debt, written down so it cannot grow. To pay some off, move the
+# routes to the routes folder and delete the file's line. Never add a line.
+
+lib/museum_routes.rb
+lib/story_templates.rb
