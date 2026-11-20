@@ -31,10 +31,17 @@ describe 'The four tiers of the acceptance tests' do
       .layer('system').defined_by(%r{\A(lib|models|routes)/.*\.rb\z|\A[^/]+\.rb\z})
   end
 
-  def assert_kept(rule)
-    found = rule.check(ArchUnit::CheckOptions.new(dependency_analysis: :imports_and_constants))
+  # Each breach as the file that reaches and the file it names.
+  def breaches(rule)
+    rule.check(ArchUnit::CheckOptions.new(dependency_analysis: :imports_and_constants)).map do |breach|
+      next ArchUnit.format_violations([breach], color: false) unless breach.respond_to?(:dependency)
 
-    assert_empty(found, -> { ArchUnit.format_violations(found, color: false) })
+      "#{breach.dependency.source_label} -> #{breach.dependency.target_label}"
+    end
+  end
+
+  def assert_kept(rule)
+    assert_empty breaches(rule)
   end
 
   it 'lets the DSL reach the system only through a driver' do
@@ -47,5 +54,31 @@ describe 'The four tiers of the acceptance tests' do
     rule = tiers.where_layer('system').may_not_depend_on_layers('cases', 'dsl', 'drivers', 'documents', 'helpers')
 
     assert_kept rule
+  end
+
+  # Test cases written before these rules reach past the DSL in places.
+  # test/tier_breaches.txt records each one, a line apiece. The list is debt:
+  # it gets shorter and never longer.
+  describe 'test cases, which reach the system only through the DSL' do
+    def found
+      breaches(tiers.where_layer('cases').may_only_depend_on_layers('dsl', 'documents', 'helpers'))
+    end
+
+    def recorded
+      File.readlines(File.join(root, 'test/tier_breaches.txt'), chomp: true)
+        .map { |line| line.sub(/\s*#.*\z/, '') }.reject(&:empty?)
+    end
+
+    it 'reach past it nowhere new' do
+      added = found - recorded
+
+      assert_empty added, "A test case names the system or a driver itself. Give the DSL a step for it:\n#{added.join("\n")}"
+    end
+
+    it 'leave no line recorded for a breach that has been put right' do
+      gone = recorded - found
+
+      assert_empty gone, "Put right. Delete from test/tier_breaches.txt:\n#{gone.join("\n")}"
+    end
   end
 end
